@@ -9,12 +9,16 @@ WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # 安装依赖
-RUN \
-  if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
-  else echo "无法找到锁文件，使用 npm install" && npm install; \
-  fi
+# RUN \
+#   if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
+#   elif [ -f package-lock.json ]; then npm ci; \
+#   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
+#   else echo "无法找到锁文件，使用 npm install" && npm install; \
+#   fi
+
+# 直接使用 pnpm 安装依赖
+RUN corepack enable pnpm \
+    && pnpm install
 
 # 生产环境构建
 FROM base AS runner
