@@ -4,13 +4,13 @@
 
 [English](./README.md) | 简体中文
 
-## 技术栈
+## 📋 技术栈
 
 ### 后端 (API)
 - **框架**: [Fastify](https://fastify.dev/) - 高性能 Node.js Web 框架
-- **数据库**: PostgreSQL + [Drizzle ORM](https://orm.drizzle.team/)
+- **数据库**: PostgreSQL 16 + [Drizzle ORM](https://orm.drizzle.team/)
 - **身份验证**: JWT + OAuth2
-- **缓存**: Redis (通过 ioredis)
+- **缓存**: Redis 7
 - **邮件服务**: Nodemailer
 - **API 文档**: Swagger/OpenAPI
 - **进程管理**: PM2
@@ -24,188 +24,363 @@
 - **Markdown**: React Markdown (支持 GitHub 风格)
 - **主题**: next-themes (支持深色/浅色模式)
 
-### 开发工具
+### 开发与部署
 - **单体仓库**: Turborepo
-- **包管理器**: pnpm
+- **包管理器**: pnpm 9+
 - **环境变量**: dotenvx
-- **部署**: Docker + Docker Compose + Nginx
+- **容器化**: Docker + Docker Compose
+- **反向代理**: Nginx (生产环境)
 
-## 项目结构
+## 🏗️ 系统架构
+
+```
+┌─────────────────────────────┐
+│    Nginx (生产环境)          │
+│  SSL/HTTPS + 反向代理        │
+└─────────────┬───────────────┘
+              │
+      ┌───────┴────────┐
+      │                │
+┌─────▼─────┐    ┌────▼────┐
+│    Web    │────▶│   API   │
+│   :3100   │    │  :7100  │
+└───────────┘    └──┬───┬──┘
+                    │   │
+          ┌─────────┘   └─────────┐
+          │                       │
+    ┌─────▼──────┐         ┌─────▼─────┐
+    │ PostgreSQL │         │   Redis   │
+    │   :5432    │         │   :6379   │
+    └────────────┘         └───────────┘
+```
+
+| 服务 | 技术 | 端口 | 说明 |
+|------|------|------|------|
+| **web** | Next.js 15 | 3100 | 前端应用 |
+| **api** | Fastify | 7100 | 后端 API 服务 |
+| **postgres** | PostgreSQL 16 | 5432 | 主数据库 |
+| **redis** | Redis 7 | 6379 | 缓存服务 |
+
+## 🚀 快速开始
+
+### 前置要求
+
+- **Docker**: Docker Engine 20.10+
+- **Docker Compose**: 2.0+
+- **Make**: (可选，用于简化命令)
+
+### 方式一：自动部署脚本（推荐）
+
+```bash
+# 运行自动部署脚本
+./deploy.sh
+```
+
+该脚本会自动：
+- 检查 Docker 环境
+- 初始化 `.env` 文件
+- 验证配置
+- 构建镜像
+- 启动服务
+- 初始化数据库
+
+### 方式二：使用 Makefile
+
+```bash
+# 初始化环境
+make init
+
+# 编辑 .env 文件（重要！）
+vi .env
+
+# 启动所有服务
+make up
+
+# 初始化数据库
+make db-push
+make seed
+
+# 查看日志
+make logs
+
+# 检查服务健康
+make health
+```
+
+### 方式三：使用 Docker Compose
+
+```bash
+# 1. 复制环境变量文件
+cp .env.docker.example .env
+
+# 2. 编辑配置
+vi .env
+
+# 3. 启动服务
+docker compose up -d
+
+# 4. 初始化数据库
+docker compose exec api npm run db:push:dev
+docker compose exec api npm run seed
+```
+
+## 🔐 安全配置
+
+**重要提醒**：部署前，请在 `.env` 文件中修改以下配置：
+
+```bash
+# 生成安全的 JWT 密钥
+openssl rand -base64 32
+
+# 必须修改的配置：
+POSTGRES_PASSWORD=your_secure_postgres_password
+REDIS_PASSWORD=your_secure_redis_password
+JWT_SECRET=generated_secure_jwt_secret
+CORS_ORIGIN=https://yourdomain.com  # 生产环境
+```
+
+## 🌐 访问地址
+
+部署完成后，访问以下地址：
+
+- **Web 前端**: http://localhost:3100
+- **API 文档**: http://localhost:7100/docs
+- **API 健康检查**: http://localhost:7100/api
+
+## 📝 常用命令
+
+### 使用 Makefile（推荐）
+
+```bash
+make help              # 显示所有可用命令
+
+# 容器管理
+make up                # 启动所有服务
+make down              # 停止所有服务
+make restart           # 重启所有服务
+make build             # 重新构建镜像
+make ps                # 查看容器状态
+
+# 日志
+make logs              # 查看所有日志
+make logs-api          # 查看 API 日志
+make logs-web          # 查看 Web 日志
+
+# 数据库操作
+make db-push           # 推送数据库模式
+make db-generate       # 生成迁移文件
+make db-migrate        # 运行迁移
+make db-studio         # 打开 Drizzle Studio
+make seed              # 初始化种子数据
+make seed-reset        # 重置并重新填充数据
+
+# 容器访问
+make exec-api          # 进入 API 容器
+make exec-web          # 进入 Web 容器
+make exec-db           # 进入 PostgreSQL
+make exec-redis        # 进入 Redis
+
+# 健康检查与清理
+make health            # 检查服务健康状态
+make clean             # 删除容器和网络
+make clean-all         # 删除所有内容包括数据卷（危险！）
+```
+
+### 使用 Docker Compose
+
+```bash
+# 启动/停止
+docker compose up -d
+docker compose down
+docker compose restart
+
+# 日志
+docker compose logs -f
+docker compose logs -f api
+
+# 重新构建
+docker compose build --no-cache
+docker compose up -d --build
+
+# 状态
+docker compose ps
+```
+
+## 🛠️ 开发环境设置（不使用 Docker）
+
+### 前置要求
+- Node.js >= 18
+- pnpm >= 9.0.0
+- PostgreSQL
+- Redis
+
+### 步骤
+
+```bash
+# 1. 安装依赖
+pnpm install
+
+# 2. 配置环境变量
+cd apps/api
+cp .env.example .env
+# 编辑 .env，配置数据库和 Redis 连接信息
+
+cd ../web
+cp .env.example .env
+# 编辑 .env，配置 API 地址
+
+# 3. 设置数据库
+cd ../api
+pnpm db:push:dev
+pnpm seed
+
+# 4. 启动开发服务器
+cd ../..
+pnpm dev
+
+# API 将运行在 7100 端口
+# Web 将运行在 3100 端口
+```
+
+## 📦 项目结构
 
 ```
 nodebbs/
-   apps/
-      api/          # Fastify 后端 API
-      web/          # Next.js 前端应用
-   packages/         # 共享包（即将推出）
-   scripts/          # 部署和实用脚本
-   turbo.json        # Turborepo 配置
+├── apps/
+│   ├── api/                 # Fastify 后端
+│   │   ├── src/
+│   │   │   ├── routes/      # API 路由
+│   │   │   ├── plugins/     # Fastify 插件
+│   │   │   ├── db/          # 数据库模式
+│   │   │   └── utils/       # 工具函数
+│   │   ├── Dockerfile
+│   │   ├── .dockerignore
+│   │   └── package.json
+│   └── web/                 # Next.js 前端
+│       ├── app/             # Next.js App Router
+│       ├── components/      # React 组件
+│       ├── Dockerfile
+│       ├── .dockerignore
+│       └── package.json
+├── packages/                # 共享包（未来）
+├── scripts/                 # 部署脚本
+├── docker-compose.yml       # Docker Compose 配置
+├── docker-compose.prod.yml  # 生产环境配置
+├── Makefile                 # 命令快捷方式
+├── deploy.sh                # 自动部署脚本
+├── nginx.conf.example       # Nginx 配置模板
+├── .env.docker.example      # 环境变量模板
+└── turbo.json               # Turborepo 配置
 ```
 
-## 前置要求
+## 🚀 生产环境部署
 
-- Node.js >= 18
-- pnpm >= 9.0.0
-- PostgreSQL (生产环境)
-- Redis (缓存)
-
-## 快速开始
-
-### 1. 安装依赖
+### 1. 准备环境
 
 ```bash
-pnpm install
+# 克隆仓库
+git clone <repository-url>
+cd nodebbs
+
+# 初始化环境
+cp .env.docker.example .env
+vi .env  # 配置生产环境设置
 ```
 
-### 2. 环境配置
+### 2. 配置 Nginx（推荐）
 
-#### API 配置
-在 `apps/api/` 目录下创建 `.env` 文件：
-
-```shell
-cd apps/api
-cp .env.example .env
-```
-
-#### Web 配置
-在 `apps/web/` 目录下创建 `.env` 文件：
-
-```shell
-cd apps/web
-cp .env.example .env
-```
-
-### 3. 数据库设置
+复制并修改 `nginx.conf.example`：
 
 ```bash
-cd apps/api
-
-# 推送数据库模式
-pnpm db:push:dev
-
-# 运行迁移
-pnpm db:migrate
-
-# 填充初始数据
-pnpm seed
-
-# 打开 Drizzle Studio（可选）
-pnpm db:studio
+cp nginx.conf.example /etc/nginx/sites-available/nodebbs
+# 编辑文件，配置域名和 SSL 证书
+sudo ln -s /etc/nginx/sites-available/nodebbs /etc/nginx/sites-enabled/
+sudo nginx -t && sudo nginx -s reload
 ```
 
-### 4. 开发
-
-启动开发服务器：
+### 3. 使用 Docker 部署
 
 ```bash
-# 从项目根目录 - 同时运行 API 和 Web
-pnpm dev
+# 使用部署脚本
+./deploy.sh
 
-# 或者单独运行
-cd apps/api && pnpm dev  # API 运行在 7100 端口
-cd apps/web && pnpm dev  # Web 运行在 3100 端口
+# 或手动部署
+docker compose -f docker-compose.prod.yml up -d
+make db-push
+make seed
 ```
 
-应用将在以下地址运行：
-- API: http://localhost:7100
-- Web: http://localhost:3100
-- API 文档: http://localhost:7100/docs
-
-## 生产构建
+### 4. 设置数据库备份
 
 ```bash
-# 构建所有应用
-pnpm build
+# 备份数据库
+docker compose exec postgres pg_dump -U postgres nodebbs > backup_$(date +%Y%m%d).sql
 
-# 或者单独构建
-cd apps/api && pnpm build
-cd apps/web && pnpm build
+# 恢复数据库
+docker compose exec -T postgres psql -U postgres nodebbs < backup_20241110.sql
 ```
 
-## Docker 部署
+## 🔍 故障排查
 
-### 开发环境
-
+### 查看服务日志
 ```bash
-# 启动所有服务（PostgreSQL、Redis、API、Web）
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
+make logs
+docker compose logs -f [service_name]
 ```
 
-### 生产环境
-
+### 检查服务健康状态
 ```bash
-# 构建并启动生产服务
-docker-compose -f docker-compose.prod.yml up -d
-
-# 初始化数据库
-make db-push # 推送 schema
-make seed # 初始化数据
-
-# 查看生产日志
-docker-compose -f docker-compose.prod.yml logs -f
+make health
+docker compose ps
 ```
 
-更多部署命令请查看 `Makefile`。
+### 重启特定服务
+```bash
+docker compose restart api
+docker compose restart web
+```
 
-## 可用脚本
+### 数据库连接问题
+```bash
+# 检查数据库状态
+docker compose exec postgres pg_isready
 
-### 根目录
-- `pnpm dev` - 启动所有应用的开发服务器
-- `pnpm build` - 构建所有应用的生产版本
+# 访问数据库
+make exec-db
+```
 
-### API (apps/api)
-- `pnpm dev` - 以开发模式启动 API（支持热重载）
-- `pnpm prod` - 使用 PM2 以生产模式启动 API
-- `pnpm db:push:dev` - 推送数据库模式变更
-- `pnpm db:generate` - 生成迁移文件
-- `pnpm db:migrate` - 运行迁移
-- `pnpm db:studio` - 打开 Drizzle Studio
-- `pnpm seed` - 填充初始数据
-- `pnpm seed:reset` - 重置并重新填充数据库
+### Redis 连接问题
+```bash
+# 检查 Redis 状态
+docker compose exec redis redis-cli ping
 
-### Web (apps/web)
-- `pnpm dev` - 以开发模式启动 Next.js
-- `pnpm build` - 构建 Next.js 生产版本
-- `pnpm start` - 启动生产服务器
-- `pnpm prod` - 使用 PM2 启动
-- `pnpm lint` - 运行 ESLint
+# 访问 Redis
+make exec-redis
+```
 
-## 功能特性
+## 📚 文档
 
-- 用户认证和授权（JWT + OAuth2）
-- 速率限制和安全中间件
-- RESTful API（自动生成文档）
-- 图片优化和 CDN 支持（ipx）
-- 邮件通知
-- Redis 缓存以提升性能
-- 响应式 UI（支持深色/浅色主题）
-- Markdown 内容支持
-- 实时更新能力
+- [Docker 部署指南](./DOCKER_DEPLOY.md) - 详细的部署说明
+- [Docker 文件组织](./DOCKER_FILE_ORGANIZATION.md) - Dockerfile 结构说明
+- [快速开始指南](./START.md) - 快速部署方法
 
-## API 文档
+## 🤝 贡献
 
-API 服务器运行后，访问 http://localhost:7100/docs 查看交互式 Swagger UI 文档。
-
-## 贡献
-
-欢迎贡献！请随时提交 Pull Request。
+欢迎贡献！请遵循以下步骤：
 
 1. Fork 本仓库
 2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交你的更改 (`git commit -m 'Add some amazing feature'`)
+3. 提交你的更改 (`git commit -m 'Add amazing feature'`)
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 打开一个 Pull Request
 
-## 许可证
+## 📄 许可证
 
 MIT
 
-## 支持
+## 🐛 支持
 
-如有问题，请在 GitHub 上提交 issue。
+如有问题：
+- 在 GitHub 上提交 issue
+- 查看 `/docs` 目录中的现有文档
+- 查阅 `DOCKER_DEPLOY.md` 了解部署相关问题
