@@ -1,0 +1,617 @@
+import db from '../../db/index.js';
+import { posts, topics, users, likes, notifications, subscriptions } from '../../db/schema.js';
+import { eq, sql, desc, and, inArray, ne, like } from 'drizzle-orm';
+import { getSetting } from '../../utils/settings.js';
+
+export default async function postRoutes(fastify, options) {
+  // Get posts (by topic or by user)
+  fastify.get('/', {
+    preHandler: [fastify.optionalAuth],
+    schema: {
+      tags: ['posts'],
+      description: '获取话题或用户的帖子',
+      querystring: {
+        type: 'object',
+        properties: {
+          topicId: { type: 'number' },
+          userId: { type: 'number' },
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 },
+          search: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { topicId, userId, page = 1, limit = 20, search } = request.query;
+    const offset = (page - 1) * limit;
+
+    // Must provide either topicId or userId
+    if (!topicId && !userId) {
+      return reply.code(400).send({ error: '必须提供 topicId 或 userId' });
+    }
+
+    // If topicId provided, verify topic exists
+    if (topicId) {
+      const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+      const [topic] = await db.select().from(topics).where(eq(topics.id, topicId)).limit(1);
+
+      if (!topic) {
+        return reply.code(404).send({ error: '话题不存在' });
+      }
+
+      // 只有管理员和版主可以查看已删除话题的回复
+      if (topic.isDeleted && !isModerator) {
+        return reply.code(404).send({ error: '话题不存在' });
+      }
+    }
+
+    // Build query conditions
+    let whereConditions = [eq(posts.isDeleted, false)];
+
+    // 添加搜索条件
+    if (search && search.trim()) {
+      whereConditions.push(like(posts.content, `%${search.trim()}%`));
+    }
+
+    if (topicId) {
+      whereConditions.push(eq(posts.topicId, topicId));
+      // 排除话题的第一条回复（即话题内容本身）
+      whereConditions.push(ne(posts.postNumber, 1));
+    }
+    if (userId) {
+      whereConditions.push(eq(posts.userId, userId));
+      // 排除话题的第一条回复（即话题内容本身）
+      whereConditions.push(ne(posts.postNumber, 1));
+      
+      // 检查用户的内容可见性设置
+      const [targetUser] = await db
+        .select({ contentVisibility: users.contentVisibility })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      
+      if (targetUser) {
+        const isViewingSelf = request.user && request.user.id === userId;
+        
+        // 如果不是查看自己的内容，需要检查权限
+        if (!isViewingSelf) {
+          if (targetUser.contentVisibility === 'private') {
+            // 仅自己可见，返回空结果
+            return { items: [], page, limit, total: 0 };
+          } else if (targetUser.contentVisibility === 'authenticated' && !request.user) {
+            // 需要登录才能查看，但用户未登录
+            return { items: [], page, limit, total: 0 };
+          }
+        }
+      }
+    }
+
+    // 如果不是版主/管理员，只显示已批准的内容
+    // 如果是查看自己的回复，显示所有状态
+    // 如果是查看话题，需要检查是否是话题作者
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    const isOwnPosts = userId && request.user && userId === request.user.id;
+    
+    // 如果是通过topicId查询，检查是否是话题作者
+    let isTopicAuthor = false;
+    if (topicId && request.user) {
+      const [topic] = await db.select({ userId: topics.userId }).from(topics).where(eq(topics.id, topicId)).limit(1);
+      isTopicAuthor = topic && topic.userId === request.user.id;
+    }
+    
+    if (!isModerator && !isOwnPosts && !isTopicAuthor) {
+      whereConditions.push(eq(posts.approvalStatus, 'approved'));
+    }
+
+    // Get posts
+    const postsList = await db
+      .select({
+        id: posts.id,
+        topicId: posts.topicId,
+        topicTitle: topics.title,
+        topicSlug: topics.slug,
+        userId: posts.userId,
+        username: users.username,
+        userName: users.name,
+        userAvatar: users.avatar,
+        userRole: users.role,
+        userIsBanned: users.isBanned,
+        content: posts.content,
+        postNumber: posts.postNumber,
+        replyToPostId: posts.replyToPostId,
+        likeCount: posts.likeCount,
+        approvalStatus: posts.approvalStatus,
+        editedAt: posts.editedAt,
+        editCount: posts.editCount,
+        createdAt: posts.createdAt
+      })
+      .from(posts)
+      .innerJoin(users, eq(posts.userId, users.id))
+      .innerJoin(topics, eq(posts.topicId, topics.id))
+      .where(and(...whereConditions))
+      .orderBy(topicId ? posts.postNumber : desc(posts.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
+    postsList.forEach(post => {
+      if (post.userIsBanned && !isModerator) {
+        post.userAvatar = null;
+      }
+      // 移除 userIsBanned 字段，不返回给客户端
+      delete post.userIsBanned;
+    });
+
+    // Check which posts current user has liked
+    if (request.user) {
+      const postIds = postsList.map(p => p.id);
+      if (postIds.length > 0) {
+        // 使用Drizzle ORM的inArray方法替代手动构造ANY查询
+        const userLikes = await db
+          .select({ postId: likes.postId })
+          .from(likes)
+          .where(and(eq(likes.userId, request.user.id), inArray(likes.postId, postIds)));
+
+        const likedPostIds = new Set(userLikes.map(l => l.postId));
+
+        postsList.forEach(post => {
+          post.isLiked = likedPostIds.has(post.id);
+        });
+      }
+    }
+
+    // Get reply-to post information for posts that have replyToPostId
+    const replyToPostIds = postsList
+      .filter(p => p.replyToPostId)
+      .map(p => p.replyToPostId);
+    
+    if (replyToPostIds.length > 0) {
+      const replyToPosts = await db
+        .select({
+          id: posts.id,
+          postNumber: posts.postNumber,
+          userId: posts.userId,
+          userName: users.name,
+          userUsername: users.username,
+          userAvatar: users.avatar,
+          userIsBanned: users.isBanned,
+        })
+        .from(posts)
+        .innerJoin(users, eq(posts.userId, users.id))
+        .where(inArray(posts.id, replyToPostIds));
+      
+      // 如果被回复的用户被封禁且访问者不是管理员/版主，隐藏头像
+      replyToPosts.forEach(replyPost => {
+        if (replyPost.userIsBanned && !isModerator) {
+          replyPost.userAvatar = null;
+        }
+        delete replyPost.userIsBanned;
+      });
+      
+      const replyToPostMap = new Map(replyToPosts.map(p => [p.id, p]));
+      
+      postsList.forEach(post => {
+        if (post.replyToPostId && replyToPostMap.has(post.replyToPostId)) {
+          post.replyToPost = replyToPostMap.get(post.replyToPostId);
+        }
+      });
+    }
+
+    // Build count query with same conditions
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(posts)
+      .where(and(...whereConditions));
+
+    return {
+      items: postsList,
+      page,
+      limit,
+      total: Number(count)
+    };
+  });
+
+  // Get single post
+  fastify.get('/:id', {
+    preHandler: [fastify.optionalAuth],
+    schema: {
+      tags: ['posts'],
+      description: '根据ID获取单个帖子',
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    const [post] = await db
+      .select({
+        id: posts.id,
+        topicId: posts.topicId,
+        userId: posts.userId,
+        username: users.username,
+        userName: users.name,
+        userAvatar: users.avatar,
+        userRole: users.role,
+        userIsBanned: users.isBanned,
+        content: posts.content,
+        rawContent: posts.rawContent,
+        postNumber: posts.postNumber,
+        replyToPostId: posts.replyToPostId,
+        likeCount: posts.likeCount,
+        editedAt: posts.editedAt,
+        editCount: posts.editCount,
+        createdAt: posts.createdAt
+      })
+      .from(posts)
+      .innerJoin(users, eq(posts.userId, users.id))
+      .where(and(eq(posts.id, id), eq(posts.isDeleted, false)))
+      .limit(1);
+
+    if (!post) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // 检查用户权限
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    
+    // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
+    if (post.userIsBanned && !isModerator) {
+      post.userAvatar = null;
+    }
+    delete post.userIsBanned;
+
+    // Check if current user has liked
+    if (request.user) {
+      const [like] = await db
+        .select()
+        .from(likes)
+        .where(and(eq(likes.userId, request.user.id), eq(likes.postId, id)))
+        .limit(1);
+      post.isLiked = !!like;
+    }
+
+    return post;
+  });
+
+  // Create post (reply to topic)
+  fastify.post('/', {
+    preHandler: [fastify.authenticate, fastify.checkBanned, fastify.requireEmailVerification],
+    schema: {
+      tags: ['posts'],
+      description: '创建新帖子（回复）',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        required: ['topicId', 'content'],
+        properties: {
+          topicId: { type: 'number' },
+          content: { type: 'string', minLength: 1 },
+          replyToPostId: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { topicId, content, replyToPostId } = request.body;
+
+    // Verify topic exists and is not closed
+    const [topic] = await db.select().from(topics).where(eq(topics.id, topicId)).limit(1);
+
+    if (!topic || topic.isDeleted) {
+      return reply.code(404).send({ error: '话题不存在' });
+    }
+
+    if (topic.isClosed) {
+      return reply.code(403).send({ error: '话题已关闭，无法回复' });
+    }
+
+    // Get next post number
+    const [{ maxPostNumber }] = await db
+      .select({ maxPostNumber: sql`COALESCE(MAX(${posts.postNumber}), 0)` })
+      .from(posts)
+      .where(eq(posts.topicId, topicId));
+
+    const postNumber = Number(maxPostNumber) + 1;
+
+    // 检查是否开启内容审核
+    const contentModerationEnabled = await getSetting('content_moderation_enabled', false);
+    const approvalStatus = contentModerationEnabled ? 'pending' : 'approved';
+
+    // Create post
+    const [newPost] = await db.insert(posts).values({
+      topicId,
+      userId: request.user.id,
+      content,
+      rawContent: content,
+      postNumber,
+      replyToPostId,
+      approvalStatus
+    }).returning();
+
+    // Update topic stats
+    await db.update(topics).set({
+      postCount: sql`${topics.postCount} + 1`,
+      lastPostAt: new Date(),
+      lastPostUserId: request.user.id,
+      updatedAt: new Date()
+    }).where(eq(topics.id, topicId));
+
+    // Create notification for topic owner if not replying to own topic
+    if (topic.userId !== request.user.id) {
+      await db.insert(notifications).values({
+        userId: topic.userId,
+        type: 'reply',
+        triggeredByUserId: request.user.id,
+        topicId,
+        postId: newPost.id,
+        message: `${request.user.username} 回复了你的话题`
+      });
+    }
+
+    // If replying to specific post, notify that user too
+    if (replyToPostId) {
+      const [replyToPost] = await db.select().from(posts).where(eq(posts.id, replyToPostId)).limit(1);
+      if (replyToPost && replyToPost.userId !== request.user.id && replyToPost.userId !== topic.userId) {
+        await db.insert(notifications).values({
+          userId: replyToPost.userId,
+          type: 'reply',
+          triggeredByUserId: request.user.id,
+          topicId,
+          postId: newPost.id,
+          message: `${request.user.username} 回复了你的帖子`
+        });
+      }
+    }
+
+    // Notify all subscribers to this topic (except the replier and topic owner)
+    const subscribers = await db
+      .select({ userId: subscriptions.userId })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.topicId, topicId),
+          ne(subscriptions.userId, request.user.id),
+          ne(subscriptions.userId, topic.userId)
+        )
+      );
+
+    if (subscribers.length > 0) {
+      const notificationValues = subscribers.map(sub => ({
+        userId: sub.userId,
+        type: 'topic_reply',
+        triggeredByUserId: request.user.id,
+        topicId,
+        postId: newPost.id,
+        message: `${request.user.username} 在 "${topic.title}" 中回复了`
+      }));
+
+      await db.insert(notifications).values(notificationValues);
+    }
+
+    const message = contentModerationEnabled 
+      ? '您的回复已提交，等待审核后将公开显示' 
+      : '回复发布成功';
+
+    return { 
+      post: newPost,
+      message,
+      requiresApproval: contentModerationEnabled
+    };
+  });
+
+  // Update post
+  fastify.patch('/:id', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['posts'],
+      description: '更新帖子（所有者、版主或管理员）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: {
+          content: { type: 'string', minLength: 1 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { content } = request.body;
+
+    const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+
+    if (!post || post.isDeleted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // Check permissions
+    const isModerator = ['moderator', 'admin'].includes(request.user.role);
+    const isOwner = post.userId === request.user.id;
+
+    if (!isModerator && !isOwner) {
+      return reply.code(403).send({ error: '你没有权限编辑该帖子' });
+    }
+
+    const [updatedPost] = await db.update(posts).set({
+      content,
+      rawContent: content,
+      editedAt: new Date(),
+      editCount: sql`${posts.editCount} + 1`,
+      updatedAt: new Date()
+    }).where(eq(posts.id, id)).returning();
+
+    return updatedPost;
+  });
+
+  // Delete post
+  fastify.delete('/:id', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['posts'],
+      description: '删除帖子（软删除）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+
+    if (!post || post.isDeleted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // Cannot delete first post (use topic delete instead)
+    if (post.postNumber === 1) {
+      return reply.code(400).send({ error: '无法删除第一条帖子，请删除话题' });
+    }
+
+    // Check permissions
+    const isModerator = ['moderator', 'admin'].includes(request.user.role);
+    const isOwner = post.userId === request.user.id;
+
+    if (!isModerator && !isOwner) {
+      return reply.code(403).send({ error: '你没有权限删除该帖子' });
+    }
+
+    // Soft delete
+    await db.update(posts).set({
+      isDeleted: true,
+      deletedAt: new Date(),
+      deletedBy: request.user.id,
+      updatedAt: new Date()
+    }).where(eq(posts.id, id));
+
+    // Update topic post count
+    await db.update(topics).set({
+      postCount: sql`${topics.postCount} - 1`,
+      updatedAt: new Date()
+    }).where(eq(topics.id, post.topicId));
+
+    return { message: 'Post deleted successfully' };
+  });
+
+  // Like post
+  fastify.post('/:id/like', {
+    preHandler: [fastify.authenticate, fastify.checkBanned],
+    schema: {
+      tags: ['posts'],
+      description: '点赞帖子',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+
+    if (!post || post.isDeleted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // Check if already liked
+    const [existing] = await db
+      .select()
+      .from(likes)
+      .where(and(eq(likes.userId, request.user.id), eq(likes.postId, id)))
+      .limit(1);
+
+    if (existing) {
+      return reply.code(400).send({ error: '帖子已点赞' });
+    }
+
+    // Create like
+    await db.insert(likes).values({
+      userId: request.user.id,
+      postId: id
+    });
+
+    // Update post like count
+    await db.update(posts).set({
+      likeCount: sql`${posts.likeCount} + 1`
+    }).where(eq(posts.id, id));
+
+    // Create notification for post owner
+    if (post.userId !== request.user.id) {
+      await db.insert(notifications).values({
+        userId: post.userId,
+        type: 'like',
+        triggeredByUserId: request.user.id,
+        topicId: post.topicId,
+        postId: id,
+        message: `${request.user.username} 赞了你的帖子`
+      });
+    }
+
+    return { message: 'Post liked successfully' };
+  });
+
+  // Unlike post
+  fastify.delete('/:id/like', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['posts'],
+      description: '取消点赞帖子',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    // Delete like
+    const deleted = await db
+      .delete(likes)
+      .where(and(eq(likes.userId, request.user.id), eq(likes.postId, id)))
+      .returning();
+
+    if (deleted.length > 0) {
+      // Update post like count
+      await db.update(posts).set({
+        likeCount: sql`${posts.likeCount} - 1`
+      }).where(eq(posts.id, id));
+    }
+
+    return { message: 'Like removed successfully' };
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+

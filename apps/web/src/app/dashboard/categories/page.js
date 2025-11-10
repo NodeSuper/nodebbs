@@ -1,0 +1,502 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { DataTable } from '@/components/forum/DataTable';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Edit, Trash2, Loader2, Lock } from 'lucide-react';
+import { categoryApi } from '@/lib/api';
+import { toast } from 'sonner';
+import CategorySelector from '@/components/forum/CategorySelector';
+import { Loading } from '@/components/common/Loading';
+
+export default function CategoriesManagement() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    color: '#3B82F6',
+    icon: '',
+    parentId: null,
+    position: 0,
+    isPrivate: false,
+    isFeatured: false,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await categoryApi.getAll();
+      setCategories(data);
+    } catch (err) {
+      console.error('获取分类失败:', err);
+      toast.error('获取分类失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      toast.error('请输入分类名称');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (dialogMode === 'create') {
+        await categoryApi.create(formData);
+        toast.success('分类创建成功');
+      } else {
+        await categoryApi.update(selectedCategory.id, formData);
+        toast.success('分类更新成功');
+      }
+      setShowDialog(false);
+      resetForm();
+      fetchCategories();
+    } catch (err) {
+      console.error(
+        `${dialogMode === 'create' ? '创建' : '更新'}分类失败:`,
+        err
+      );
+      toast.error(
+        `${dialogMode === 'create' ? '创建' : '更新'}失败：` + err.message
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setSubmitting(true);
+    try {
+      await categoryApi.delete(selectedCategory.id);
+      toast.success('分类删除成功');
+      setShowDeleteDialog(false);
+      setSelectedCategory(null);
+      fetchCategories();
+    } catch (err) {
+      console.error('删除分类失败:', err);
+      toast.error('删除失败：' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openCreateDialog = () => {
+    setDialogMode('create');
+    resetForm();
+    setShowDialog(true);
+  };
+
+  const openEditDialog = (category) => {
+    setDialogMode('edit');
+    setSelectedCategory(category);
+    setFormData({
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      color: category.color || '#3B82F6',
+      icon: category.icon || '',
+      parentId: category.parentId || null,
+      position: category.position !== undefined ? category.position : 0,
+      isPrivate: category.isPrivate || false,
+      isFeatured: category.isFeatured || false,
+    });
+    setShowDialog(true);
+  };
+
+  const openDeleteDialog = (category) => {
+    setSelectedCategory(category);
+    setShowDeleteDialog(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
+      color: '#3B82F6',
+      icon: '',
+      parentId: null,
+      position: 0,
+      isPrivate: false,
+      isFeatured: false,
+    });
+    setSelectedCategory(null);
+  };
+
+  // 扁平化分类列表（包括子分类）
+  const flattenCategories = (cats) => {
+    const result = [];
+    cats.forEach((cat) => {
+      result.push(cat);
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        result.push(...flattenCategories(cat.subcategories));
+      }
+    });
+    return result;
+  };
+
+  const flatCategories = flattenCategories(categories);
+
+  if (loading) {
+    return <Loading text='加载中...' className='py-12' />;
+  }
+
+  return (
+    <div className='space-y-6'>
+      {/* Page header */}
+      <div className='flex items-center justify-between'>
+        <div>
+          <h2 className='text-2xl font-semibold mb-2'>分类管理</h2>
+          <p className='text-sm text-muted-foreground'>
+            管理论坛的分类和子分类
+          </p>
+        </div>
+        <Button onClick={openCreateDialog}>
+          <Plus className='h-4 w-4' />
+          创建分类
+        </Button>
+      </div>
+
+      {/* Categories table */}
+      <DataTable
+        columns={[
+          {
+            key: 'name',
+            label: '名称',
+            render: (_, category) => {
+              const parentCategory = category.parentId
+                ? flatCategories.find((c) => c.id === category.parentId)
+                : null;
+
+              return (
+                <div className='flex flex-col gap-1'>
+                  <div className='flex items-center gap-2'>
+                    {category.parentId && (
+                      <span className='text-muted-foreground text-xs'>└─</span>
+                    )}
+                    {category.icon && (
+                      <span className='text-lg'>{category.icon}</span>
+                    )}
+                    <span className='font-medium text-sm'>{category.name}</span>
+                    {category.isFeatured && (
+                      <span className='px-1.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded'>
+                        精选
+                      </span>
+                    )}
+                    {category.isPrivate && (
+                      <Lock
+                        className='h-3.5 w-3.5 text-muted-foreground'
+                        title='私有分类'
+                      />
+                    )}
+                  </div>
+                  {parentCategory && (
+                    <div className='text-xs text-muted-foreground ml-6'>
+                      父分类: {parentCategory.name}
+                    </div>
+                  )}
+                </div>
+              );
+            },
+          },
+          {
+            key: 'slug',
+            label: 'Slug',
+            width: 'w-[200px]',
+            render: (value) => (
+              <code className='text-xs text-muted-foreground bg-muted px-2 py-1 rounded'>
+                {value}
+              </code>
+            ),
+          },
+          {
+            key: 'color',
+            label: '颜色',
+            width: 'w-[150px]',
+            render: (value) => (
+              <div className='flex items-center gap-2'>
+                <div
+                  className='w-5 h-5 rounded border border-border'
+                  style={{ backgroundColor: value }}
+                />
+                <span className='text-xs text-muted-foreground font-mono'>
+                  {value}
+                </span>
+              </div>
+            ),
+          },
+          {
+            key: 'position',
+            label: '排序',
+            width: 'w-[80px]',
+            render: (value) => <span className='text-sm text-muted-foreground'>{value}</span>,
+          },
+          {
+            key: 'topicCount',
+            label: '话题数',
+            width: 'w-[100px]',
+            render: (value) => <span className='text-sm'>{value || 0}</span>,
+          },
+          {
+            key: 'actions',
+            label: '操作',
+            width: 'w-[100px]',
+            align: 'right',
+            sticky: 'right',
+            render: (_, category) => (
+              <div className='flex items-center justify-end gap-1'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => openEditDialog(category)}
+                  className='h-8 w-8 p-0'
+                >
+                  <Edit className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => openDeleteDialog(category)}
+                  className='h-8 w-8 p-0 text-destructive hover:text-destructive'
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </div>
+            ),
+          },
+        ]}
+        data={flatCategories}
+        loading={loading}
+        emptyMessage='暂无分类'
+      />
+
+      {/* 创建/编辑分类对话框 */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogMode === 'create' ? '创建分类' : '编辑分类'}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogMode === 'create'
+                ? '添加一个新的论坛分类'
+                : '修改分类信息'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='name'>名称 *</Label>
+              <Input
+                id='name'
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder='分类名称'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='slug'>
+                Slug{dialogMode === 'create' ? '（可选）' : ''}
+              </Label>
+              <Input
+                id='slug'
+                value={formData.slug}
+                onChange={(e) =>
+                  setFormData({ ...formData, slug: e.target.value })
+                }
+                placeholder={dialogMode === 'create' ? '自动生成' : ''}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='parentId'>父分类（可选）</Label>
+              <CategorySelector
+                value={formData.parentId}
+                onChange={(value) =>
+                  setFormData({ ...formData, parentId: value })
+                }
+                placeholder='无（顶级分类）'
+                excludeId={selectedCategory?.id}
+                onlyTopLevel={true}
+              />
+              <p className='text-xs text-muted-foreground mt-1'>
+                选择一个父分类，使此分类成为子分类
+              </p>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='position'>排序位置</Label>
+              <Input
+                id='position'
+                type='number'
+                min='0'
+                value={formData.position}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    position: parseInt(e.target.value) || 0,
+                  })
+                }
+                placeholder='0'
+              />
+              <p className='text-xs text-muted-foreground mt-1'>
+                数字越小越靠前，相同时按名称排序
+              </p>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='description'>描述</Label>
+              <Textarea
+                id='description'
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder='分类描述'
+                rows={3}
+              />
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='color'>颜色</Label>
+                <Input
+                  id='color'
+                  type='color'
+                  value={formData.color}
+                  onChange={(e) =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
+                />
+              </div>
+              <div  className='space-y-2'>
+                <Label htmlFor='icon'>图标（Emoji）</Label>
+                <Input
+                  id='icon'
+                  value={formData.icon}
+                  onChange={(e) =>
+                    setFormData({ ...formData, icon: e.target.value })
+                  }
+                  placeholder='📁'
+                  maxLength={2}
+                />
+              </div>
+            </div>
+            <div className='flex items-center justify-between space-x-2 rounded-lg border border-border p-4'>
+              <div className='space-y-0.5'>
+                <Label htmlFor='isFeatured' className='text-base'>
+                  精选分类
+                </Label>
+                <p className='text-sm text-muted-foreground'>
+                  精选分类会优先显示在列表顶部
+                </p>
+              </div>
+              <Switch
+                id='isFeatured'
+                checked={formData.isFeatured}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isFeatured: checked })
+                }
+              />
+            </div>
+            <div className='flex items-center justify-between space-x-2 rounded-lg border border-border p-4'>
+              <div className='space-y-0.5'>
+                <Label htmlFor='isPrivate' className='text-base'>
+                  私有分类
+                </Label>
+                <p className='text-sm text-muted-foreground'>
+                  只有管理员和版主可以查看和发布
+                </p>
+              </div>
+              <Switch
+                id='isPrivate'
+                checked={formData.isPrivate}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isPrivate: checked })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowDialog(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : dialogMode === 'create' ? (
+                '创建'
+              ) : (
+                '保存'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除？</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要删除分类 "{selectedCategory?.name}" 吗？此操作不可撤销。
+              {selectedCategory?.topicCount > 0 && (
+                <span className='block mt-2 text-destructive'>
+                  注意：该分类下有 {selectedCategory.topicCount}{' '}
+                  个话题，无法删除。
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={submitting || selectedCategory?.topicCount > 0}
+              className='bg-destructive hover:bg-destructive/90'
+            >
+              {submitting ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                '删除'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

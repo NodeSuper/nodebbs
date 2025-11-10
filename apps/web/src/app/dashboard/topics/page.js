@@ -1,0 +1,399 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DataTable } from '@/components/forum/DataTable';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { topicApi } from '@/lib/api';
+import { toast } from 'sonner';
+import {
+  Loader2,
+  MoreHorizontal,
+  Trash2,
+  Eye,
+  Lock,
+  Unlock,
+  Pin,
+  PinOff,
+} from 'lucide-react';
+import Link from 'next/link';
+import Time from '@/components/forum/Time';
+
+export default function AdminTopicsPage() {
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteType, setDeleteType] = useState('soft'); // 'soft' or 'hard'
+  const [deleting, setDeleting] = useState(false);
+  const limit = 20;
+
+  // 防抖搜索词 - 只对搜索输入应用防抖
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+  // 搜索输入防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // 数据请求 - page 和 statusFilter 立即响应，searchQuery 使用防抖值
+  useEffect(() => {
+    fetchTopics();
+  }, [page, statusFilter, debouncedSearch]);
+
+  const fetchTopics = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page,
+        limit,
+        includeDeleted: true, // 管理员可以看到已删除的话题
+      };
+
+      // 添加搜索参数 - 使用防抖后的搜索词
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch.trim();
+      }
+
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'deleted') {
+          params.isDeleted = true;
+        } else if (statusFilter === 'pinned') {
+          params.isPinned = true;
+        } else if (statusFilter === 'closed') {
+          params.isClosed = true;
+        }
+      }
+
+      const data = await topicApi.getList(params);
+      setTopics(data.items || []);
+      setTotal(data.total || 0);
+    } catch (error) {
+      console.error('获取话题列表失败:', error);
+      toast.error('获取话题列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTogglePin = async (topicId, isPinned) => {
+    try {
+      await topicApi.update(topicId, { isPinned: !isPinned });
+      toast.success(isPinned ? '已取消置顶' : '已置顶');
+      fetchTopics();
+    } catch (error) {
+      toast.error('操作失败');
+    }
+  };
+
+  const handleToggleClosed = async (topicId, isClosed) => {
+    try {
+      await topicApi.update(topicId, { isClosed: !isClosed });
+      toast.success(isClosed ? '已重新开启' : '已关闭');
+      fetchTopics();
+    } catch (error) {
+      toast.error('操作失败');
+    }
+  };
+
+  const handleDeleteClick = (topic, type) => {
+    setDeleteTarget(topic);
+    setDeleteType(type);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+    try {
+      await topicApi.delete(deleteTarget.id, deleteType === 'hard');
+      toast.success(deleteType === 'hard' ? '话题已彻底删除' : '话题已删除');
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
+      fetchTopics();
+    } catch (error) {
+      toast.error('删除失败');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // 定义表格列
+  const columns = [
+    {
+      key: 'id',
+      label: 'ID',
+      width: 'w-[60px]',
+      render: (value) => <span className='font-mono text-xs'>#{value}</span>,
+    },
+    {
+      key: 'title',
+      label: '标题',
+      render: (value, row) => (
+        <div className='flex items-center gap-2'>
+          <Link
+            href={`/topic/${row.id}`}
+            className='hover:text-primary hover:underline font-medium'
+            target='_blank'
+          >
+            {value}
+          </Link>
+          {row.isPinned && <Pin className='h-3 w-3 text-orange-500' />}
+          {row.isClosed && <Lock className='h-3 w-3 text-muted-foreground' />}
+        </div>
+      ),
+    },
+    {
+      key: 'categoryName',
+      label: '分类',
+      width: 'w-[120px]',
+      render: (value) => (
+        <Badge variant='secondary' className='text-xs'>
+          {value}
+        </Badge>
+      ),
+    },
+    {
+      key: 'username',
+      label: '作者',
+      width: 'w-[120px]',
+      render: (value) => (
+        <Link
+          href={`/users/${value}`}
+          className='text-sm hover:text-primary hover:underline'
+          target='_blank'
+        >
+          {value}
+        </Link>
+      ),
+    },
+    {
+      key: 'status',
+      label: '状态',
+      width: 'w-[100px]',
+      render: (_, row) => {
+        if (row.isDeleted) {
+          return (
+            <Badge variant='destructive' className='text-xs'>
+              已删除
+            </Badge>
+          );
+        }
+        if (row.isClosed) {
+          return (
+            <Badge variant='secondary' className='text-xs'>
+              已关闭
+            </Badge>
+          );
+        }
+        return (
+          <Badge variant='default' className='text-xs'>
+            正常
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'createdAt',
+      label: '创建时间',
+      width: 'w-[120px]',
+      render: (value) => (
+        <span className='text-xs text-muted-foreground'>
+          <Time date={value} />
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: '操作',
+      width: 'w-[80px]',
+      align: 'right',
+      sticky: 'right',
+      render: (_, row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' size='sm'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem asChild>
+              <Link href={`/topic/${row.id}`} target='_blank'>
+                <Eye className='h-4 w-4' />
+                查看话题
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleTogglePin(row.id, row.isPinned)}
+            >
+              {row.isPinned ? (
+                <>
+                  <PinOff className='h-4 w-4' />
+                  取消置顶
+                </>
+              ) : (
+                <>
+                  <Pin className='h-4 w-4' />
+                  置顶话题
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleToggleClosed(row.id, row.isClosed)}
+            >
+              {row.isClosed ? (
+                <>
+                  <Unlock className='h-4 w-4' />
+                  重新开启
+                </>
+              ) : (
+                <>
+                  <Lock className='h-4 w-4' />
+                  关闭话题
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {!row.isDeleted && (
+              <DropdownMenuItem
+                onClick={() => handleDeleteClick(row, 'soft')}
+                className='text-orange-600'
+              >
+                <Trash2 className='h-4 w-4' />
+                软删除
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onClick={() => handleDeleteClick(row, 'hard')}
+              className='text-destructive'
+            >
+              <Trash2 className='h-4 w-4' />
+              彻底删除
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <div className='mb-6'>
+        <h1 className='text-2xl font-bold text-foreground mb-1'>话题管理</h1>
+        <p className='text-sm text-muted-foreground'>
+          管理所有话题，支持置顶、关闭和删除操作
+        </p>
+      </div>
+
+      {/* 数据表格 */}
+      <DataTable
+        columns={columns}
+        data={topics}
+        loading={loading}
+        search={{
+          value: searchQuery,
+          onChange: (value) => {
+            setSearchQuery(value);
+            setPage(1); // 搜索时重置到第一页
+          },
+          placeholder: '搜索话题标题...',
+        }}
+        filter={{
+          value: statusFilter,
+          onChange: setStatusFilter,
+          options: [
+            { value: 'all', label: '全部话题' },
+            { value: 'pinned', label: '置顶话题' },
+            { value: 'closed', label: '已关闭' },
+            { value: 'deleted', label: '已删除' },
+          ],
+        }}
+        pagination={{
+          page,
+          total,
+          limit,
+          onPageChange: setPage,
+        }}
+        emptyMessage='暂无话题'
+      />
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteType === 'hard' ? '确认彻底删除？' : '确认删除？'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteType === 'hard' ? (
+                <>
+                  此操作将
+                  <span className='font-semibold text-destructive'>
+                    彻底删除
+                  </span>
+                  话题 "{deleteTarget?.title}"，包括所有回复和相关数据。
+                  <br />
+                  <span className='font-semibold'>此操作不可恢复！</span>
+                </>
+              ) : (
+                <>
+                  此操作将软删除话题 "{deleteTarget?.title}"。
+                  <br />
+                  软删除后话题将不再显示，但数据仍保留在数据库中。
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className={
+                deleteType === 'hard'
+                  ? 'bg-destructive hover:bg-destructive/90'
+                  : ''
+              }
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                  删除中...
+                </>
+              ) : (
+                '确认删除'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

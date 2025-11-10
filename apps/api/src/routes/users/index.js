@@ -1,0 +1,822 @@
+import db from '../../db/index.js';
+import { users, topics, posts, follows, bookmarks, categories } from '../../db/schema.js';
+import { eq, sql, desc, and, ne } from 'drizzle-orm';
+import { pipeline } from 'stream/promises';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import crypto from 'crypto';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default async function userRoutes(fastify, options) {
+  // Create user (admin only)
+  fastify.post('/', {
+    preHandler: [fastify.requireAdmin],
+    schema: {
+      tags: ['users'],
+      description: '创建用户（仅管理员）',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        required: ['username', 'email', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 3, maxLength: 50 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 6 },
+          name: { type: 'string', maxLength: 255 },
+          role: { type: 'string', enum: ['user', 'moderator', 'admin'], default: 'user' },
+          isEmailVerified: { type: 'boolean', default: false }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            username: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            role: { type: 'string' },
+            isEmailVerified: { type: 'boolean' },
+            createdAt: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username, email, password, name, role = 'user', isEmailVerified = false } = request.body;
+
+    // 规范化并验证用户名格式
+    const { validateUsername, normalizeUsername } = await import('../../utils/validateUsername.js');
+    const normalizedUsername = normalizeUsername(username);
+    const usernameValidation = validateUsername(normalizedUsername);
+
+    if (!usernameValidation.valid) {
+      return reply.code(400).send({ error: usernameValidation.error });
+    }
+
+    // Check if user exists
+    const [existingEmail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existingEmail) {
+      return reply.code(400).send({ error: '邮箱已被注册' });
+    }
+
+    const [existingUsername] = await db.select().from(users).where(eq(users.username, normalizedUsername)).limit(1);
+    if (existingUsername) {
+      return reply.code(400).send({ error: '用户名已被占用' });
+    }
+
+    // Hash password
+    const passwordHash = await fastify.hashPassword(password);
+
+    // Create user
+    const [newUser] = await db.insert(users).values({
+      username: normalizedUsername,
+      email,
+      passwordHash,
+      name: name || normalizedUsername,
+      role,
+      isEmailVerified
+    }).returning();
+
+    // 如果需要发送欢迎邮件
+    if (!isEmailVerified) {
+      try {
+        const { createEmailVerification } = await import('../../utils/verification.js');
+        const verificationToken = await createEmailVerification(email, newUser.id);
+
+        await fastify.sendEmail({
+          to: email,
+          template: 'welcome',
+          data: {
+            username: newUser.username,
+            verificationLink: `${process.env.APP_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`,
+          },
+        });
+        fastify.log.info(`[管理员创建用户] 欢迎邮件已发送至 ${email}`);
+      } catch (error) {
+        fastify.log.error(`[管理员创建用户] 发送欢迎邮件失败: ${error.message}`);
+      }
+    }
+
+    // Remove sensitive data
+    delete newUser.passwordHash;
+
+    return newUser;
+  });
+
+  // Get users list (admin only)
+  fastify.get('/', {
+    preHandler: [fastify.requireAdmin],
+    schema: {
+      tags: ['users'],
+      description: '获取用户列表（仅管理员）',
+      security: [{ bearerAuth: [] }],
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 },
+          search: { type: 'string' },
+          role: { type: 'string', enum: ['user', 'moderator', 'admin'] },
+          isBanned: { type: 'boolean' },
+          includeDeleted: { type: 'boolean', default: true }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { page = 1, limit = 20, search, role, isBanned, includeDeleted = true } = request.query;
+    const offset = (page - 1) * limit;
+
+    let query = db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      name: users.name,
+      avatar: users.avatar,
+      role: users.role,
+      isBanned: users.isBanned,
+      isDeleted: users.isDeleted,
+      createdAt: users.createdAt,
+      lastSeenAt: users.lastSeenAt
+    }).from(users);
+
+    // Apply filters
+    const conditions = [];
+    
+    // 默认不显示已删除用户，除非明确请求
+    if (!includeDeleted) {
+      conditions.push(eq(users.isDeleted, false));
+    }
+    
+    if (search) {
+      conditions.push(
+        sql`${users.username} ILIKE ${`%${search}%`} OR ${users.email} ILIKE ${`%${search}%`} OR ${users.name} ILIKE ${`%${search}%`}`
+      );
+    }
+    if (role) {
+      conditions.push(eq(users.role, role));
+    }
+    if (isBanned !== undefined) {
+      conditions.push(eq(users.isBanned, isBanned));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const usersList = await query
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Get total count
+    let countQuery = db.select({ count: sql`count(*)` }).from(users);
+    if (conditions.length > 0) {
+      countQuery = countQuery.where(and(...conditions));
+    }
+    const [{ count }] = await countQuery;
+
+    return {
+      items: usersList,
+      page,
+      limit,
+      total: Number(count)
+    };
+  });
+
+  // Get user profile by username
+  fastify.get('/:username', {
+    preHandler: [fastify.optionalAuth],
+    schema: {
+      tags: ['users'],
+      description: '根据用户名获取用户资料',
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            username: { type: 'string' },
+            name: { type: 'string' },
+            bio: { type: 'string' },
+            avatar: { type: 'string' },
+            role: { type: 'string' },
+            createdAt: { type: 'string' },
+            messagePermission: { type: 'string' },
+            contentVisibility: { type: 'string' },
+            topicCount: { type: 'number' },
+            postCount: { type: 'number' },
+            followerCount: { type: 'number' },
+            followingCount: { type: 'number' },
+            isFollowing: { type: 'boolean' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    // 检查用户权限
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    
+    // 如果用户已被删除且访问者不是管理员/版主，返回 404
+    if (user.isDeleted && !isModerator) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+    
+    // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
+    if (user.isBanned && !isModerator) {
+      user.avatar = null;
+    }
+
+    // Get stats
+    const [topicCountResult] = await db.select({ count: sql`count(*)` }).from(topics).where(and(eq(topics.userId, user.id), ne(topics.isDeleted, true)));
+    const [postCountResult] = await db.select({ count: sql`count(*)` }).from(posts).where(and(eq(posts.userId, user.id), ne(posts.postNumber, 1)));
+    const [followerCountResult] = await db.select({ count: sql`count(*)` }).from(follows).where(eq(follows.followingId, user.id));
+    const [followingCountResult] = await db.select({ count: sql`count(*)` }).from(follows).where(eq(follows.followerId, user.id));
+
+    // Check if current user is following
+    let isFollowing = false;
+    if (request.user) {
+      const [follow] = await db.select().from(follows).where(
+        and(
+          eq(follows.followerId, request.user.id),
+          eq(follows.followingId, user.id)
+        )
+      ).limit(1);
+      isFollowing = !!follow;
+    }
+
+    delete user.passwordHash;
+    delete user.email;
+
+    return {
+      ...user,
+      topicCount: Number(topicCountResult.count),
+      postCount: Number(postCountResult.count),
+      followerCount: Number(followerCountResult.count),
+      followingCount: Number(followingCountResult.count),
+      isFollowing
+    };
+  });
+
+  // Update current user profile
+  fastify.patch('/me', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['users'],
+      description: '更新当前用户资料',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', maxLength: 255 },
+          bio: { type: 'string' },
+          avatar: { type: 'string', maxLength: 500 },
+          messagePermission: { type: 'string', enum: ['everyone', 'followers', 'disabled'] },
+          contentVisibility: { type: 'string', enum: ['everyone', 'authenticated', 'private'] }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            username: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            bio: { type: 'string' },
+            avatar: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const updates = {};
+    if (request.body.name !== undefined) updates.name = request.body.name;
+    if (request.body.bio !== undefined) updates.bio = request.body.bio;
+    if (request.body.avatar !== undefined) updates.avatar = request.body.avatar;
+    if (request.body.messagePermission !== undefined) updates.messagePermission = request.body.messagePermission;
+    if (request.body.contentVisibility !== undefined) updates.contentVisibility = request.body.contentVisibility;
+    updates.updatedAt = new Date();
+
+    const [updatedUser] = await db.update(users).set(updates).where(eq(users.id, request.user.id)).returning();
+
+    // 清除用户缓存
+    await fastify.clearUserCache(request.user.id);
+
+    delete updatedUser.passwordHash;
+
+    return updatedUser;
+  });
+
+  // Change password
+  fastify.post('/me/change-password', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['users'],
+      description: '修改密码',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        required: ['currentPassword', 'newPassword'],
+        properties: {
+          currentPassword: { type: 'string' },
+          newPassword: { type: 'string', minLength: 6 }
+        }
+      },
+    }
+  }, async (request, reply) => {
+    const { currentPassword, newPassword } = request.body;
+
+    const [user] = await db.select().from(users).where(eq(users.id, request.user.id)).limit(1);
+
+    const isValidPassword = await fastify.verifyPassword(currentPassword, user.passwordHash);
+    if (!isValidPassword) {
+      return reply.code(200).send({ error: '当前密码不正确' });
+    }
+
+    const passwordHash = await fastify.hashPassword(newPassword);
+    await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, user.id));
+
+    return { message: 'Password changed successfully' };
+  });
+
+  // Follow user
+  fastify.post('/:username/follow', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['users'],
+      description: '关注用户',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+
+    const [targetUser] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!targetUser) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    if (targetUser.id === request.user.id) {
+      return reply.code(400).send({ error: '不能关注自己' });
+    }
+
+    // Check if already following
+    const [existing] = await db.select().from(follows).where(
+      and(
+        eq(follows.followerId, request.user.id),
+        eq(follows.followingId, targetUser.id)
+      )
+    ).limit(1);
+
+    if (existing) {
+      return reply.code(400).send({ error: '已关注该用户' });
+    }
+
+    await db.insert(follows).values({
+      followerId: request.user.id,
+      followingId: targetUser.id
+    });
+
+    return { message: 'Successfully followed user' };
+  });
+
+  // Unfollow user
+  fastify.delete('/:username/follow', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['users'],
+      description: '取消关注用户',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+
+    const [targetUser] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!targetUser) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    await db.delete(follows).where(
+      and(
+        eq(follows.followerId, request.user.id),
+        eq(follows.followingId, targetUser.id)
+      )
+    );
+
+    return { message: 'Successfully unfollowed user' };
+  });
+
+  // Get user's followers
+  fastify.get('/:username/followers', {
+    schema: {
+      tags: ['users'],
+      description: '获取用户粉丝',
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+    const { page = 1, limit = 20 } = request.query;
+    const offset = (page - 1) * limit;
+
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    const followers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        avatar: users.avatar,
+        isBanned: users.isBanned,
+        followedAt: follows.createdAt
+      })
+      .from(follows)
+      .innerJoin(users, eq(follows.followerId, users.id))
+      .where(eq(follows.followingId, user.id))
+      .orderBy(desc(follows.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // 检查用户权限
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    
+    // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
+    followers.forEach(follower => {
+      if (follower.isBanned && !isModerator) {
+        follower.avatar = null;
+      }
+      delete follower.isBanned;
+    });
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(follows)
+      .where(eq(follows.followingId, user.id));
+
+    return {
+      items: followers,
+      page,
+      limit,
+      total: Number(count)
+    };
+  });
+
+  // Get user's following
+  fastify.get('/:username/following', {
+    schema: {
+      tags: ['users'],
+      description: '获取用户关注列表',
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+    const { page = 1, limit = 20 } = request.query;
+    const offset = (page - 1) * limit;
+
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    const following = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        avatar: users.avatar,
+        isBanned: users.isBanned,
+        followedAt: follows.createdAt
+      })
+      .from(follows)
+      .innerJoin(users, eq(follows.followingId, users.id))
+      .where(eq(follows.followerId, user.id))
+      .orderBy(desc(follows.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // 检查用户权限
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    
+    // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
+    following.forEach(followedUser => {
+      if (followedUser.isBanned && !isModerator) {
+        followedUser.avatar = null;
+      }
+      delete followedUser.isBanned;
+    });
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(follows)
+      .where(eq(follows.followerId, user.id));
+
+    return {
+      items: following,
+      page,
+      limit,
+      total: Number(count)
+    };
+  });
+
+  // Get user's bookmarks
+  fastify.get('/:username/bookmarks', {
+    preHandler: [fastify.optionalAuth],
+    schema: {
+      tags: ['users'],
+      description: '获取用户收藏的话题',
+      params: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { username } = request.params;
+    const { page = 1, limit = 20 } = request.query;
+    const offset = (page - 1) * limit;
+
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    const bookmarkedTopics = await db
+      .select({
+        id: topics.id,
+        title: topics.title,
+        slug: topics.slug,
+        categoryId: topics.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        userId: topics.userId,
+        username: users.username,
+        userAvatar: users.avatar,
+        userIsBanned: users.isBanned,
+        viewCount: topics.viewCount,
+        // 注意：likeCount 已从 topics 表移除
+        postCount: topics.postCount,
+        isPinned: topics.isPinned,
+        isClosed: topics.isClosed,
+        lastPostAt: topics.lastPostAt,
+        createdAt: topics.createdAt,
+        bookmarkedAt: bookmarks.createdAt
+      })
+      .from(bookmarks)
+      .innerJoin(topics, eq(bookmarks.topicId, topics.id))
+      .innerJoin(categories, eq(topics.categoryId, categories.id))
+      .innerJoin(users, eq(topics.userId, users.id))
+      .where(and(eq(bookmarks.userId, user.id), eq(topics.isDeleted, false)))
+      .orderBy(desc(bookmarks.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // 检查用户权限
+    const isModerator = request.user && ['moderator', 'admin'].includes(request.user.role);
+    
+    // 如果话题作者被封禁且访问者不是管理员/版主，隐藏头像
+    bookmarkedTopics.forEach(topic => {
+      if (topic.userIsBanned && !isModerator) {
+        topic.userAvatar = null;
+      }
+      delete topic.userIsBanned;
+    });
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(bookmarks)
+      .innerJoin(topics, eq(bookmarks.topicId, topics.id))
+      .where(and(eq(bookmarks.userId, user.id), eq(topics.isDeleted, false)));
+
+    return {
+      items: bookmarkedTopics,
+      page,
+      limit,
+      total: Number(count)
+    };
+  });
+
+  // Upload avatar
+  fastify.post('/me/upload-avatar', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['users'],
+      description: '上传用户头像',
+      security: [{ bearerAuth: [] }],
+      consumes: ['multipart/form-data'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            avatar: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const data = await request.file();
+
+    if (!data) {
+      return reply.code(400).send({ error: '未上传文件' });
+    }
+
+    // Validate file type
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedMimes.includes(data.mimetype)) {
+      return reply.code(400).send({ error: '文件类型无效，仅支持 JPG、PNG、GIF 和 WebP' });
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    let fileSize = 0;
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'avatars');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // Generate unique filename
+    const ext = path.extname(data.filename);
+    const filename = `${request.user.id}-${crypto.randomBytes(8).toString('hex')}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+
+    try {
+      // Save file
+      await pipeline(data.file, fs.createWriteStream(filepath));
+
+      // Check file size after writing
+      const stats = fs.statSync(filepath);
+      if (stats.size > maxSize) {
+        fs.unlinkSync(filepath); // Delete the file
+        return reply.code(400).send({ error: '文件大小超过 5MB 限制' });
+      }
+
+      // Update user avatar in database
+      const avatarUrl = `/uploads/avatars/${filename}`;
+      await db.update(users)
+        .set({ avatar: avatarUrl, updatedAt: new Date() })
+        .where(eq(users.id, request.user.id));
+
+      return { avatar: avatarUrl };
+    } catch (err) {
+      // Clean up file if it was created
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+      fastify.log.error(err);
+      return reply.code(500).send({ error: '文件上传失败' });
+    }
+  });
+
+  // Delete user (admin only)
+  fastify.delete('/:userId', {
+    preHandler: [fastify.requireAdmin],
+    schema: {
+      tags: ['users'],
+      description: '删除用户（仅管理员）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'number' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          permanent: { type: 'boolean', default: false }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { userId } = request.params;
+    const { permanent = false } = request.query;
+
+    // Check if user exists
+    const [targetUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!targetUser) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    // Prevent deleting the first admin (founder)
+    const [firstAdmin] = await db.select().from(users).where(eq(users.role, 'admin')).orderBy(users.id).limit(1);
+    if (targetUser.id === firstAdmin.id) {
+      return reply.code(403).send({ error: '不能删除创始人账号' });
+    }
+
+    if (permanent) {
+      // Hard delete - cascade will handle related records
+      await db.delete(users).where(eq(users.id, userId));
+      return { message: '用户已彻底删除' };
+    } else {
+      // Soft delete
+      await db.update(users).set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+      return { message: '用户已软删除' };
+    }
+  });
+}
