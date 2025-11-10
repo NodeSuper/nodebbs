@@ -361,8 +361,6 @@ make exec-redis
 ## 📚 文档
 
 - [Docker 部署指南](./DOCKER_DEPLOY.md) - 详细的部署说明
-- [Docker 文件组织](./DOCKER_FILE_ORGANIZATION.md) - Dockerfile 结构说明
-- [快速开始指南](./START.md) - 快速部署方法
 
 ## 🤝 贡献
 

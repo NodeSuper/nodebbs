@@ -361,8 +361,6 @@ make exec-redis
 ## 📚 Documentation
 
 - [Docker Deployment Guide](./DOCKER_DEPLOY.md) - Detailed deployment instructions
-- [Docker File Organization](./DOCKER_FILE_ORGANIZATION.md) - Dockerfile structure explanation
-- [Quick Start Guide](./START.md) - Fast deployment methods
 
 ## 🤝 Contributing
 
