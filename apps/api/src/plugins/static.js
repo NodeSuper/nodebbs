@@ -19,17 +19,25 @@ const ipxHandler = createIPXNodeServer(ipx);
 
 export default fp(async function (fastify, opts) {
   // 仅处理头像
-  fastify.all('/uploads/:modifiers/avatars/*', async (request, reply) => {
-    // 关键：剥离 /uploads 前缀
-    const originalUrl = request.raw.url;
-    const cleanPath = originalUrl.replace(/^\/uploads/, '');
+  fastify.get(
+    '/uploads/:modifiers/avatars/*',
+    {
+      schema: {
+        hide: true,
+      },
+    },
+    async (request, reply) => {
+      // 关键：剥离 /uploads 前缀
+      const originalUrl = request.raw.url;
+      const cleanPath = originalUrl.replace(/^\/uploads/, '');
 
-    // 修改请求的原始 URL，让 IPX 看到正确的路径
-    request.raw.url = cleanPath;
+      // 修改请求的原始 URL，让 IPX 看到正确的路径
+      request.raw.url = cleanPath;
 
-    ipxHandler(request.raw, reply.raw);
-    return reply.hijack();
-  });
+      ipxHandler(request.raw, reply.raw);
+      return reply.hijack();
+    }
+  );
 
   // 保留原始静态文件服务（可选）
   fastify.register(fastifyStatic, {

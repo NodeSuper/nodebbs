@@ -7,7 +7,7 @@ async function docsPlugin(fastify, opts) {
   await fastify.register(swagger, {
     openapi: {
       info: {
-        title: '论坛 API',
+        title: 'NodeBBS API',
         description:
           '基于 Fastify、Drizzle ORM 和 PostgreSQL 构建的完整论坛 API',
         version: '1.0.0',
@@ -78,7 +78,11 @@ async function docsPlugin(fastify, opts) {
               id: { type: 'number', description: '用户ID' },
               username: { type: 'string', description: '用户名' },
               name: { type: 'string', description: '显示名称' },
-              avatar: { type: 'string', nullable: true, description: '头像URL' },
+              avatar: {
+                type: 'string',
+                nullable: true,
+                description: '头像URL',
+              },
               role: {
                 type: 'string',
                 enum: ['user', 'moderator', 'admin'],
