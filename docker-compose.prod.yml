@@ -17,11 +17,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
+          cpus: '1'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -36,7 +36,7 @@ services:
       --requirepass ${REDIS_PASSWORD}
       --appendonly yes
       --appendfsync everysec
-      --maxmemory 512mb
+      --maxmemory 256mb
       --maxmemory-policy allkeys-lru
     ports: []  # 生产环境不暴露端口到主机
     healthcheck:
@@ -47,10 +47,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 512M
+          cpus: '0.5'
+          memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: 128M
     logging:
       driver: "json-file"
@@ -66,6 +66,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}  # 生产环境必须设置
       CORS_ORIGIN: ${CORS_ORIGIN}  # 生产环境必须明确设置
       APP_URL: ${APP_URL}  # 生产环境实际域名
+      NODE_OPTIONS: "--max-old-space-size=512"  # 限制 Node.js 内存使用
     volumes:
       - api_uploads:/app/uploads  # 生产环境不挂载源代码
     healthcheck:
@@ -73,11 +74,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
+          cpus: '1'
+          memory: 768M
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.3'
+          memory: 384M
     logging:
       driver: "json-file"
       options:
@@ -94,16 +95,17 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NODE_OPTIONS: "--max-old-space-size=512"  # 限制 Node.js 内存使用
     healthcheck:
       start_period: 60s
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
+          cpus: '1'
+          memory: 768M
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.3'
+          memory: 384M
     logging:
       driver: "json-file"
       options:

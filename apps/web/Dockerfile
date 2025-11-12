@@ -18,7 +18,7 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # 直接使用 pnpm 安装依赖
 RUN corepack enable pnpm \
-    && pnpm install
+    && pnpm install --no-frozen-lockfile --network-concurrency=1
 
 # 构建阶段
 FROM base AS builder
