@@ -309,6 +309,15 @@ export default async function postRoutes(fastify, options) {
       return reply.code(403).send({ error: '话题已关闭，无法回复' });
     }
 
+    // 检查话题审核状态：待审核和已拒绝的话题不能回复
+    if (topic.approvalStatus === 'pending') {
+      return reply.code(403).send({ error: '话题正在审核中，暂时无法回复' });
+    }
+
+    if (topic.approvalStatus === 'rejected') {
+      return reply.code(403).send({ error: '话题已被拒绝，无法回复' });
+    }
+
     // Get next post number
     const [{ maxPostNumber }] = await db
       .select({ maxPostNumber: sql`COALESCE(MAX(${posts.postNumber}), 0)` })
