@@ -745,6 +745,13 @@ export default async function topicRoutes(fastify, options) {
         updates.slug = slugify(request.body.title) + '-' + topic.id;
       }
 
+      // 如果话题被拒绝，且编辑者是话题作者（非管理员/版主），重置为待审核
+      let statusChanged = false;
+      if (topic.approvalStatus === 'rejected' && isOwner && !isModerator) {
+        updates.approvalStatus = 'pending';
+        statusChanged = true;
+      }
+
       // Update topic
       const [updatedTopic] = await db
         .update(topics)
@@ -761,17 +768,37 @@ export default async function topicRoutes(fastify, options) {
           .limit(1);
 
         if (firstPost) {
+          const postUpdates = {
+            content,
+            rawContent: content,
+            editedAt: new Date(),
+            editCount: sql`${posts.editCount} + 1`,
+            updatedAt: new Date(),
+          };
+
+          // 如果话题状态被重置，第一条回复也需要重置
+          if (statusChanged) {
+            postUpdates.approvalStatus = 'pending';
+          }
+
           await db
             .update(posts)
-            .set({
-              content,
-              rawContent: content,
-              editedAt: new Date(),
-              editCount: sql`${posts.editCount} + 1`,
-              updatedAt: new Date(),
-            })
+            .set(postUpdates)
             .where(eq(posts.id, firstPost.id));
         }
+      }
+
+      // 记录重新提交审核的日志
+      if (statusChanged) {
+        await db.insert(moderationLogs).values({
+          action: 'resubmit',
+          targetType: 'topic',
+          targetId: id,
+          moderatorId: request.user.id,
+          previousStatus: 'rejected',
+          newStatus: 'pending',
+          metadata: JSON.stringify({ note: '作者编辑后重新提交审核' })
+        });
       }
 
       // If tags are provided, update them

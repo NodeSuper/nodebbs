@@ -144,6 +144,7 @@ export function ModerationLogs() {
                   open: '打开',
                   pin: '置顶',
                   unpin: '取消置顶',
+                  resubmit: '重新提交',
                 }[log.action] || log.action;
 
               const targetTypeText =
@@ -163,6 +164,7 @@ export function ModerationLogs() {
                   open: 'text-green-600',
                   pin: 'text-blue-600',
                   unpin: 'text-gray-600',
+                  resubmit: 'text-blue-600',
                 }[log.action] || 'text-foreground';
 
               const ActionIcon =

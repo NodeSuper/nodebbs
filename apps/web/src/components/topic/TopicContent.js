@@ -11,6 +11,7 @@ import {
   Pin,
   Archive,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import TimeAgo from '@/components/forum/TimeAgo';
 import MarkdownRender from '@/components/common/MarkdownRender';
@@ -79,6 +80,21 @@ export default function TopicContent({ topic }) {
             <p className='text-xs text-muted-foreground'>
               作为{user?.role === 'admin' ? '管理员' : '版主'}
               ，您可以查看已删除的话题内容。普通用户无法访问此话题。
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 被拒绝话题提示 */}
+      {topic.approvalStatus === 'rejected' && user?.id === topic.userId && (
+        <div className='mb-4 bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3'>
+          <AlertCircle className='h-5 w-5 text-destructive shrink-0 mt-0.5' />
+          <div className='flex-1'>
+            <p className='text-sm font-medium text-destructive mb-1'>
+              此话题审核未通过
+            </p>
+            <p className='text-xs text-muted-foreground'>
+              您可以编辑话题内容后重新提交审核。编辑后，话题将自动重新进入待审核状态。
             </p>
           </div>
         </div>

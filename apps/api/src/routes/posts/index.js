@@ -452,13 +452,36 @@ export default async function postRoutes(fastify, options) {
       return reply.code(403).send({ error: '你没有权限编辑该帖子' });
     }
 
-    const [updatedPost] = await db.update(posts).set({
+    // 准备更新数据
+    const updates = {
       content,
       rawContent: content,
       editedAt: new Date(),
       editCount: sql`${posts.editCount} + 1`,
       updatedAt: new Date()
-    }).where(eq(posts.id, id)).returning();
+    };
+
+    // 如果回复被拒绝，且编辑者是回复作者（非管理员/版主），重置为待审核
+    let statusChanged = false;
+    if (post.approvalStatus === 'rejected' && isOwner && !isModerator) {
+      updates.approvalStatus = 'pending';
+      statusChanged = true;
+    }
+
+    const [updatedPost] = await db.update(posts).set(updates).where(eq(posts.id, id)).returning();
+
+    // 记录重新提交审核的日志
+    if (statusChanged) {
+      await db.insert(moderationLogs).values({
+        action: 'resubmit',
+        targetType: 'post',
+        targetId: id,
+        moderatorId: request.user.id,
+        previousStatus: 'rejected',
+        newStatus: 'pending',
+        metadata: JSON.stringify({ note: '作者编辑后重新提交审核' })
+      });
+    }
 
     return updatedPost;
   });

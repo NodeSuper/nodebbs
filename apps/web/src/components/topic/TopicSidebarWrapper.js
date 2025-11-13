@@ -110,7 +110,14 @@ export default function TopicSidebarWrapper({ topic, onTopicUpdate }) {
 
     try {
       const response = await topicApi.update(topic.id, editData);
-      toast.success('话题更新成功');
+
+      // 检查是否从拒绝状态变更为待审核
+      if (topic.approvalStatus === 'rejected' && response?.approvalStatus === 'pending') {
+        toast.success('话题已重新提交审核，等待审核后将公开显示');
+      } else {
+        toast.success('话题更新成功');
+      }
+
       setIsEditDialogOpen(false);
       
       // 更新父组件状态
