@@ -567,6 +567,17 @@ export default async function userRoutes(fastify, options) {
       return reply.code(400).send({ error: '该邮箱已被其他用户使用' });
     }
 
+    // 先检查邮件服务是否配置，避免创建无用的验证码
+    const emailProvider = await fastify.getDefaultEmailProvider();
+
+    if (!emailProvider || !emailProvider.isEnabled) {
+      // 邮件服务未配置，记录错误并返回明确的错误信息
+      fastify.log.error(`[邮箱修改] 邮件服务未配置或未启用，无法发送验证码至 ${newEmail}`);
+      return reply.code(503).send({
+        error: '邮件服务未配置，无法发送验证码。请联系管理员配置邮件服务。'
+      });
+    }
+
     // 生成验证码
     const { createEmailChangeVerification } = await import('../../utils/verification.js');
     const expiresMinutes = await getSetting('email_change_verification_expires_minutes', 15);
