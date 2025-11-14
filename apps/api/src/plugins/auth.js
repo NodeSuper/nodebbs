@@ -40,10 +40,19 @@ async function authPlugin(fastify) {
         id: users.id,
         username: users.username,
         email: users.email,
+        name: users.name,
+        bio: users.bio,
+        avatar: users.avatar,
         role: users.role,
         isBanned: users.isBanned,
         isEmailVerified: users.isEmailVerified,
         isDeleted: users.isDeleted,
+        messagePermission: users.messagePermission,
+        contentVisibility: users.contentVisibility,
+        usernameChangeCount: users.usernameChangeCount,
+        usernameChangedAt: users.usernameChangedAt,
+        createdAt: users.createdAt,
+        lastSeenAt: users.lastSeenAt,
       })
       .from(users)
       .where(eq(users.id, userId))

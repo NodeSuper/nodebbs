@@ -313,6 +313,8 @@ export default async function authRoutes(fastify, options) {
               lastSeenAt: { type: 'string' },
               messagePermission: { type: 'string' },
               contentVisibility: { type: 'string' },
+              usernameChangeCount: { type: 'number' },
+              usernameChangedAt: { type: ['string', 'null'] },
             },
           },
         },
