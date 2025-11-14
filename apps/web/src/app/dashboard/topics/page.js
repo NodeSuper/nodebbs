@@ -111,7 +111,21 @@ export default function AdminTopicsPage() {
     try {
       await topicApi.update(topicId, { isPinned: !isPinned });
       toast.success(isPinned ? '已取消置顶' : '已置顶');
-      fetchTopics();
+
+      // 局部更新：直接修改本地状态
+      setTopics((prevTopics) => {
+        const updatedTopics = prevTopics.map((topic) =>
+          topic.id === topicId ? { ...topic, isPinned: !isPinned } : topic
+        );
+
+        // 如果筛选条件是 'pinned'，且取消了置顶，则移除该项
+        if (statusFilter === 'pinned' && isPinned) {
+          setTotal((prev) => Math.max(0, prev - 1));
+          return updatedTopics.filter((topic) => topic.id !== topicId);
+        }
+
+        return updatedTopics;
+      });
     } catch (error) {
       toast.error('操作失败');
     }
@@ -121,7 +135,21 @@ export default function AdminTopicsPage() {
     try {
       await topicApi.update(topicId, { isClosed: !isClosed });
       toast.success(isClosed ? '已重新开启' : '已关闭');
-      fetchTopics();
+
+      // 局部更新：直接修改本地状态
+      setTopics((prevTopics) => {
+        const updatedTopics = prevTopics.map((topic) =>
+          topic.id === topicId ? { ...topic, isClosed: !isClosed } : topic
+        );
+
+        // 如果筛选条件是 'closed'，且重新开启了，则移除该项
+        if (statusFilter === 'closed' && isClosed) {
+          setTotal((prev) => Math.max(0, prev - 1));
+          return updatedTopics.filter((topic) => topic.id !== topicId);
+        }
+
+        return updatedTopics;
+      });
     } catch (error) {
       toast.error('操作失败');
     }
@@ -141,8 +169,30 @@ export default function AdminTopicsPage() {
       await topicApi.delete(deleteTarget.id, deleteType === 'hard');
       toast.success(deleteType === 'hard' ? '话题已彻底删除' : '话题已删除');
       setDeleteDialogOpen(false);
+
+      // 局部更新：直接修改本地状态
+      setTopics((prevTopics) => {
+        // 硬删除：直接从列表中移除
+        if (deleteType === 'hard') {
+          setTotal((prev) => Math.max(0, prev - 1));
+          return prevTopics.filter((topic) => topic.id !== deleteTarget.id);
+        }
+
+        // 软删除：根据筛选条件决定是更新还是移除
+        const updatedTopics = prevTopics.map((topic) =>
+          topic.id === deleteTarget.id ? { ...topic, isDeleted: true } : topic
+        );
+
+        // 如果当前筛选不包含已删除的项，则移除
+        if (statusFilter !== 'all' && statusFilter !== 'deleted') {
+          setTotal((prev) => Math.max(0, prev - 1));
+          return updatedTopics.filter((topic) => topic.id !== deleteTarget.id);
+        }
+
+        return updatedTopics;
+      });
+
       setDeleteTarget(null);
-      fetchTopics();
     } catch (error) {
       toast.error('删除失败');
     } finally {
