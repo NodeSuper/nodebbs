@@ -1,53 +1,23 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import UserAvatar from '@/components/forum/UserAvatar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  User,
-  Mail,
-  Calendar,
-  Upload,
-  Save,
-  Loader2,
-  Lock,
-  MessageSquare,
-  Shield,
-  Eye,
-  Edit,
-} from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { User, Lock, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
-import { userApi, authApi } from '@/lib/api';
+import { userApi } from '@/lib/api';
 import { toast } from 'sonner';
-import Link from 'next/link';
-import Time from '@/components/forum/Time';
+
+// 导入拆分的组件
+import { ProfileTab } from './components/ProfileTab';
+import { PrivacyTab } from './components/PrivacyTab';
+import { SecurityTab } from './components/SecurityTab';
+import { UsernameChangeDialog } from './components/UsernameChangeDialog';
+import { EmailChangeDialog } from './components/EmailChangeDialog';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, loading: authLoading, checkAuth } = useAuth();
   const { settings } = useSettings();
-  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -112,10 +82,6 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -147,10 +113,6 @@ export default function SettingsPage() {
       toast.error('上传头像失败：' + err.message);
     } finally {
       setUploadingAvatar(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
@@ -368,14 +330,6 @@ export default function SettingsPage() {
     };
   };
 
-  const avatarUrl = formData.avatar
-    ? formData.avatar.startsWith('http')
-      ? formData.avatar
-      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7100'}${
-          formData.avatar
-        }`
-    : 'https://github.com/shadcn.png';
-
   const usernameInfo = getUsernameChangeInfo();
 
   return (
@@ -405,714 +359,75 @@ export default function SettingsPage() {
 
         {/* 个人资料 Tab */}
         <TabsContent value='profile'>
-          <form onSubmit={handleSubmit} className='space-y-6'>
-            {/* 个人资料 */}
-            <div className='bg-card border border-border rounded-lg overflow-hidden'>
-              <div className='px-4 py-3 bg-muted border-b border-border'>
-                <h3 className='text-sm font-medium text-card-foreground'>
-                  个人资料
-                </h3>
-              </div>
-              <div className='p-6 space-y-6'>
-                {/* 头像 */}
-                <div className='flex items-start space-x-4'>
-                  <UserAvatar url={formData.avatar} name={user.username} size="xl" />
-                  <div className='flex-1'>
-                    <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                      头像
-                    </Label>
-                    <input
-                      ref={fileInputRef}
-                      type='file'
-                      accept='image/*'
-                      onChange={handleAvatarChange}
-                      className='hidden'
-                    />
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={handleAvatarClick}
-                      disabled={uploadingAvatar}
-                    >
-                      {uploadingAvatar ? (
-                        <>
-                          <Loader2 className='h-4 w-4 animate-spin' />
-                          上传中...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className='h-4 w-4' />
-                          上传新头像
-                        </>
-                      )}
-                    </Button>
-                    <p className='text-xs text-muted-foreground mt-2'>
-                      推荐尺寸：200x200px，支持 JPG、PNG 格式，最大 5MB
-                    </p>
-                  </div>
-                </div>
-
-                {/* 用户名 */}
-                <div>
-                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                    用户名
-                  </Label>
-                  <div className='flex items-center gap-2'>
-                    <Input
-                      type='text'
-                      value={user.username}
-                      disabled
-                      className='bg-muted flex-1'
-                    />
-                    {settings.allow_username_change?.value && (
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        onClick={() => setShowUsernameDialog(true)}
-                        disabled={!usernameInfo?.canChange}
-                      >
-                        <Edit className='h-4 w-4' />
-                        修改
-                      </Button>
-                    )}
-                  </div>
-                  {settings.allow_username_change?.value ? (
-                    <p className='text-xs text-muted-foreground mt-1'>
-                      {usernameInfo?.canChange ? (
-                        <>
-                          {usernameInfo.remainingChanges >= 0
-                            ? `剩余修改次数：${usernameInfo.remainingChanges}次`
-                            : '可修改'}
-                          {usernameInfo.cooldownDays > 0 &&
-                            ` · 冷却期：${usernameInfo.cooldownDays}天`}
-                        </>
-                      ) : usernameInfo?.nextAvailable ? (
-                        `下次可修改时间：${usernameInfo.nextAvailable.toLocaleDateString(
-                          'zh-CN'
-                        )}`
-                      ) : (
-                        '已达到修改次数上限'
-                      )}
-                    </p>
-                  ) : (
-                    <p className='text-xs text-muted-foreground mt-1'>
-                      用户名不可修改
-                    </p>
-                  )}
-                </div>
-
-                {/* 邮箱 */}
-                <div>
-                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                    <Mail className='h-4 w-4 inline mr-1' />
-                    邮箱地址
-                  </Label>
-                  <div className='flex items-center gap-2'>
-                    <Input
-                      type='email'
-                      value={user.email}
-                      disabled
-                      className='bg-muted flex-1'
-                    />
-                    {user.isEmailVerified ? (
-                      <Badge variant='success' className='bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'>
-                        已验证
-                      </Badge>
-                    ) : (
-                      <Badge variant='warning' className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'>
-                        未验证
-                      </Badge>
-                    )}
-                    {settings.allow_email_change?.value && (
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        onClick={() => {
-                          setShowEmailDialog(true);
-                          setEmailStep(1);
-                          setEmailData({ newEmail: '', password: '', verificationCode: '' });
-                        }}
-                      >
-                        <Edit className='h-4 w-4' />
-                        修改
-                      </Button>
-                    )}
-                  </div>
-                  <p className='text-xs text-muted-foreground mt-1'>
-                    {settings.allow_email_change?.value
-                      ? '可修改邮箱地址'
-                      : '邮箱不可修改'}
-                  </p>
-                </div>
-
-                {/* 姓名 */}
-                <div>
-                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                    姓名 *
-                  </Label>
-                  <Input
-                    type='text'
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder='请输入姓名'
-                    required
-                  />
-                </div>
-
-                {/* 个人简介 */}
-                <div>
-                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                    个人简介
-                  </Label>
-                  <Textarea
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    rows={3}
-                    placeholder='介绍一下你自己...'
-                    className='resize-none'
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 账户信息 */}
-            <div className='bg-card border border-border rounded-lg overflow-hidden'>
-              <div className='px-4 py-3 bg-muted border-b border-border'>
-                <h3 className='text-sm font-medium text-card-foreground'>
-                  账户信息
-                </h3>
-              </div>
-              <div className='p-6 space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-                    <Calendar className='h-4 w-4' />
-                    <span>加入时间</span>
-                  </div>
-                  <span className='text-sm text-card-foreground'>
-                    <Time date={user.createdAt} />
-                  </span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-                    <User className='h-4 w-4' />
-                    <span>用户ID</span>
-                  </div>
-                  <Badge variant='secondary'>#{user.id}</Badge>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-                    <User className='h-4 w-4' />
-                    <span>用户角色</span>
-                  </div>
-                  <Badge variant='outline'>
-                    {user.role === 'admin'
-                      ? '管理员'
-                      : user.role === 'moderator'
-                      ? '版主'
-                      : '用户'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* 保存按钮 */}
-            <div className='flex items-center justify-end space-x-3'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  setFormData({
-                    name: user.name || '',
-                    bio: user.bio || '',
-                    avatar: user.avatar || '',
-                    messagePermission: user.messagePermission || 'everyone',
-                    contentVisibility: user.contentVisibility || 'everyone',
-                  });
-                }}
-              >
-                重置
-              </Button>
-              <Button type='submit' disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                    保存中...
-                  </>
-                ) : (
-                  <>
-                    <Save className='h-4 w-4' />
-                    保存设置
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+          <ProfileTab
+            user={user}
+            settings={settings}
+            formData={formData}
+            onInputChange={handleInputChange}
+            onAvatarChange={handleAvatarChange}
+            onSubmit={handleSubmit}
+            loading={loading}
+            uploadingAvatar={uploadingAvatar}
+            onShowUsernameDialog={() => setShowUsernameDialog(true)}
+            onShowEmailDialog={() => {
+              setShowEmailDialog(true);
+              setEmailStep(1);
+              setEmailData({ newEmail: '', password: '', verificationCode: '' });
+            }}
+            usernameInfo={usernameInfo}
+          />
         </TabsContent>
 
         {/* 隐私设置 Tab */}
         <TabsContent value='privacy'>
-          <form onSubmit={handleSubmit} className='space-y-6'>
-            <div className='bg-card border border-border rounded-lg overflow-hidden'>
-              <div className='px-4 py-3 bg-muted border-b border-border'>
-                <h3 className='text-sm font-medium text-card-foreground'>
-                  站内信设置
-                </h3>
-              </div>
-              <div className='p-6 space-y-6'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex-1 mr-4'>
-                    <div className='flex items-center space-x-2 mb-1'>
-                      <MessageSquare className='h-4 w-4 text-muted-foreground' />
-                      <Label className='text-sm font-medium text-card-foreground'>
-                        站内信权限
-                      </Label>
-                    </div>
-                    <p className='text-xs text-muted-foreground'>
-                      控制谁可以给你发送站内信
-                    </p>
-                  </div>
-                  <Select
-                    value={formData.messagePermission}
-                    onValueChange={(value) =>
-                      handleInputChange('messagePermission', value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue>
-                        {formData.messagePermission === 'everyone' && '所有已登录用户'}
-                        {formData.messagePermission === 'followers' && '关注我的用户'}
-                        {formData.messagePermission === 'disabled' && '禁用'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent align='end'>
-                      <SelectItem value='everyone'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>所有已登录用户</span>
-                          <span className='text-xs text-muted-foreground'>
-                            任何登录用户都可以给你发站内信
-                          </span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='followers'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>关注我的用户</span>
-                          <span className='text-xs text-muted-foreground'>
-                            只有关注你的用户可以发站内信
-                          </span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='disabled'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>禁用</span>
-                          <span className='text-xs text-muted-foreground'>
-                            不接收任何站内信
-                          </span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='flex items-center justify-between'>
-                  <div className='flex-1 mr-4'>
-                    <div className='flex items-center space-x-2 mb-1'>
-                      <Eye className='h-4 w-4 text-muted-foreground' />
-                      <Label className='text-sm font-medium text-card-foreground'>
-                        话题/回复查看权限
-                      </Label>
-                    </div>
-                    <p className='text-xs text-muted-foreground'>
-                      控制谁可以在你的个人主页查看你发布的话题和回复
-                    </p>
-                  </div>
-                  <Select
-                    value={formData.contentVisibility}
-                    onValueChange={(value) =>
-                      handleInputChange('contentVisibility', value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue>
-                        {formData.contentVisibility === 'everyone' && '所有人'}
-                        {formData.contentVisibility === 'authenticated' && '登录用户'}
-                        {formData.contentVisibility === 'private' && '仅自己'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent align='end'>
-                      <SelectItem value='everyone'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>所有人</span>
-                          <span className='text-xs text-muted-foreground'>
-                            任何人都可以查看你的话题和回复
-                          </span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='authenticated'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>登录用户</span>
-                          <span className='text-xs text-muted-foreground'>
-                            只有登录用户可以查看
-                          </span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='private'>
-                        <div className='flex flex-col items-start'>
-                          <span className='font-medium'>仅自己</span>
-                          <span className='text-xs text-muted-foreground'>
-                            只有你自己可以查看
-                          </span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* 保存按钮 */}
-            <div className='flex items-center justify-end'>
-              <Button type='submit' disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                    保存中...
-                  </>
-                ) : (
-                  <>
-                    <Save className='h-4 w-4' />
-                    保存设置
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+          <PrivacyTab
+            formData={formData}
+            onInputChange={handleInputChange}
+            onSubmit={handleSubmit}
+            loading={loading}
+          />
         </TabsContent>
 
         {/* 安全设置 Tab */}
         <TabsContent value='security'>
-          <div className='space-y-6'>
-            {/* 邮箱验证 */}
-            <div className='bg-card border border-border rounded-lg overflow-hidden'>
-              <div className='px-4 py-3 bg-muted border-b border-border'>
-                <h3 className='text-sm font-medium text-card-foreground'>
-                  邮箱验证
-                </h3>
-              </div>
-              <div className='p-6'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex-1 mr-4'>
-                    <div className='flex items-center space-x-2 mb-1'>
-                      <Mail className='h-4 w-4 text-muted-foreground' />
-                      <Label className='text-sm font-medium text-card-foreground'>
-                        {user.email}
-                      </Label>
-                    </div>
-                    <p className='text-xs text-muted-foreground'>
-                      {user.isEmailVerified
-                        ? '您的邮箱已验证'
-                        : '请验证您的邮箱以使用完整功能'}
-                    </p>
-                  </div>
-                  {user.isEmailVerified ? (
-                    <Badge variant='success' className='bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'>
-                      已验证
-                    </Badge>
-                  ) : (
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={async () => {
-                        try {
-                          const data = await authApi.resendVerification();
-                          toast.success(data.message || '验证邮件已发送');
-                        } catch (err) {
-                          toast.error(err.message || '发送失败');
-                        }
-                      }}
-                    >
-                      <Mail className='h-4 w-4' />
-                      发送验证邮件
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 修改密码 */}
-            <form onSubmit={handlePasswordSubmit} className='space-y-6'>
-              <div className='bg-card border border-border rounded-lg overflow-hidden'>
-                <div className='px-4 py-3 bg-muted border-b border-border'>
-                  <h3 className='text-sm font-medium text-card-foreground'>
-                    修改密码
-                  </h3>
-                </div>
-                <div className='p-6 space-y-4'>
-                  <div>
-                    <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                      当前密码 *
-                    </Label>
-                    <Input
-                      type='password'
-                      value={passwordData.currentPassword}
-                      onChange={(e) =>
-                        handlePasswordChange('currentPassword', e.target.value)
-                      }
-                      placeholder='请输入当前密码'
-                    />
-                  </div>
-
-                  <div>
-                    <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                      新密码 *
-                    </Label>
-                    <Input
-                      type='password'
-                      value={passwordData.newPassword}
-                      onChange={(e) =>
-                        handlePasswordChange('newPassword', e.target.value)
-                      }
-                      placeholder='请输入新密码（至少6位）'
-                    />
-                  </div>
-
-                  <div>
-                    <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                      确认新密码 *
-                    </Label>
-                    <Input
-                      type='password'
-                      value={passwordData.confirmPassword}
-                      onChange={(e) =>
-                        handlePasswordChange('confirmPassword', e.target.value)
-                      }
-                      placeholder='请再次输入新密码'
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className='flex items-center justify-end'>
-                <Button type='submit' disabled={changingPassword}>
-                  {changingPassword ? (
-                    <>
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                      修改中...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className='h-4 w-4' />
-                      修改密码
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
+          <SecurityTab
+            user={user}
+            passwordData={passwordData}
+            onPasswordChange={handlePasswordChange}
+            onPasswordSubmit={handlePasswordSubmit}
+            changingPassword={changingPassword}
+          />
         </TabsContent>
       </Tabs>
 
       {/* 修改用户名对话框 */}
-      <Dialog open={showUsernameDialog} onOpenChange={setShowUsernameDialog}>
-        <DialogContent className='sm:max-w-[500px]'>
-          <DialogHeader>
-            <DialogTitle>修改用户名</DialogTitle>
-            <DialogDescription>
-              {usernameInfo?.cooldownDays > 0 &&
-                `修改后需等待 ${usernameInfo.cooldownDays} 天才能再次修改`}
-              {usernameInfo?.remainingChanges >= 0 &&
-                ` · 剩余修改次数：${usernameInfo.remainingChanges}次`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div>
-              <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                当前用户名
-              </Label>
-              <Input value={user?.username} disabled className='bg-muted' />
-            </div>
-            <div>
-              <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                新用户名 *
-              </Label>
-              <Input
-                value={usernameData.newUsername}
-                onChange={(e) =>
-                  setUsernameData({ ...usernameData, newUsername: e.target.value })
-                }
-                placeholder='输入新用户名'
-                disabled={changingUsername}
-              />
-            </div>
-            {settings.username_change_requires_password?.value && (
-              <div>
-                <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                  当前密码 *
-                </Label>
-                <Input
-                  type='password'
-                  value={usernameData.password}
-                  onChange={(e) =>
-                    setUsernameData({ ...usernameData, password: e.target.value })
-                  }
-                  placeholder='输入当前密码'
-                  disabled={changingUsername}
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setShowUsernameDialog(false);
-                setUsernameData({ newUsername: '', password: '' });
-              }}
-              disabled={changingUsername}
-            >
-              取消
-            </Button>
-            <Button onClick={handleUsernameSubmit} disabled={changingUsername}>
-              {changingUsername ? (
-                <>
-                  <Loader2 className='h-4 w-4 animate-spin mr-2' />
-                  修改中...
-                </>
-              ) : (
-                '确认修改'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UsernameChangeDialog
+        open={showUsernameDialog}
+        onOpenChange={setShowUsernameDialog}
+        user={user}
+        settings={settings}
+        usernameData={usernameData}
+        onUsernameDataChange={setUsernameData}
+        onSubmit={handleUsernameSubmit}
+        loading={changingUsername}
+        usernameInfo={usernameInfo}
+      />
 
       {/* 修改邮箱对话框 */}
-      <Dialog
+      <EmailChangeDialog
         open={showEmailDialog}
-        onOpenChange={(open) => {
-          setShowEmailDialog(open);
-          if (!open) {
-            setEmailStep(1);
-            setEmailData({ newEmail: '', password: '', verificationCode: '' });
-            setEmailExpiresAt(null);
-          }
-        }}
-      >
-        <DialogContent className='sm:max-w-[500px]'>
-          <DialogHeader>
-            <DialogTitle>修改邮箱地址</DialogTitle>
-            <DialogDescription>
-              {emailStep === 1
-                ? '输入新邮箱地址，我们将发送验证码'
-                : '请输入发送到新邮箱的验证码'}
-            </DialogDescription>
-          </DialogHeader>
-
-          {emailStep === 1 ? (
-            <div className='space-y-4 py-4'>
-              <div>
-                <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                  当前邮箱
-                </Label>
-                <Input value={user?.email} disabled className='bg-muted' />
-              </div>
-              <div>
-                <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                  新邮箱地址 *
-                </Label>
-                <Input
-                  type='email'
-                  value={emailData.newEmail}
-                  onChange={(e) =>
-                    setEmailData({ ...emailData, newEmail: e.target.value })
-                  }
-                  placeholder='输入新邮箱地址'
-                  disabled={changingEmail}
-                />
-              </div>
-              {settings.email_change_requires_password?.value && (
-                <div>
-                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                    当前密码 *
-                  </Label>
-                  <Input
-                    type='password'
-                    value={emailData.password}
-                    onChange={(e) =>
-                      setEmailData({ ...emailData, password: e.target.value })
-                    }
-                    placeholder='输入当前密码'
-                    disabled={changingEmail}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className='space-y-4 py-4'>
-              <div className='p-4 bg-muted rounded-lg'>
-                <p className='text-sm text-muted-foreground'>
-                  验证码已发送到：<span className='font-medium text-card-foreground'>{emailData.newEmail}</span>
-                </p>
-                {emailExpiresAt && (
-                  <p className='text-xs text-muted-foreground mt-1'>
-                    有效期至：{new Date(emailExpiresAt).toLocaleString('zh-CN')}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                  验证码 *
-                </Label>
-                <Input
-                  value={emailData.verificationCode}
-                  onChange={(e) =>
-                    setEmailData({ ...emailData, verificationCode: e.target.value })
-                  }
-                  placeholder='输入6位验证码'
-                  maxLength={6}
-                  disabled={changingEmail}
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                if (emailStep === 2) {
-                  setEmailStep(1);
-                } else {
-                  setShowEmailDialog(false);
-                  setEmailData({ newEmail: '', password: '', verificationCode: '' });
-                  setEmailExpiresAt(null);
-                }
-              }}
-              disabled={changingEmail}
-            >
-              {emailStep === 2 ? '上一步' : '取消'}
-            </Button>
-            <Button
-              onClick={emailStep === 1 ? handleEmailRequest : handleEmailVerify}
-              disabled={changingEmail}
-            >
-              {changingEmail ? (
-                <>
-                  <Loader2 className='h-4 w-4 animate-spin mr-2' />
-                  {emailStep === 1 ? '发送中...' : '验证中...'}
-                </>
-              ) : emailStep === 1 ? (
-                '发送验证码'
-              ) : (
-                '确认修改'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setShowEmailDialog}
+        user={user}
+        settings={settings}
+        emailStep={emailStep}
+        emailData={emailData}
+        onEmailDataChange={setEmailData}
+        onRequestCode={handleEmailRequest}
+        onVerifyCode={handleEmailVerify}
+        loading={changingEmail}
+        emailExpiresAt={emailExpiresAt}
+        onStepChange={setEmailStep}
+      />
     </div>
   );
 }

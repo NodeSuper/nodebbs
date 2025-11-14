@@ -1,0 +1,283 @@
+'use client';
+
+import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import UserAvatar from '@/components/forum/UserAvatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  User,
+  Mail,
+  Calendar,
+  Upload,
+  Save,
+  Loader2,
+  Edit,
+} from 'lucide-react';
+import { userApi } from '@/lib/api';
+import { toast } from 'sonner';
+import Time from '@/components/forum/Time';
+
+export function ProfileTab({
+  user,
+  settings,
+  formData,
+  onInputChange,
+  onAvatarChange,
+  onSubmit,
+  loading,
+  uploadingAvatar,
+  onShowUsernameDialog,
+  onShowEmailDialog,
+  usernameInfo,
+}) {
+  const fileInputRef = useRef(null);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <form onSubmit={onSubmit} className='space-y-6'>
+      {/* 个人资料 */}
+      <div className='bg-card border border-border rounded-lg overflow-hidden'>
+        <div className='px-4 py-3 bg-muted border-b border-border'>
+          <h3 className='text-sm font-medium text-card-foreground'>
+            个人资料
+          </h3>
+        </div>
+        <div className='p-6 space-y-6'>
+          {/* 头像 */}
+          <div className='flex items-start space-x-4'>
+            <UserAvatar url={formData.avatar} name={user.username} size="xl" />
+            <div className='flex-1'>
+              <Label className='text-sm font-medium text-card-foreground block mb-2'>
+                头像
+              </Label>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='image/*'
+                onChange={onAvatarChange}
+                className='hidden'
+              />
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={handleAvatarClick}
+                disabled={uploadingAvatar}
+              >
+                {uploadingAvatar ? (
+                  <>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    上传中...
+                  </>
+                ) : (
+                  <>
+                    <Upload className='h-4 w-4' />
+                    上传新头像
+                  </>
+                )}
+              </Button>
+              <p className='text-xs text-muted-foreground mt-2'>
+                推荐尺寸：200x200px，支持 JPG、PNG 格式，最大 5MB
+              </p>
+            </div>
+          </div>
+
+          {/* 用户名 */}
+          <div>
+            <Label className='text-sm font-medium text-card-foreground block mb-2'>
+              用户名
+            </Label>
+            <div className='flex items-center gap-2'>
+              <Input
+                type='text'
+                value={user.username}
+                disabled
+                className='bg-muted flex-1'
+              />
+              {settings.allow_username_change?.value && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={onShowUsernameDialog}
+                  disabled={!usernameInfo?.canChange}
+                >
+                  <Edit className='h-4 w-4' />
+                  修改
+                </Button>
+              )}
+            </div>
+            {settings.allow_username_change?.value ? (
+              <p className='text-xs text-muted-foreground mt-1'>
+                {usernameInfo?.canChange ? (
+                  <>
+                    {usernameInfo.remainingChanges >= 0
+                      ? `剩余修改次数：${usernameInfo.remainingChanges}次`
+                      : '可修改'}
+                    {usernameInfo.cooldownDays > 0 &&
+                      ` · 冷却期：${usernameInfo.cooldownDays}天`}
+                  </>
+                ) : usernameInfo?.nextAvailable ? (
+                  `下次可修改时间：${usernameInfo.nextAvailable.toLocaleDateString(
+                    'zh-CN'
+                  )}`
+                ) : (
+                  '已达到修改次数上限'
+                )}
+              </p>
+            ) : (
+              <p className='text-xs text-muted-foreground mt-1'>
+                用户名不可修改
+              </p>
+            )}
+          </div>
+
+          {/* 邮箱 */}
+          <div>
+            <Label className='text-sm font-medium text-card-foreground block mb-2'>
+              <Mail className='h-4 w-4 inline mr-1' />
+              邮箱地址
+            </Label>
+            <div className='flex items-center gap-2'>
+              <Input
+                type='email'
+                value={user.email}
+                disabled
+                className='bg-muted flex-1'
+              />
+              {user.isEmailVerified ? (
+                <Badge variant='success' className='bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'>
+                  已验证
+                </Badge>
+              ) : (
+                <Badge variant='warning' className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'>
+                  未验证
+                </Badge>
+              )}
+              {settings.allow_email_change?.value && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={onShowEmailDialog}
+                >
+                  <Edit className='h-4 w-4' />
+                  修改
+                </Button>
+              )}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {settings.allow_email_change?.value
+                ? '可修改邮箱地址'
+                : '邮箱不可修改'}
+            </p>
+          </div>
+
+          {/* 姓名 */}
+          <div>
+            <Label className='text-sm font-medium text-card-foreground block mb-2'>
+              姓名 *
+            </Label>
+            <Input
+              type='text'
+              value={formData.name}
+              onChange={(e) => onInputChange('name', e.target.value)}
+              placeholder='请输入姓名'
+              required
+            />
+          </div>
+
+          {/* 个人简介 */}
+          <div>
+            <Label className='text-sm font-medium text-card-foreground block mb-2'>
+              个人简介
+            </Label>
+            <Textarea
+              value={formData.bio}
+              onChange={(e) => onInputChange('bio', e.target.value)}
+              rows={3}
+              placeholder='介绍一下你自己...'
+              className='resize-none'
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 账户信息 */}
+      <div className='bg-card border border-border rounded-lg overflow-hidden'>
+        <div className='px-4 py-3 bg-muted border-b border-border'>
+          <h3 className='text-sm font-medium text-card-foreground'>
+            账户信息
+          </h3>
+        </div>
+        <div className='p-6 space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+              <Calendar className='h-4 w-4' />
+              <span>加入时间</span>
+            </div>
+            <span className='text-sm text-card-foreground'>
+              <Time date={user.createdAt} />
+            </span>
+          </div>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+              <User className='h-4 w-4' />
+              <span>用户ID</span>
+            </div>
+            <Badge variant='secondary'>#{user.id}</Badge>
+          </div>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+              <User className='h-4 w-4' />
+              <span>用户角色</span>
+            </div>
+            <Badge variant='outline'>
+              {user.role === 'admin'
+                ? '管理员'
+                : user.role === 'moderator'
+                ? '版主'
+                : '用户'}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* 保存按钮 */}
+      <div className='flex items-center justify-end space-x-3'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={() => {
+            onInputChange('name', user.name || '');
+            onInputChange('bio', user.bio || '');
+            onInputChange('avatar', user.avatar || '');
+            onInputChange('messagePermission', user.messagePermission || 'everyone');
+            onInputChange('contentVisibility', user.contentVisibility || 'everyone');
+          }}
+        >
+          重置
+        </Button>
+        <Button type='submit' disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className='h-4 w-4 animate-spin' />
+              保存中...
+            </>
+          ) : (
+            <>
+              <Save className='h-4 w-4' />
+              保存设置
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+}
