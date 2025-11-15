@@ -331,9 +331,20 @@ export default fp(async function (fastify, opts) {
     fastify.log.info('Online tracking plugin closed');
   });
 
-  // 添加请求钩子，追踪在线用户
+  // 添加请求钩子，仅追踪 API 请求
+  // 排除静态资源请求，避免数据失真
   fastify.addHook('onRequest', async (request, reply) => {
     try {
+      // 只追踪 API 请求路径
+      // 排除: /uploads/*, /favicon.ico, /robots.txt 等静态资源
+      const url = request.url;
+      const isApiRequest = url.startsWith('/api/');
+
+      // 如果不是 API 请求，跳过追踪
+      if (!isApiRequest) {
+        return;
+      }
+
       const userId = request.user?.id || null;
       const guestId = userId ? null : tracker.generateGuestId(request);
 
