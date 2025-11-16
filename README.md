@@ -231,7 +231,7 @@ docker compose ps
 ## 🛠️ 开发环境设置（不使用 Docker）
 
 ### 前置要求
-- Node.js >= 18
+- Node.js >= 22
 - pnpm >= 9.0.0
 - PostgreSQL
 - Redis

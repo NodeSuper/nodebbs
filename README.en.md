@@ -231,7 +231,7 @@ docker compose ps
 ## 🛠️ Development Setup (Without Docker)
 
 ### Prerequisites
-- Node.js >= 18
+- Node.js >= 22
 - pnpm >= 9.0.0
 - PostgreSQL
 - Redis
