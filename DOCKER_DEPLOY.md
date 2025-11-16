@@ -118,7 +118,7 @@ services:
 | **postgres** | PostgreSQL 16 | 5432 | 主数据库 |
 | **redis** | Redis 7 | 6379 | 缓存服务 |
 | **api** | Fastify + Drizzle | 7100 | API 服务 |
-| **web** | Next.js 15 | 3100 | 前端应用 |
+| **web** | Next.js 16 | 3100 | 前端应用 |
 
 ### 服务依赖关系
 

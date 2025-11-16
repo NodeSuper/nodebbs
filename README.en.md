@@ -16,7 +16,7 @@ A modern, high-performance forum platform built with Turborepo monorepo architec
 - **Process Management**: PM2
 
 ### Frontend (Web)
-- **Framework**: [Next.js 15](https://nextjs.org/) with Turbopack
+- **Framework**: [Next.js 16](https://nextjs.org/) with Turbopack
 - **UI Library**: React 19
 - **Styling**: Tailwind CSS 4
 - **Components**: Radix UI
@@ -56,7 +56,7 @@ A modern, high-performance forum platform built with Turborepo monorepo architec
 
 | Service | Technology | Port | Description |
 |---------|-----------|------|-------------|
-| **web** | Next.js 15 | 3100 | Frontend application |
+| **web** | Next.js 16 | 3100 | Frontend application |
 | **api** | Fastify | 7100 | Backend API service |
 | **postgres** | PostgreSQL 16 | 5432 | Main database |
 | **redis** | Redis 7 | 6379 | Cache service |

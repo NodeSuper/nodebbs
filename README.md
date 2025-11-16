@@ -16,7 +16,7 @@
 - **进程管理**: PM2
 
 ### 前端 (Web)
-- **框架**: [Next.js 15](https://nextjs.org/) (支持 Turbopack)
+- **框架**: [Next.js 16](https://nextjs.org/) (支持 Turbopack)
 - **UI 库**: React 19
 - **样式**: Tailwind CSS 4
 - **组件库**: Radix UI
@@ -56,7 +56,7 @@
 
 | 服务 | 技术 | 端口 | 说明 |
 |------|------|------|------|
-| **web** | Next.js 15 | 3100 | 前端应用 |
+| **web** | Next.js 16 | 3100 | 前端应用 |
 | **api** | Fastify | 7100 | 后端 API 服务 |
 | **postgres** | PostgreSQL 16 | 5432 | 主数据库 |
 | **redis** | Redis 7 | 6379 | 缓存服务 |

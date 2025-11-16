@@ -2,7 +2,7 @@
 
 ## 项目技术栈
 
-- **框架**: Next.js 15 (App Router + Turbopack)
+- **框架**: Next.js 16 (App Router + Turbopack)
 - **样式**: Tailwind CSS 4
 - **组件库**: shadcn/ui (基于 Radix UI)
 - **图标**: Lucide React
