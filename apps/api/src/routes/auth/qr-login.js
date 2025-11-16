@@ -82,8 +82,13 @@ export default async function qrLoginRoutes(fastify, options) {
           200: {
             type: 'object',
             properties: {
+              requestId: { type: 'string' },
               status: { type: 'string' },
               token: { type: 'string' },
+              ipAddress: { type: 'string' },
+              userAgent: { type: 'string' },
+              expiresAt: { type: 'string' },
+              createdAt: { type: 'string' },
               user: {
                 type: 'object',
                 properties: {
@@ -142,7 +147,15 @@ export default async function qrLoginRoutes(fastify, options) {
         }
       }
 
-      return { status: loginRequest.status };
+      // pending 状态返回完整信息供 App 端确认
+      return {
+        requestId: loginRequest.requestId,
+        status: loginRequest.status,
+        ipAddress: loginRequest.ipAddress,
+        userAgent: loginRequest.userAgent,
+        expiresAt: loginRequest.expiresAt.toISOString(),
+        createdAt: loginRequest.createdAt.toISOString(),
+      };
     }
   );
 
