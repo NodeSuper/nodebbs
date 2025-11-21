@@ -81,7 +81,8 @@ export default async function authRoutes(fastify, options) {
       }
 
       // 如果是邀请码模式，验证邀请码
-      if (registrationMode === 'invitation') {
+      const isInvitationMode = registrationMode === 'invitation';
+      if (isInvitationMode) {
         if (!invitationCode) {
           return reply
             .code(400)
@@ -102,7 +103,7 @@ export default async function authRoutes(fastify, options) {
       // ============ StopForumSpam 垃圾注册检查 ============
       const spamProtectionEnabled = await getSetting('spam_protection_enabled', false);
 
-      if (spamProtectionEnabled) {
+      if (spamProtectionEnabled && !isInvitationMode) {
         // 获取检查配置
         const checkIP = await getSetting('spam_protection_check_ip', true);
         const checkEmail = await getSetting('spam_protection_check_email', true);
