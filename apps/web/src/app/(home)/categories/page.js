@@ -1,16 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CategoryCard from '@/components/forum/CategoryCard';
 import { Badge } from '@/components/ui/badge';
 import { categoryApi } from '@/lib/api';
 import { toast } from 'sonner';
 import {
   Tag,
-  ArrowLeft,
   MessageSquare,
-  Grid3X3,
-  List,
   Loader2,
   Eye,
 } from 'lucide-react';
@@ -19,7 +15,6 @@ import Time from '@/components/forum/Time';
 import { Loading } from '@/components/common/Loading';
 
 export default function CategoriesPage() {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,37 +82,6 @@ export default function CategoriesPage() {
             {!loading && categories.length === 0 && <>还没有创建任何分类</>}
           </p>
         </div>
-
-        {!loading && categories.length > 0 && (
-          <div className='flex items-center space-x-2'>
-            {/* 视图切换 */}
-            <div className='flex items-center border border-border rounded-md overflow-hidden'>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewMode === 'grid'
-                    ? 'bg-accent text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                }`}
-                title='网格视图'
-              >
-                <Grid3X3 className='h-4 w-4' />
-              </button>
-              <div className='w-px h-5 bg-border' />
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-accent text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                }`}
-                title='列表视图'
-              >
-                <List className='h-4 w-4' />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {loading ? (
@@ -169,124 +133,114 @@ export default function CategoriesPage() {
             </div>
           </div> */}
 
-          {/* 分类展示 */}
-          {viewMode === 'grid' ? (
-            /* 网格视图 */
-            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
-              {categories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          ) : (
-            /* 列表视图 */
-            <div className='bg-card border border-border rounded-lg overflow-hidden'>
-              {/* 列表头部 */}
-              <div className='px-4 py-2.5 bg-muted/30 border-b border-border'>
-                <div className='grid grid-cols-12 gap-4 text-xs font-semibold text-muted-foreground'>
-                  <div className='col-span-5'>分类</div>
-                  <div className='col-span-4 hidden md:block'>最新话题</div>
-                  <div className='col-span-3 text-center'>统计</div>
-                </div>
+          {/* 分类展示 - 列表视图 */}
+          <div className='bg-card border border-border rounded-lg overflow-hidden'>
+            {/* 列表头部 */}
+            <div className='px-4 py-2.5 bg-muted/30 border-b border-border'>
+              <div className='grid grid-cols-12 gap-4 text-xs font-semibold text-muted-foreground'>
+                <div className='col-span-5'>分类</div>
+                <div className='col-span-4 hidden md:block'>最新话题</div>
+                <div className='col-span-3 text-center'>统计</div>
               </div>
+            </div>
 
-              {/* 分类项目 */}
-              <div className='divide-y divide-border'>
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className='px-4 py-4 hover:bg-accent/50 transition-colors group'
-                  >
-                    <div className='grid grid-cols-12 gap-4 items-center'>
-                      {/* 左侧：分类信息 */}
-                      <div className='col-span-5'>
-                        <div className='flex items-center gap-2 mb-2'>
-                          <div
-                            className='w-3 h-3 rounded-sm shrink-0'
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <Link
-                            href={`/categories/${category.slug}`}
-                            className='font-semibold text-foreground hover:text-primary transition-colors'
-                          >
-                            {category.name}
-                          </Link>
-                        </div>
-                        {category.description && (
-                          <p className='text-sm text-muted-foreground line-clamp-2 ml-5'>
-                            {category.description}
-                          </p>
-                        )}
-                        {/* 子分类 */}
-                        {category.subcategories &&
-                          category.subcategories.length > 0 && (
-                            <div className='flex items-center gap-2 flex-wrap mt-2 ml-5'>
-                              {category.subcategories.map((sub) => (
-                                <Link
-                                  key={sub.id}
-                                  href={`/categories/${sub.slug}`}
-                                  className='inline-block'
+            {/* 分类项目 */}
+            <div className='divide-y divide-border'>
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className='px-4 py-4 hover:bg-accent/50 transition-colors group'
+                >
+                  <div className='grid grid-cols-12 gap-4 items-center'>
+                    {/* 左侧：分类信息 */}
+                    <div className='col-span-5'>
+                      <div className='flex items-center gap-2 mb-2'>
+                        <div
+                          className='w-3 h-3 rounded-sm shrink-0'
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <Link
+                          href={`/categories/${category.slug}`}
+                          className='font-semibold text-foreground hover:text-primary transition-colors'
+                        >
+                          {category.name}
+                        </Link>
+                      </div>
+                      {category.description && (
+                        <p className='text-sm text-muted-foreground line-clamp-2 ml-5'>
+                          {category.description}
+                        </p>
+                      )}
+                      {/* 子分类 */}
+                      {category.subcategories &&
+                        category.subcategories.length > 0 && (
+                          <div className='flex items-center gap-2 flex-wrap mt-2 ml-5'>
+                            {category.subcategories.map((sub) => (
+                              <Link
+                                key={sub.id}
+                                href={`/categories/${sub.slug}`}
+                                className='inline-block'
+                              >
+                                <Badge
+                                  variant='outline'
+                                  className='text-xs cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors'
                                 >
-                                  <Badge
-                                    variant='outline'
-                                    className='text-xs cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors'
-                                  >
-                                    {sub.name}
-                                  </Badge>
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-
-                      {/* 中间：最新话题 */}
-                      <div className='col-span-4 hidden md:block'>
-                        {category.latestTopic ? (
-                          <Link
-                            href={`/topic/${category.latestTopic.id}`}
-                            className='block'
-                          >
-                            <p className='text-sm text-foreground line-clamp-1 hover:text-primary transition-colors mb-1'>
-                              {category.latestTopic.title}
-                            </p>
-                            <p className='text-xs text-muted-foreground'>
-                              <Time
-                                date={category.latestTopic.updatedAt}
-                                fromNow
-                              />
-                            </p>
-                          </Link>
-                        ) : (
-                          <p className='text-sm text-muted-foreground'>
-                            暂无话题
-                          </p>
+                                  {sub.name}
+                                </Badge>
+                              </Link>
+                            ))}
+                          </div>
                         )}
-                      </div>
+                    </div>
 
-                      {/* 右侧：统计信息 */}
-                      <div className='col-span-3'>
-                        <div className='flex flex-col gap-1.5 text-xs text-muted-foreground'>
-                          <div className='flex items-center justify-center gap-1.5'>
-                            <MessageSquare className='h-3.5 w-3.5' />
-                            <span className='font-medium'>
-                              {category.topicCount || 0}
-                            </span>
-                            <span className='hidden sm:inline'>话题</span>
-                          </div>
-                          <div className='flex items-center justify-center gap-1.5'>
-                            <Eye className='h-3.5 w-3.5' />
-                            <span className='font-medium'>
-                              {category.viewCount || 0}
-                            </span>
-                            <span className='hidden sm:inline'>浏览</span>
-                          </div>
+                    {/* 中间：最新话题 */}
+                    <div className='col-span-4 hidden md:block'>
+                      {category.latestTopic ? (
+                        <Link
+                          href={`/topic/${category.latestTopic.id}`}
+                          className='block'
+                        >
+                          <p className='text-sm text-foreground line-clamp-1 hover:text-primary transition-colors mb-1'>
+                            {category.latestTopic.title}
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            <Time
+                              date={category.latestTopic.updatedAt}
+                              fromNow
+                            />
+                          </p>
+                        </Link>
+                      ) : (
+                        <p className='text-sm text-muted-foreground'>
+                          暂无话题
+                        </p>
+                      )}
+                    </div>
+
+                    {/* 右侧：统计信息 */}
+                    <div className='col-span-3'>
+                      <div className='flex flex-col gap-1.5 text-xs text-muted-foreground'>
+                        <div className='flex items-center justify-center gap-1.5'>
+                          <MessageSquare className='h-3.5 w-3.5' />
+                          <span className='font-medium'>
+                            {category.topicCount || 0}
+                          </span>
+                          <span className='hidden sm:inline'>话题</span>
+                        </div>
+                        <div className='flex items-center justify-center gap-1.5'>
+                          <Eye className='h-3.5 w-3.5' />
+                          <span className='font-medium'>
+                            {category.viewCount || 0}
+                          </span>
+                          <span className='hidden sm:inline'>浏览</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </>
       )}
     </>
