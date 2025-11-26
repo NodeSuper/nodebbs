@@ -8,10 +8,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, X, Trash2, Settings } from 'lucide-react';
+import { Bell, Check, X, Trash2, Settings, MessageCircle, Heart, UserPlus } from 'lucide-react';
 import { notificationApi } from '@/lib/api';
 import Link from 'next/link';
 import { Loading } from '../common/Loading';
+import UserAvatar from './UserAvatar';
+import Time from './Time';
 
 export default function NotificationPopover() {
   const [notifications, setNotifications] = useState([]);
@@ -58,7 +60,7 @@ export default function NotificationPopover() {
     try {
       await notificationApi.markAsRead(id);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
@@ -69,7 +71,7 @@ export default function NotificationPopover() {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -89,33 +91,66 @@ export default function NotificationPopover() {
     }
   };
 
-  const formatRelativeTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
-
-    if (diffInSeconds < 60) return '刚刚';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}分钟前`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)}小时前`;
-    if (diffInSeconds < 604800)
-      return `${Math.floor(diffInSeconds / 86400)}天前`;
-    return date.toLocaleDateString('zh-CN');
+  const handleNotificationClick = async (notification) => {
+    // 如果未读，标记为已读
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id);
+    }
+    // 关闭弹窗
+    setIsOpen(false);
   };
 
   const getNotificationIcon = (type) => {
-    // 根据不同类型返回不同的图标或样式
+    // 根据不同类型返回不同的图标
     switch (type) {
       case 'reply':
-        return '💬';
-      case 'like':
-        return '❤️';
+      case 'topic_reply':
+        return <MessageCircle className='h-4 w-4 text-blue-500' />;
       case 'mention':
-        return '@';
+        return <MessageCircle className='h-4 w-4 text-purple-500' />;
+      case 'like':
+        return <Heart className='h-4 w-4 text-red-500' />;
       case 'follow':
-        return '👤';
+        return <UserPlus className='h-4 w-4 text-green-500' />;
       default:
-        return '🔔';
+        return <Bell className='h-4 w-4' />;
+    }
+  };
+
+  const getNotificationMessage = (notification) => {
+    // 根据不同类型返回不同的消息内容（不包含用户名，因为用户名已在头像旁显示）
+    switch (notification.type) {
+      case 'topic_reply':
+        return notification.topicTitle
+          ? `在 "${notification.topicTitle}" 中回复了`
+          : '在话题中回复了';
+      case 'reply':
+        // reply 类型有两种情况：回复话题 或 回复帖子
+        // 通过检查原始 message 来区分
+        if (notification.message && notification.message.includes('帖子')) {
+          return notification.topicTitle
+            ? `在 "${notification.topicTitle}" 中回复了你的帖子`
+            : '回复了你的帖子';
+        }
+        return notification.topicTitle
+          ? `回复了你的话题 "${notification.topicTitle}"`
+          : '回复了你的话题';
+      case 'like':
+        return notification.topicTitle
+          ? `在 "${notification.topicTitle}" 中赞了你的帖子`
+          : '赞了你的帖子';
+      case 'mention':
+        return notification.topicTitle
+          ? `在 "${notification.topicTitle}" 中提到了你`
+          : '在回复中提到了你';
+      case 'follow':
+        return '关注了你';
+      case 'report_resolved':
+        return '你的举报已处理';
+      case 'report_dismissed':
+        return '你的举报已驳回';
+      default:
+        return notification.message || '发送了一条通知';
     }
   };
 
@@ -164,65 +199,106 @@ export default function NotificationPopover() {
             <Loading className='py-8' />
           ) : notifications.length > 0 ? (
             <div className='divide-y divide-border'>
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`px-4 py-3 hover:bg-accent transition-colors ${
-                    !notification.isRead ? 'bg-accent/80' : ''
-                  }`}
-                >
-                  <div className='flex items-start gap-3'>
-                    {/* 图标 */}
-                    <div className='shrink-0 text-xl mt-0.5'>
-                      {getNotificationIcon(notification.type)}
-                    </div>
+              {notifications.map((notification) => {
+                // 生成跳转链接
+                const linkUrl = notification.topicId
+                  ? `/topic/${notification.topicId}${
+                      notification.postId ? `#post-${notification.postId}` : ''
+                    }`
+                  : null;
 
-                    {/* 内容 */}
-                    <div className='flex-1 min-w-0'>
-                      <p className='text-sm text-foreground leading-relaxed'>
-                        {notification.message}
-                      </p>
-                      <div className='flex items-center gap-2 mt-1'>
-                        <span className='text-xs text-muted-foreground'>
-                          {formatRelativeTime(notification.createdAt)}
-                        </span>
+                return (
+                  <div
+                    key={notification.id}
+                    className={`px-4 py-3 hover:bg-accent transition-colors ${
+                      !notification.isRead ? 'bg-accent/50' : ''
+                    } ${linkUrl ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (linkUrl) {
+                        handleNotificationClick(notification);
+                        window.location.href = linkUrl;
+                      }
+                    }}
+                  >
+                    <div className='flex items-start gap-3'>
+                      {/* 未读指示器 */}
+                      <div className='shrink-0 pt-1.5'>
                         {!notification.isRead && (
-                          <Badge
-                            variant='secondary'
-                            className='h-4 px-1 text-xs font-bold text-green-600'
-                          >
-                            新
-                          </Badge>
+                          <div className='w-2 h-2 bg-green-500 rounded-full ring-2 ring-green-500/20' />
                         )}
                       </div>
-                    </div>
 
-                    {/* 操作按钮 */}
-                    <div className='flex items-center gap-1 shrink-0'>
-                      {!notification.isRead && (
+                      {/* 用户头像 */}
+                      <UserAvatar
+                        url={notification.triggeredByAvatar}
+                        name={notification.triggeredByUsername}
+                        size='sm'
+                      />
+
+                      {/* 内容 */}
+                      <div className='flex-1 min-w-0'>
+                        {/* 用户名和消息 */}
+                        <div className='flex items-start gap-1.5 mb-1 flex-wrap'>
+                          {getNotificationIcon(notification.type)}
+                          {notification.triggeredByUsername && (
+                            <span className='text-sm font-medium text-foreground'>
+                              {notification.triggeredByUsername}
+                            </span>
+                          )}
+                          <span className='text-sm text-muted-foreground'>
+                            {getNotificationMessage(notification)}
+                          </span>
+                        </div>
+
+                        {/* 时间和未读标记 */}
+                        <div className='flex items-center gap-2'>
+                          <span className='text-xs text-muted-foreground'>
+                            <Time date={notification.createdAt} fromNow />
+                          </span>
+                          {!notification.isRead && (
+                            <Badge
+                              variant='secondary'
+                              className='h-4 px-1.5 text-xs font-bold text-green-600'
+                            >
+                              新
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 操作按钮 */}
+                      <div className='flex items-center gap-1 shrink-0'>
+                        {!notification.isRead && (
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsRead(notification.id);
+                            }}
+                            title='标记为已读'
+                          >
+                            <Check className='h-3 w-3' />
+                          </Button>
+                        )}
                         <Button
                           variant='ghost'
                           size='icon'
-                          className='h-6 w-6'
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          title='标记为已读'
+                          className='h-6 w-6 hover:text-destructive'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(notification.id);
+                          }}
+                          title='删除'
                         >
-                          <Check className='h-3 w-3' />
+                          <Trash2 className='h-3 w-3' />
                         </Button>
-                      )}
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6 hover:text-destructive'
-                        onClick={() => handleDelete(notification.id)}
-                        title='删除'
-                      >
-                        <Trash2 className='h-3 w-3' />
-                      </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className='flex flex-col items-center justify-center py-12'>
