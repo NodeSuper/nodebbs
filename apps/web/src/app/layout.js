@@ -15,20 +15,38 @@ const $title = 'NodeBBS';
 const $description = '一个基于 Node.js 和 React 的现代化论坛系统';
 
 export async function generateMetadata({ params }) {
-  const settings = await request('/api/settings');
-  const name = settings?.site_name?.value || $title;
-  const description = settings.site_description?.value || $description;
-  return {
-    title: {
-      template: `\%s | ${name}`,
-      default: $title, // a default is required when creating a template
-    },
-    description,
-  };
+  try {
+    const settings = await request('/api/settings');
+    const name = settings?.site_name?.value || $title;
+    const description = settings?.site_description?.value || $description;
+    return {
+      title: {
+        template: `\%s | ${name}`,
+        default: $title, // a default is required when creating a template
+      },
+      description,
+    };
+  } catch (error) {
+    console.error('Error fetching settings for metadata:', error);
+    return {
+      title: {
+        template: `\%s | ${$title}`,
+        default: $title,
+      },
+      description: $description,
+    };
+  }
 }
 
 async function AppLayout({ children }) {
-  const settings = await request('/api/settings');
+  let settings = null;
+  try {
+    settings = await request('/api/settings');
+  } catch (error) {
+    console.error('Error fetching settings for layout:', error);
+    settings = null;
+  }
+
   return (
     <div className='min-h-screen bg-background flex flex-col'>
       <Header settings={settings} />
