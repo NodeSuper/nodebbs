@@ -16,6 +16,16 @@ export default function MarkdownRender({ content }) {
         a: ({ node, ...props }) => (
           <Link {...props} target='_blank' rel='noopener noreferrer' />
         ),
+        img: ({ node, src, alt, ...props }) => {
+          // 如果 src 为空，不渲染图片
+          if (!src || src.trim() === '') {
+            return null;
+          }
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} alt={alt || ''} {...props} />
+          );
+        },
         code(props) {
           const { children, className, node, ...rest } = props;
           const match = /language-(\w+)/.exec(className || '');
