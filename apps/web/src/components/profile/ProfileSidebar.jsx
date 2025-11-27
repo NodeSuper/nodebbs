@@ -95,6 +95,7 @@ export default function ProfileSidebar() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={`
                 flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors
                 ${

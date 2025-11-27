@@ -175,6 +175,7 @@ export default function TopicSidebar({
             />
             <Link
               href={`/users/${author?.username}`}
+              prefetch={false}
               className='text-sm hover:text-primary hover:underline font-medium'
             >
               {author?.name}

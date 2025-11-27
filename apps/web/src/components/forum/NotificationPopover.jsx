@@ -319,7 +319,7 @@ export default function NotificationPopover() {
 
         {/* 底部操作 */}
         <div className='border-t border-border px-4 py-2'>
-          <Link href='/profile/notifications' onClick={() => setIsOpen(false)}>
+          <Link href='/profile/notifications' prefetch={false} onClick={() => setIsOpen(false)}>
             <Button variant='ghost' className='w-full text-sm hover:bg-accent'>
               查看全部通知
             </Button>

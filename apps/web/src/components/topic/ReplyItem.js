@@ -208,7 +208,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
           <div className='flex items-center justify-between mb-3'>
             {/* 左侧：作者信息 */}
             <div className='flex items-center gap-2'>
-              <Link href={`/users/${localReply.username}`}>
+              <Link href={`/users/${localReply.username}`} prefetch={false}>
                 <UserAvatar
                   url={localReply.userAvatar}
                   name={localReply.userName}
@@ -219,6 +219,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
               <div className='flex items-center gap-1.5 flex-wrap text-sm text-muted-foreground'>
                 <Link
                   href={`/users/${localReply.username}`}
+                  prefetch={false}
                   className='hover:text-foreground transition-colors'
                 >
                   {localReply.userName || localReply.userUsername}
@@ -401,6 +402,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
                 <span>回复</span>
                 <Link
                   href={`/topic/${topicId}#post-${localReply.replyToPost.id}`}
+                  prefetch={false}
                 >
                   #{localReply.replyToPost.postNumber}
                 </Link>

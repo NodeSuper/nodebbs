@@ -52,6 +52,7 @@ export function TopicItem({ topic }) {
             {/* Title */}
             <Link
               href={`/topic/${topic.id}`}
+              prefetch={false}
               className='text-base font-semibold hover:text-primary transition-colors line-clamp-2 block mb-2'
             >
               {topic.title}
@@ -109,6 +110,7 @@ export function PostItem({ post }) {
           <div className='mb-3'>
             <Link
               href={`/topic/${post.topicId}`}
+              prefetch={false}
               className='text-sm text-muted-foreground hover:text-primary transition-colors'
             >
               <span className='font-medium'>回复于:</span> {post.topicTitle}

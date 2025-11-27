@@ -31,6 +31,7 @@ export default function Footer({ settings }) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={false}
                   className="hover:text-primary transition-colors"
                 >
                   {link.label}

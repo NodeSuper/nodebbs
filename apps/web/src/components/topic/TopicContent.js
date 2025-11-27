@@ -149,6 +149,7 @@ export default function TopicContent({ topic }) {
               <span className='opacity-50'>•</span>
               <Link
                 href={`/users/${topic.username}`}
+                prefetch={false}
                 className='hover:text-foreground transition-colors'
               >
                 {topic.userName || topic.username}

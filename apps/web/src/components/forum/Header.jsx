@@ -71,7 +71,7 @@ export default function Header({ settings }) {
           {/* Logo 和导航 */}
           <div className='flex items-center space-x-8'>
             {/* Logo */}
-            <Link href='/' className='flex items-center space-x-2.5 group'>
+            <Link href='/' prefetch={false} className='flex items-center space-x-2.5 group'>
               <img
                 src='/logo.svg'
                 alt='logo'
@@ -88,6 +88,7 @@ export default function Header({ settings }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className='flex items-center space-x-1.5 px-3 py-1.5 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all'
                 >
                   <item.icon className='h-4 w-4' />
@@ -122,7 +123,7 @@ export default function Header({ settings }) {
               <>
                 {/* 发布按钮 */}
                 {isAuthenticated && (
-                  <Link href='/create' className='hidden sm:block'>
+                  <Link href='/create' prefetch={false} className='hidden sm:block'>
                     <Button>
                       <Plus className='h-4 w-4' />
                       <span className='hidden lg:inline'>发布话题</span>
@@ -172,7 +173,7 @@ export default function Header({ settings }) {
                       <DropdownMenuSeparator />
 
                       <DropdownMenuItem asChild>
-                        <Link href='/profile/topics' className='cursor-pointer'>
+                        <Link href='/profile/topics' prefetch={false} className='cursor-pointer'>
                           <MessageSquare className='h-4 w-4' />
                           我的话题
                         </Link>
@@ -180,6 +181,7 @@ export default function Header({ settings }) {
 
                       <DropdownMenuItem asChild>
                         <Link
+                          prefetch={false}
                           href='/profile/messages'
                           className='cursor-pointer'
                         >
@@ -191,6 +193,7 @@ export default function Header({ settings }) {
                       <DropdownMenuItem asChild>
                         <Link
                           href='/profile/settings'
+                          prefetch={false}
                           className='cursor-pointer'
                         >
                           <Settings className='h-4 w-4' />
@@ -205,6 +208,7 @@ export default function Header({ settings }) {
                           <DropdownMenuItem asChild>
                             <Link
                               href='/dashboard'
+                              prefetch={false}
                               className='cursor-pointer text-primary'
                             >
                               <Shield className='h-4 w-4' />
@@ -286,6 +290,7 @@ export default function Header({ settings }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className='flex items-center space-x-3 px-3 py-2.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all'
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -297,7 +302,7 @@ export default function Header({ settings }) {
 
             {/* 移动端发布按钮 */}
             {!loading && isAuthenticated && (
-              <Link href='/create' onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href='/create' prefetch={false} onClick={() => setIsMobileMenuOpen(false)}>
                 <Button className='w-full h-10 bg-chart-2 hover:bg-chart-2/90 text-primary-foreground shadow-sm'>
                   <Plus className='h-4 w-4' />
                   发布话题
