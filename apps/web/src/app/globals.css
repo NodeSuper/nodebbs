@@ -308,6 +308,20 @@
   }
 }
 
+/* 字号缩放系统 - 通过修改 html 根元素字号来影响所有 rem 单位 */
+/* 必须在 @layer base 之后定义，以确保优先级 */
+html.font-scale-compact {
+  font-size: 14px !important;
+}
+
+html.font-scale-normal {
+  font-size: 16px !important;
+}
+
+html.font-scale-comfortable {
+  font-size: 18px !important;
+}
+
 /* Typography Scale - 字号标准规范
  * 遵循现代设计系统最佳实践和WCAG可访问性标准
  *

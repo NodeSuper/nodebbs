@@ -9,12 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Palette, Check } from 'lucide-react';
 import { useTheme as useCustomTheme } from '@/contexts/ThemeContext';
 import { useTheme } from 'next-themes';
 
 export default function ThemeSwitcher() {
-  const { themeStyle, setThemeStyle, themes, mounted: customMounted } = useCustomTheme();
+  const { themeStyle, setThemeStyle, themes, fontSize, setFontSize, fontSizes, mounted: customMounted } = useCustomTheme();
   const { theme, setTheme, systemTheme } = useTheme();
 
   // 防止服务端渲染不匹配
@@ -69,6 +70,23 @@ export default function ThemeSwitcher() {
             {theme === m.value && <Check className='h-4 w-4 text-primary' />}
           </DropdownMenuItem>
         ))}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuLabel className='text-xs font-medium text-muted-foreground'>
+          字号
+        </DropdownMenuLabel>
+        <div className='px-2 pb-2'>
+          <Tabs value={fontSize} onValueChange={setFontSize}>
+            <TabsList className='w-full'>
+              {fontSizes.map((f) => (
+                <TabsTrigger key={f.value} value={f.value} className='flex-1'>
+                  {f.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
