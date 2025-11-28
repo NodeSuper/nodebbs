@@ -17,6 +17,10 @@ async function docsPlugin(fastify, opts) {
           url: 'http://localhost:7100',
           description: '开发服务器',
         },
+        {
+          url: 'https://nodebbs.com',
+          description: '正式环境',
+        },
       ],
       tags: [
         { name: 'auth', description: '认证端点' },

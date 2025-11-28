@@ -7,9 +7,7 @@ export default function Footer({ settings }) {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = [
-    { label: '服务条款', href: '/terms' },
-    { label: '隐私政策', href: '/privacy' },
-    { label: '帮助', href: '/help' },
+    { label: 'API 文档', href: '/reference' },
     { label: '关于', href: '/about' },
   ];
 
