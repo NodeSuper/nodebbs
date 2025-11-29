@@ -99,7 +99,7 @@ export function Pager({
 
           {pages.map((p, idx) =>
             p === '...' ? (
-              <PaginationItem key={idx}>
+              <PaginationItem key={`ellipsis-${idx}`}>
                 <PaginationEllipsis />
               </PaginationItem>
             ) : (
