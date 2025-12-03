@@ -119,7 +119,21 @@ export const VerificationCodeConfig = {
     description: '绑定邮箱',
     template: 'verification-code',
   },
-
+  /**
+   * TODO: 旧邮箱 + 新邮箱双验证
+   * 步骤：
+    1. 用户发起更换邮箱请求（需登录态）
+    验证用户当前已登录
+    可能再加一次用户密码确认（可选）
+    2. 向旧邮箱发送 OTP（旧邮箱验证码）
+    例如：verify your old email: 6-digit code
+    3. 用户输入旧邮箱验证码通过后 → 允许进入下一步
+    4. 用户输入新邮箱地址
+    5. 向新邮箱发送 OTP（新邮箱验证码）
+    6. 新邮箱 OTP 验证成功 → 完成更换
+    需要两个验证码: EMAIL_CHANGE_OLD EMAIL_CHANGE_NEW
+    如果用户旧邮箱不可用，则采用：登录密码 + 手机验证码。
+   */
   [VerificationCodeType.EMAIL_CHANGE]: {
     channel: VerificationChannel.EMAIL,
     digits: 6,
@@ -138,7 +152,7 @@ export const VerificationCodeConfig = {
     digits: 6,
     expiryMinutes: 10,
     requireAuth: false,
-    userValidation: UserValidation.MUST_NOT_EXIST,
+    userValidation: UserValidation.MUST_NOT_EXIST, // 保留，降级使用：支持手机号+密码注册
     maxRetries: 5,
     rateLimitSeconds: 60,
     description: '注册验证',
@@ -150,7 +164,7 @@ export const VerificationCodeConfig = {
     digits: 6,
     expiryMinutes: 5,
     requireAuth: false,
-    userValidation: UserValidation.MUST_EXIST,
+    // userValidation: UserValidation.MUST_EXIST, // 不设置，新用户自动注册
     maxRetries: 3,
     rateLimitSeconds: 60,
     description: '登录验证',
@@ -181,6 +195,18 @@ export const VerificationCodeConfig = {
     template: 'SMS_BIND',
   },
 
+  /**
+   * TODO: 更换手机号逻辑：如果用户能接收旧手机号的验证码，则必须验证旧号。
+   * 步骤：
+    - 用户发起换手机号
+    - 向用户旧手机号发送 旧号验证验证码（OTP1）
+    - 旧号验证通过 → 进入下一步
+    - 用户输入新手机号
+    - 向新手机号发送 新号验证验证码（OTP2）
+    - 新号验证通过 → 完成更换
+    需要两个验证码: PHONE_CHANGE_OLD PHONE_CHANGE_NEW
+    如果用户旧手机号不可用，则采用：登录密码 + 邮箱验证码。
+   */
   [VerificationCodeType.PHONE_CHANGE]: {
     channel: VerificationChannel.SMS,
     digits: 6,
