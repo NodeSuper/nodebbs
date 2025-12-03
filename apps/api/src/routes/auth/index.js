@@ -1006,6 +1006,11 @@ export default async function authRoutes(fastify, options) {
           return reply.code(401).send({ error: '需要登录后才能执行此操作' });
         }
 
+        // 校验 identifier 是否存在
+        if (!identifier) {
+          return reply.code(400).send({ error: `请输入${config.channel === VerificationChannel.EMAIL ? '邮箱地址' : '手机号'}` });
+        }
+
         // 验证验证码
         const result = await verifyCode(identifier, code, type);
 
