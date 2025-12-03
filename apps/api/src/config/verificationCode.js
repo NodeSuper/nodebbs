@@ -34,8 +34,11 @@ export const VerificationCodeType = {
   // 绑定邮箱（需要登录）
   EMAIL_BIND: 'email_bind',
 
-  // 更换邮箱（需要登录）
-  EMAIL_CHANGE: 'email_change',
+  // 更换邮箱 - 验证旧邮箱（需要登录）
+  EMAIL_CHANGE_OLD: 'email_change_old',
+
+  // 更换邮箱 - 验证新邮箱（需要登录）
+  EMAIL_CHANGE_NEW: 'email_change_new',
 
   // ========== 短信渠道 ==========
   // 手机号注册验证
@@ -119,30 +122,30 @@ export const VerificationCodeConfig = {
     description: '绑定邮箱',
     template: 'verification-code',
   },
-  /**
-   * TODO: 旧邮箱 + 新邮箱双验证
-   * 步骤：
-    1. 用户发起更换邮箱请求（需登录态）
-    验证用户当前已登录
-    可能再加一次用户密码确认（可选）
-    2. 向旧邮箱发送 OTP（旧邮箱验证码）
-    例如：verify your old email: 6-digit code
-    3. 用户输入旧邮箱验证码通过后 → 允许进入下一步
-    4. 用户输入新邮箱地址
-    5. 向新邮箱发送 OTP（新邮箱验证码）
-    6. 新邮箱 OTP 验证成功 → 完成更换
-    需要两个验证码: EMAIL_CHANGE_OLD EMAIL_CHANGE_NEW
-    如果用户旧邮箱不可用，则采用：登录密码 + 手机验证码。
-   */
-  [VerificationCodeType.EMAIL_CHANGE]: {
+
+  // 更换邮箱 - 步骤1：验证旧邮箱
+  [VerificationCodeType.EMAIL_CHANGE_OLD]: {
     channel: VerificationChannel.EMAIL,
     digits: 6,
     expiryMinutes: 10,
     requireAuth: true,
-    userValidation: UserValidation.MUST_EXIST, // 在业务逻辑中额外检查所有权
+    userValidation: UserValidation.MUST_EXIST, // 旧邮箱必须存在且属于当前用户
     maxRetries: 5,
     rateLimitSeconds: 60,
-    description: '更换邮箱',
+    description: '更换邮箱（验证旧邮箱）',
+    template: 'verification-code',
+  },
+
+  // 更换邮箱 - 步骤2：验证新邮箱
+  [VerificationCodeType.EMAIL_CHANGE_NEW]: {
+    channel: VerificationChannel.EMAIL,
+    digits: 6,
+    expiryMinutes: 10,
+    requireAuth: true,
+    // userValidation: 不设置，在业务逻辑中检查是否被其他用户占用
+    maxRetries: 5,
+    rateLimitSeconds: 60,
+    description: '更换邮箱（验证新邮箱）',
     template: 'verification-code',
   },
 

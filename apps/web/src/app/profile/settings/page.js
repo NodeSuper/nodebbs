@@ -43,14 +43,16 @@ export default function SettingsPage() {
 
   // 邮箱修改相关状态
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [emailStep, setEmailStep] = useState(1); // 1: 输入新邮箱, 2: 输入验证码
+  const [emailStep, setEmailStep] = useState(1); // 1: 验证旧邮箱, 2: 验证新邮箱, 3: 确认提交
   const [emailData, setEmailData] = useState({
+    oldEmailCode: '',
     newEmail: '',
+    newEmailCode: '',
     password: '',
-    verificationCode: '',
+    oldEmailCodeSent: false,
+    newEmailCodeSent: false,
   });
   const [changingEmail, setChangingEmail] = useState(false);
-  const [emailExpiresAt, setEmailExpiresAt] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -224,8 +226,29 @@ export default function SettingsPage() {
     }
   };
 
-  // 处理邮箱修改 - 步骤1：请求验证码
-  const handleEmailRequest = async () => {
+  // 处理邮箱修改 - 步骤1：发送旧邮箱验证码
+  const handleSendOldEmailCode = async () => {
+    setChangingEmail(true);
+
+    try {
+      const { authApi } = await import('@/lib/api');
+      const result = await authApi.sendCode(
+        user.email,
+        'email_change_old'
+      );
+
+      toast.success(result.message || '验证码已发送到当前邮箱');
+      setEmailData((prev) => ({ ...prev, oldEmailCodeSent: true }));
+    } catch (err) {
+      console.error('发送验证码失败:', err);
+      toast.error(err.message || '发送验证码失败');
+    } finally {
+      setChangingEmail(false);
+    }
+  };
+
+  // 处理邮箱修改 - 步骤2：发送新邮箱验证码
+  const handleSendNewEmailCode = async () => {
     if (!emailData.newEmail.trim()) {
       toast.error('请输入新邮箱地址');
       return;
@@ -238,22 +261,17 @@ export default function SettingsPage() {
       return;
     }
 
-    if (settings.email_change_requires_password?.value && !emailData.password) {
-      toast.error('请输入当前密码');
-      return;
-    }
-
     setChangingEmail(true);
 
     try {
-      const result = await userApi.requestEmailChange(
+      const { authApi } = await import('@/lib/api');
+      const result = await authApi.sendCode(
         emailData.newEmail,
-        emailData.password
+        'email_change_new'
       );
 
-      toast.success(result.message || '验证码已发送');
-      setEmailExpiresAt(result.expiresAt);
-      setEmailStep(2); // 进入验证码输入步骤
+      toast.success(result.message || '验证码已发送到新邮箱');
+      setEmailData((prev) => ({ ...prev, newEmailCodeSent: true }));
     } catch (err) {
       console.error('发送验证码失败:', err);
       toast.error(err.message || '发送验证码失败');
@@ -262,30 +280,53 @@ export default function SettingsPage() {
     }
   };
 
-  // 处理邮箱修改 - 步骤2：验证验证码
-  const handleEmailVerify = async () => {
-    if (!emailData.verificationCode.trim()) {
-      toast.error('请输入验证码');
+  // 处理邮箱修改 - 步骤3：提交所有信息完成更换
+  const handleSubmitEmailChange = async () => {
+    if (!emailData.oldEmailCode.trim()) {
+      toast.error('请输入旧邮箱验证码');
+      return;
+    }
+
+    if (!emailData.newEmail.trim()) {
+      toast.error('请输入新邮箱地址');
+      return;
+    }
+
+    if (!emailData.newEmailCode.trim()) {
+      toast.error('请输入新邮箱验证码');
+      return;
+    }
+
+    if (settings.email_change_requires_password?.value && !emailData.password) {
+      toast.error('请输入当前密码');
       return;
     }
 
     setChangingEmail(true);
 
     try {
-      const result = await userApi.verifyEmailChange(
+      const result = await userApi.changeEmail(
+        emailData.oldEmailCode,
         emailData.newEmail,
-        emailData.verificationCode
+        emailData.newEmailCode,
+        emailData.password
       );
 
       toast.success(result.message || '邮箱修改成功');
       setShowEmailDialog(false);
       setEmailStep(1);
-      setEmailData({ newEmail: '', password: '', verificationCode: '' });
-      setEmailExpiresAt(null);
+      setEmailData({
+        oldEmailCode: '',
+        newEmail: '',
+        newEmailCode: '',
+        password: '',
+        oldEmailCodeSent: false,
+        newEmailCodeSent: false,
+      });
       await checkAuth(); // 刷新用户数据
     } catch (err) {
-      console.error('邮箱验证失败:', err);
-      toast.error(err.message || '验证失败');
+      console.error('邮箱修改失败:', err);
+      toast.error(err.message || '邮箱修改失败');
     } finally {
       setChangingEmail(false);
     }
@@ -372,7 +413,14 @@ export default function SettingsPage() {
             onShowEmailDialog={() => {
               setShowEmailDialog(true);
               setEmailStep(1);
-              setEmailData({ newEmail: '', password: '', verificationCode: '' });
+              setEmailData({
+                oldEmailCode: '',
+                newEmail: '',
+                newEmailCode: '',
+                password: '',
+                oldEmailCodeSent: false,
+                newEmailCodeSent: false,
+              });
             }}
             usernameInfo={usernameInfo}
           />
@@ -422,10 +470,10 @@ export default function SettingsPage() {
         emailStep={emailStep}
         emailData={emailData}
         onEmailDataChange={setEmailData}
-        onRequestCode={handleEmailRequest}
-        onVerifyCode={handleEmailVerify}
+        onSendOldEmailCode={handleSendOldEmailCode}
+        onSendNewEmailCode={handleSendNewEmailCode}
+        onSubmitEmailChange={handleSubmitEmailChange}
         loading={changingEmail}
-        emailExpiresAt={emailExpiresAt}
         onStepChange={setEmailStep}
       />
     </div>

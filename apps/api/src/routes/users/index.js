@@ -82,24 +82,24 @@ export default async function userRoutes(fastify, options) {
     }).returning();
 
     // 如果需要发送欢迎邮件
-    if (!isEmailVerified) {
-      try {
-        const { createEmailVerification } = await import('../../utils/verification.js');
-        const verificationToken = await createEmailVerification(email, newUser.id);
+    // if (!isEmailVerified) {
+    //   try {
+    //     const { createEmailVerification } = await import('../../utils/verification.js');
+    //     const verificationToken = await createEmailVerification(email, newUser.id);
 
-        await fastify.sendEmail({
-          to: email,
-          template: 'welcome',
-          data: {
-            username: newUser.username,
-            verificationLink: `${process.env.APP_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`,
-          },
-        });
-        fastify.log.info(`[管理员创建用户] 欢迎邮件已发送至 ${email}`);
-      } catch (error) {
-        fastify.log.error(`[管理员创建用户] 发送欢迎邮件失败: ${error.message}`);
-      }
-    }
+    //     await fastify.sendEmail({
+    //       to: email,
+    //       template: 'welcome',
+    //       data: {
+    //         username: newUser.username,
+    //         verificationLink: `${process.env.APP_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`,
+    //       },
+    //     });
+    //     fastify.log.info(`[管理员创建用户] 欢迎邮件已发送至 ${email}`);
+    //   } catch (error) {
+    //     fastify.log.error(`[管理员创建用户] 发送欢迎邮件失败: ${error.message}`);
+    //   }
+    // }
 
     // Remove sensitive data
     delete newUser.passwordHash;
@@ -504,123 +504,21 @@ export default async function userRoutes(fastify, options) {
     };
   });
 
-  // Request email change - Step 1
-  fastify.post('/me/change-email/request', {
+  // Change email - Unified endpoint for email change
+  fastify.post('/me/change-email', {
     preHandler: [fastify.authenticate],
     schema: {
       tags: ['users'],
-      description: '请求修改邮箱 - 发送验证码',
+      description: '修改邮箱 - 一次性验证旧邮箱和新邮箱',
       security: [{ bearerAuth: [] }],
       body: {
         type: 'object',
-        required: ['newEmail'],
+        required: ['oldEmailCode', 'newEmail', 'newEmailCode'],
         properties: {
-          newEmail: { type: 'string', format: 'email' },
-          password: { type: 'string' }
-        }
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            message: { type: 'string' },
-            expiresAt: { type: 'string' }
-          }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    const { newEmail, password } = request.body;
-    const userId = request.user.id;
-
-    // 获取系统设置
-    const { getSetting } = await import('../../utils/settings.js');
-
-    const allowEmailChange = await getSetting('allow_email_change', true);
-    if (!allowEmailChange) {
-      return reply.code(403).send({ error: '系统暂不允许修改邮箱' });
-    }
-
-    // 获取当前用户信息
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-
-    // 检查是否需要密码验证
-    const requiresPassword = await getSetting('email_change_requires_password', true);
-    if (requiresPassword) {
-      if (!password) {
-        return reply.code(400).send({ error: '请提供当前密码' });
-      }
-      const isValidPassword = await fastify.verifyPassword(password, user.passwordHash);
-      if (!isValidPassword) {
-        return reply.code(400).send({ error: '当前密码不正确' });
-      }
-    }
-
-    // 检查新邮箱是否与当前邮箱相同
-    if (newEmail.toLowerCase() === user.email.toLowerCase()) {
-      return reply.code(400).send({ error: '新邮箱与当前邮箱相同' });
-    }
-
-    // 检查新邮箱是否已被其他用户使用
-    const [existingUser] = await db.select().from(users).where(eq(users.email, newEmail.toLowerCase())).limit(1);
-    if (existingUser) {
-      return reply.code(400).send({ error: '该邮箱已被其他用户使用' });
-    }
-
-    // 先检查邮件服务是否配置，避免创建无用的验证码
-    const emailProvider = await fastify.getDefaultEmailProvider();
-
-    if (!emailProvider || !emailProvider.isEnabled) {
-      // 邮件服务未配置，记录错误并返回明确的错误信息
-      fastify.log.error(`[邮箱修改] 邮件服务未配置或未启用，无法发送验证码至 ${newEmail}`);
-      return reply.code(503).send({
-        error: '邮件服务未配置，无法发送验证码。请联系管理员配置邮件服务。'
-      });
-    }
-
-    // 生成验证码
-    const { createEmailChangeVerification } = await import('../../utils/verification.js');
-    const expiresMinutes = await getSetting('email_change_verification_expires_minutes', 15);
-    const verificationToken = await createEmailChangeVerification(newEmail, userId, expiresMinutes);
-
-    // 发送验证邮件（会自动检查邮件服务配置）
-    try {
-      await fastify.sendEmail({
-        to: newEmail,
-        template: 'email-change-verification',
-        data: {
-          username: user.username,
-          verificationCode: verificationToken,
-          expiresMinutes,
-        },
-      });
-
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + expiresMinutes);
-
-      return {
-        message: '验证码已发送到新邮箱，请查收',
-        expiresAt: expiresAt.toISOString()
-      };
-    } catch (error) {
-      fastify.log.error('发送邮箱验证码失败:', error);
-      return reply.code(500).send({ error: '发送验证码失败，请稍后重试' });
-    }
-  });
-
-  // Verify and complete email change - Step 2
-  fastify.post('/me/change-email/verify', {
-    preHandler: [fastify.authenticate],
-    schema: {
-      tags: ['users'],
-      description: '验证并完成邮箱修改',
-      security: [{ bearerAuth: [] }],
-      body: {
-        type: 'object',
-        required: ['newEmail', 'verificationCode'],
-        properties: {
-          newEmail: { type: 'string', format: 'email' },
-          verificationCode: { type: 'string' }
+          password: { type: 'string', description: '当前密码（可选，取决于系统设置）' },
+          oldEmailCode: { type: 'string', description: '旧邮箱验证码' },
+          newEmail: { type: 'string', format: 'email', description: '新邮箱地址' },
+          newEmailCode: { type: 'string', description: '新邮箱验证码' }
         }
       },
       response: {
@@ -634,73 +532,127 @@ export default async function userRoutes(fastify, options) {
       }
     }
   }, async (request, reply) => {
-    const { newEmail, verificationCode } = request.body;
+    const { password, oldEmailCode, newEmail, newEmailCode } = request.body;
     const userId = request.user.id;
 
-    // 验证验证码
-    const { verifyEmailChangeCode } = await import('../../utils/verification.js');
-    const isValid = await verifyEmailChangeCode(newEmail, verificationCode);
+    // 获取系统设置
+    const { getSetting } = await import('../../utils/settings.js');
 
-    if (!isValid) {
-      return reply.code(400).send({ error: '验证码错误或已过期' });
+    const allowEmailChange = await getSetting('allow_email_change', true);
+    if (!allowEmailChange) {
+      return reply.code(403).send({ error: '系统暂不允许修改邮箱' });
     }
 
     // 获取当前用户信息
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    const oldEmail = user.email;
 
-    // 再次检查新邮箱是否已被其他用户使用
-    const [existingUser] = await db.select().from(users).where(eq(users.email, newEmail.toLowerCase())).limit(1);
-    if (existingUser && existingUser.id !== userId) {
-      return reply.code(400).send({ error: '该邮箱已被其他用户使用' });
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
     }
 
-    // 更新邮箱
-    await db.update(users).set({
-      email: newEmail.toLowerCase(),
-      isEmailVerified: true, // 通过验证码验证后自动设置为已验证
-      updatedAt: new Date()
-    }).where(eq(users.id, userId));
+    // 检查是否需要密码验证
+    const requiresPassword = await getSetting('email_change_requires_password', true);
+    if (requiresPassword) {
+      if (!password) {
+        return reply.code(400).send({ error: '请提供当前密码' });
+      }
+      const isValidPassword = await fastify.verifyPassword(password, user.passwordHash);
+      if (!isValidPassword) {
+        return reply.code(400).send({ error: '当前密码不正确' });
+      }
+    }
 
-    // 清除用户缓存
-    await fastify.clearUserCache(userId);
+    const { VerificationCodeType } = await import('../../config/verificationCode.js');
+    const { verifyCode, deleteVerificationCode } = await import('../../utils/verificationCode.js');
 
-    // 记录操作日志
-    const { moderationLogs } = await import('../../db/schema.js');
-    await db.insert(moderationLogs).values({
-      action: 'email_change',
-      targetType: 'user',
-      targetId: userId,
-      moderatorId: userId,
-      previousStatus: oldEmail,
-      newStatus: newEmail,
-      metadata: JSON.stringify({
-        oldEmail,
-        newEmail
-      })
-    });
-
-    // 发送通知到旧邮箱
     try {
-      await fastify.sendEmail({
-        to: oldEmail,
-        template: 'email-changed-notification',
-        data: {
-          username: user.username,
-          oldEmail,
-          newEmail,
-          changeTime: new Date().toLocaleString('zh-CN'),
-        },
-      });
-    } catch (error) {
-      fastify.log.error('发送邮箱变更通知失败:', error);
-      // 不影响主流程
-    }
+      // 步骤 1：验证旧邮箱验证码
+      const oldEmailResult = await verifyCode(
+        user.email,
+        oldEmailCode,
+        VerificationCodeType.EMAIL_CHANGE_OLD
+      );
 
-    return {
-      message: '邮箱修改成功',
-      email: newEmail
-    };
+      if (!oldEmailResult.valid) {
+        return reply.code(400).send({
+          error: oldEmailResult.error || '旧邮箱验证码错误或已过期'
+        });
+      }
+
+      // 步骤 2：验证邮箱格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail)) {
+        return reply.code(400).send({ error: '请输入有效的邮箱地址' });
+      }
+
+      const newEmailLower = newEmail.toLowerCase();
+
+      // 检查新邮箱是否已被其他用户使用
+      const [existingUser] = await db.select().from(users).where(eq(users.email, newEmailLower)).limit(1);
+      if (existingUser && existingUser.id !== userId) {
+        return reply.code(400).send({ error: '该邮箱已被其他用户使用' });
+      }
+
+      // 步骤 3：验证新邮箱验证码
+      const newEmailResult = await verifyCode(
+        newEmailLower,
+        newEmailCode,
+        VerificationCodeType.EMAIL_CHANGE_NEW
+      );
+
+      if (!newEmailResult.valid) {
+        return reply.code(400).send({
+          error: newEmailResult.error || '新邮箱验证码错误或已过期'
+        });
+      }
+
+      const oldEmail = user.email;
+
+      // 步骤 4：更新邮箱
+      await db.update(users).set({
+        email: newEmailLower,
+        isEmailVerified: true,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+
+      // 删除已使用的验证码
+      await deleteVerificationCode(
+        user.email,
+        VerificationCodeType.EMAIL_CHANGE_OLD
+      );
+      await deleteVerificationCode(
+        newEmailLower,
+        VerificationCodeType.EMAIL_CHANGE_NEW
+      );
+
+      // 清除用户缓存
+      await fastify.clearUserCache(userId);
+
+      // 记录操作日志
+      const { moderationLogs } = await import('../../db/schema.js');
+      await db.insert(moderationLogs).values({
+        action: 'email_change',
+        targetType: 'user',
+        targetId: userId,
+        moderatorId: userId,
+        previousStatus: oldEmail,
+        newStatus: newEmailLower,
+        metadata: JSON.stringify({
+          oldEmail,
+          newEmail: newEmailLower
+        })
+      });
+
+      fastify.log.info(`[邮箱修改] 完成邮箱更换: ${oldEmail} → ${newEmailLower}`);
+
+      return {
+        message: '邮箱修改成功',
+        email: newEmailLower
+      };
+    } catch (error) {
+      fastify.log.error('[邮箱修改] 验证失败:', error);
+      return reply.code(500).send({ error: '验证失败，请稍后重试' });
+    }
   });
 
   // Follow user

@@ -161,6 +161,16 @@ export const authApi = {
     return apiClient.post('/auth/resend-verification');
   },
 
+  // 发送验证码（统一接口）
+  async sendCode(identifier, type) {
+    return apiClient.post('/auth/send-code', { identifier, type });
+  },
+
+  // 校验验证码（仅校验，不参与业务逻辑）
+  async verifyCode(identifier, code, type) {
+    return apiClient.post('/auth/verify-code', { identifier, code, type });
+  },
+
   // ============= 扫码登录 API =============
   // 生成扫码登录请求
   async generateQRLogin() {
@@ -303,19 +313,13 @@ export const userApi = {
     });
   },
 
-  // 请求修改邮箱 - 发送验证码
-  async requestEmailChange(newEmail, password) {
-    return apiClient.post('/users/me/change-email/request', {
+  // 修改邮箱 - 一次性提交所有验证信息
+  async changeEmail(oldEmailCode, newEmail, newEmailCode, password) {
+    return apiClient.post('/users/me/change-email', {
+      oldEmailCode,
       newEmail,
+      newEmailCode,
       password,
-    });
-  },
-
-  // 验证并完成邮箱修改
-  async verifyEmailChange(newEmail, verificationCode) {
-    return apiClient.post('/users/me/change-email/verify', {
-      newEmail,
-      verificationCode,
     });
   },
 

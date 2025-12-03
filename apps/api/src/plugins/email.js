@@ -3,6 +3,7 @@ import db from '../db/index.js';
 import { emailProviders } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getEmailTemplate } from '../templates/email/index.js';
+import { isDev } from '../utils/env.js';
 
 /**
  * 邮件服务插件配置
@@ -101,6 +102,10 @@ async function emailPlugin(fastify, opts) {
     
     if (!provider || !provider.isEnabled) {
       throw new Error('邮件服务未配置或未启用');
+    }
+
+    if (isDev) {
+      fastify.log.info(`[邮件发送测试] 收件人: ${to}, 数据: ${JSON.stringify(data)}, 模板: ${template || '自定义'}`);
     }
     
     // ===== 异步发送阶段：后台执行，不阻塞响应 =====
