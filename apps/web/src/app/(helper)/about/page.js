@@ -145,7 +145,7 @@ const AboutPage = () => {
               <Shield className="h-6 w-6 text-primary shrink-0 mt-1" />
               <div>
                 <h4 className="font-semibold">内容审核</h4>
-                <p className="text-sm text-muted-foreground">智能内容审核，保障社区质量</p>
+                <p className="text-sm text-muted-foreground">开启内容审核，保障社区质量</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
