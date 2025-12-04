@@ -444,7 +444,7 @@ export default async function messageRoutes(fastify) {
         .values({
           senderId: request.user.id,
           recipientId,
-          subject: subject || '(无主题)',
+          subject: subject || null,
           content,
         })
         .returning();

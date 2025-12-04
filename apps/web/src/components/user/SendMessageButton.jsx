@@ -78,7 +78,7 @@ export default function SendMessageButton({ recipientId, recipientName, recipien
     try {
       await messageApi.send({
         recipientId,
-        subject: subject.trim() || '(无主题)',
+        subject: subject.trim() || null,
         content: content.trim()
       });
 

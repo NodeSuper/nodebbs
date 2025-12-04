@@ -129,7 +129,6 @@ export default function MessageDetailPage() {
     try {
       const newMessage = await messageApi.send({
         recipientId: otherUser.id,
-        subject: '(无主题)',
         content: replyContent.trim(),
       });
 
