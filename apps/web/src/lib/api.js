@@ -889,6 +889,11 @@ export const invitationsApi = {
 
 // ============= 积分系统 API =============
 export const creditsApi = {
+  // 获取积分系统状态
+  async getStatus() {
+    return apiClient.get('/credits/status');
+  },
+
   // 获取当前用户积分余额
   async getBalance() {
     return apiClient.get('/credits/balance');
@@ -910,8 +915,8 @@ export const creditsApi = {
   },
 
   // 获取帖子的打赏列表
-  async getPostRewards(postId) {
-    return apiClient.get(`/credits/rewards/${postId}`);
+  async getPostRewards(postId, params = {}) {
+    return apiClient.get(`/credits/rewards/${postId}`, params);
   },
 
   // 获取积分排行榜
@@ -924,6 +929,11 @@ export const creditsApi = {
     // 获取积分系统统计
     async getStats() {
       return apiClient.get('/credits/admin/stats');
+    },
+
+    // 获取所有交易记录
+    async getTransactions(params = {}) {
+      return apiClient.get('/credits/admin/transactions', params);
     },
 
     // 手动发放积分

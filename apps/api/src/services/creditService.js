@@ -6,7 +6,7 @@ import {
   postRewards,
   users,
 } from '../db/schema.js';
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql, desc, ilike } from 'drizzle-orm';
 
 /**
  * 获取积分系统配置
@@ -580,12 +580,99 @@ export async function getUserTransactions(userId, options = {}) {
 }
 
 /**
+ * 获取所有交易记录（管理员用）
+ * @param {Object} options - 查询选项
+ * @param {number} options.page - 页码
+ * @param {number} options.limit - 每页数量
+ * @param {string} [options.type] - 交易类型筛选
+ * @param {number} [options.userId] - 用户ID筛选
+ * @returns {Promise<Object>} 返回 { items, page, limit, total }
+ */
+export async function getAllTransactions(options = {}) {
+  const { page = 1, limit = 20, type = null, userId = null, username = null } = options;
+  const offset = (page - 1) * limit;
+
+  try {
+    let query = db
+      .select({
+        id: creditTransactions.id,
+        userId: creditTransactions.userId,
+        username: users.username,
+        amount: creditTransactions.amount,
+        balance: creditTransactions.balance,
+        type: creditTransactions.type,
+        description: creditTransactions.description,
+        createdAt: creditTransactions.createdAt,
+        metadata: creditTransactions.metadata,
+      })
+      .from(creditTransactions)
+      .innerJoin(users, eq(creditTransactions.userId, users.id));
+
+    if (userId) {
+      query = query.where(eq(creditTransactions.userId, userId));
+    }
+
+    if (username) {
+      query = query.where(ilike(users.username, `%${username}%`));
+    }
+
+    if (type) {
+      query = query.where(eq(creditTransactions.type, type));
+    }
+
+    const items = await query
+      .orderBy(desc(creditTransactions.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // 获取总数
+    let countQuery = db
+      .select({ count: sql`count(*)` })
+      .from(creditTransactions);
+
+    if (userId) {
+      countQuery = countQuery.where(eq(creditTransactions.userId, userId));
+    }
+
+    if (username) {
+      // 如果按用户名搜索，需要关联用户表来计算总数
+      countQuery = countQuery
+        .innerJoin(users, eq(creditTransactions.userId, users.id))
+        .where(ilike(users.username, `%${username}%`));
+    }
+
+    if (type) {
+      countQuery = countQuery.where(eq(creditTransactions.type, type));
+    }
+
+    const [{ count }] = await countQuery;
+
+    return {
+      items,
+      page,
+      limit,
+      total: Number(count),
+    };
+  } catch (error) {
+    console.error('[所有交易记录] 查询失败:', error);
+    throw error;
+  }
+}
+
+/**
  * 获取帖子的打赏列表
  * @param {number} postId - 帖子ID
- * @returns {Promise<Array>}
+ * @param {Object} options - 查询选项
+ * @param {number} options.page - 页码
+ * @param {number} options.limit - 每页数量
+ * @returns {Promise<Object>}
  */
-export async function getPostRewards(postId) {
+export async function getPostRewards(postId, options = {}) {
+  const { page = 1, limit = 20 } = options;
+  const offset = (page - 1) * limit;
+
   try {
+    // 获取分页数据
     const rewards = await db
       .select({
         id: postRewards.id,
@@ -599,9 +686,26 @@ export async function getPostRewards(postId) {
       .from(postRewards)
       .innerJoin(users, eq(postRewards.fromUserId, users.id))
       .where(eq(postRewards.postId, postId))
-      .orderBy(desc(postRewards.createdAt));
+      .orderBy(desc(postRewards.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return rewards;
+    // 获取总统计
+    const [stats] = await db
+      .select({
+        totalAmount: sql`sum(${postRewards.amount})`,
+        totalCount: sql`count(*)`,
+      })
+      .from(postRewards)
+      .where(eq(postRewards.postId, postId));
+
+    return {
+      items: rewards,
+      totalAmount: Number(stats?.totalAmount || 0),
+      page,
+      limit,
+      total: Number(stats?.totalCount || 0),
+    };
   } catch (error) {
     console.error('[打赏列表] 查询失败:', error);
     throw error;

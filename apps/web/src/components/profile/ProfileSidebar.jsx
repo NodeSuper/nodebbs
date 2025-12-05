@@ -15,19 +15,28 @@ import {
   Coins,
   ShoppingCart,
   Package,
+  ChevronDown,
+  ChevronRight,
+  Store,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { messageApi } from '@/lib/api';
+import { messageApi, creditsApi } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 export default function ProfileSidebar() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [creditEnabled, setCreditEnabled] = useState(false);
+  const [openMenus, setOpenMenus] = useState({
+    'credits-shop': true, // 默认展开
+  });
 
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchUnreadCount();
+      fetchCreditStatus();
     }
   }, [isAuthenticated, user]);
 
@@ -40,6 +49,22 @@ export default function ProfileSidebar() {
     }
   };
 
+  const fetchCreditStatus = async () => {
+    try {
+      const { enabled } = await creditsApi.getStatus();
+      setCreditEnabled(enabled);
+    } catch (err) {
+      console.error('获取积分系统状态失败:', err);
+    }
+  };
+
+  const toggleMenu = (key) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const menuItems = [
     {
       href: '/profile/topics',
@@ -50,21 +75,6 @@ export default function ProfileSidebar() {
       href: '/profile/favorites',
       icon: Star,
       label: '我的收藏',
-    },
-    {
-      href: '/profile/credits',
-      icon: Coins,
-      label: '积分中心',
-    },
-    {
-      href: '/profile/shop',
-      icon: ShoppingCart,
-      label: '积分商城',
-    },
-    {
-      href: '/profile/items',
-      icon: Package,
-      label: '我的道具',
     },
     {
       href: '/profile/replies',
@@ -87,6 +97,28 @@ export default function ProfileSidebar() {
       icon: ShieldOff,
       label: '拉黑用户',
     },
+    ...(creditEnabled ? [{
+      key: 'credits-shop',
+      label: '积分与商城',
+      icon: Store,
+      children: [
+        {
+          href: '/profile/credits',
+          icon: Coins,
+          label: '积分中心',
+        },
+        {
+          href: '/profile/shop',
+          icon: ShoppingCart,
+          label: '积分商城',
+        },
+        {
+          href: '/profile/items',
+          icon: Package,
+          label: '我的道具',
+        },
+      ],
+    }] : []),
     {
       href: '/profile/invitations',
       icon: Gift,
@@ -103,38 +135,76 @@ export default function ProfileSidebar() {
     return pathname === href || pathname?.startsWith(href + '/');
   };
 
-  return (
-    <nav className='space-y-1'>
-      {menuItems.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            prefetch={false}
-            className={`
-                flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors
-                ${
-                  active
-                    ? 'bg-muted font-medium text-foreground'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                }
-              `}
+  const renderMenuItem = (item) => {
+    const Icon = item.icon;
+    
+    // 处理有子菜单的项
+    if (item.children) {
+      const isOpen = openMenus[item.key];
+      // 检查子菜单是否有激活项
+      const hasActiveChild = item.children.some(child => isActive(child.href));
+      
+      return (
+        <div key={item.key} className="space-y-1">
+          <button
+            onClick={() => toggleMenu(item.key)}
+            className={cn(
+              "w-full flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors",
+              hasActiveChild
+                ? "text-foreground font-medium"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            )}
           >
-            <div className='flex items-center gap-3'>
-              <Icon className='h-4 w-4' />
+            <div className="flex items-center gap-3">
+              <Icon className="h-4 w-4" />
               <span>{item.label}</span>
             </div>
-            {item.badge && (
-              <Badge variant='destructive' className='text-xs'>
-                {item.badge}
-              </Badge>
+            {isOpen ? (
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            ) : (
+              <ChevronRight className="h-4 w-4 opacity-50" />
             )}
-          </Link>
-        );
-      })}
+          </button>
+          
+          {isOpen && (
+            <div className="pl-4 space-y-1 border-l ml-4 my-1">
+              {item.children.map(child => renderMenuItem(child))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 处理普通菜单项
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        prefetch={false}
+        className={cn(
+          "flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-md transition-colors",
+          active
+            ? "bg-muted font-medium text-foreground"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Icon className="h-4 w-4" />
+          <span>{item.label}</span>
+        </div>
+        {item.badge && (
+          <Badge variant="destructive" className="text-xs">
+            {item.badge}
+          </Badge>
+        )}
+      </Link>
+    );
+  };
+
+  return (
+    <nav className="space-y-1">
+      {menuItems.map(item => renderMenuItem(item))}
     </nav>
   );
 }

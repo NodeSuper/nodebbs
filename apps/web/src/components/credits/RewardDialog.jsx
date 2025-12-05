@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 
 const QUICK_AMOUNTS = [1, 5, 10, 20, 50, 100];
 
-export function RewardDialog({ open, onOpenChange, postId, postAuthor, onSuccess }) {
+export function RewardDialog({ open, onOpenChange, postId, postAuthor, onSuccess, onViewHistory }) {
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,9 +107,21 @@ export function RewardDialog({ open, onOpenChange, postId, postAuthor, onSuccess
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500" />
-            打赏 {postAuthor}
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              打赏 {postAuthor}
+            </div>
+            {onViewHistory && (
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="text-xs text-muted-foreground h-auto p-0 mr-10"
+                onClick={onViewHistory}
+              >
+                查看记录
+              </Button>
+            )}
           </DialogTitle>
           <DialogDescription>
             向优质内容的创作者表示感谢

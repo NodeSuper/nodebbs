@@ -19,6 +19,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { postApi } from '@/lib/api';
 import { toast } from 'sonner';
 
+import { RewardDialog } from '@/components/credits/RewardDialog';
+import { RewardListDialog } from '@/components/credits/RewardListDialog';
+import { creditsApi } from '@/lib/api';
+import { Coins } from 'lucide-react';
+
 export default function TopicContent({ topic }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();
   const [likingPostIds, setLikingPostIds] = useState(new Set());
@@ -26,6 +31,34 @@ export default function TopicContent({ topic }) {
     isFirstPostLiked: topic.isFirstPostLiked || false,
     firstPostLikeCount: topic.firstPostLikeCount || 0,
   });
+  
+  // 打赏相关状态
+  const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
+  const [rewardListOpen, setRewardListOpen] = useState(false);
+  const [rewardStats, setRewardStats] = useState({
+    totalAmount: 0,
+    totalCount: 0
+  });
+
+  // 获取打赏统计
+  const fetchRewardStats = async () => {
+    if (topic.firstPostId) {
+      try {
+        const data = await creditsApi.getPostRewards(topic.firstPostId);
+        setRewardStats({
+          totalAmount: data.totalAmount || 0,
+          totalCount: data.total || 0
+        });
+      } catch (error) {
+        console.error('获取打赏统计失败:', error);
+      }
+    }
+  };
+
+  // 初始化获取打赏统计
+  useState(() => {
+    fetchRewardStats();
+  }, [topic.firstPostId]);
 
   // 切换首帖点赞状态
   const handleTogglePostLike = async (postId, isLiked) => {
@@ -204,7 +237,47 @@ export default function TopicContent({ topic }) {
 
           {/* 首帖底部操作栏 */}
           {topic.firstPostId && (
-            <div className='flex items-center justify-end mt-5 pt-4 border-t border-border/50'>
+            <div className='flex items-center justify-end gap-2 mt-5 pt-4 border-t border-border/50'>
+              {/* 打赏按钮 */}
+              {user?.id !== topic.userId && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      openLoginDialog();
+                      return;
+                    }
+                    setRewardDialogOpen(true);
+                  }}
+                  className='text-muted-foreground hover:text-yellow-600'
+                  title='打赏'
+                >
+                  <Coins className='h-4 w-4' />
+                  {rewardStats.totalAmount > 0 && (
+                    <span className='text-sm'>
+                      {rewardStats.totalAmount}
+                    </span>
+                  )}
+                </Button>
+              )}
+              
+              {/* 如果是作者，或者有打赏记录，且不是当前用户（因为当前用户点击打赏按钮也能看到记录入口），显示查看记录按钮 */}
+              {/* 修改：统一在打赏弹窗中查看记录，或者点击总金额查看 */}
+              {(user?.id === topic.userId && rewardStats.totalCount > 0) && (
+                 <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setRewardListOpen(true)}
+                  className='text-muted-foreground hover:text-foreground'
+                  title='查看打赏记录'
+                 >
+                   <span className="text-xs">
+                     {rewardStats.totalCount} 次打赏
+                   </span>
+                 </Button>
+              )}
+
               <Button
                 variant='ghost'
                 size='sm'
@@ -245,6 +318,32 @@ export default function TopicContent({ topic }) {
           )}
         </div>
       </div>
+
+      {/* 打赏对话框 */}
+      {topic.firstPostId && (
+        <RewardDialog
+          open={rewardDialogOpen}
+          onOpenChange={setRewardDialogOpen}
+          postId={topic.firstPostId}
+          postAuthor={topic.userName || topic.username}
+          onSuccess={() => {
+            fetchRewardStats();
+          }}
+          onViewHistory={() => {
+            setRewardDialogOpen(false);
+            setRewardListOpen(true);
+          }}
+        />
+      )}
+
+      {/* 打赏记录对话框 */}
+      {topic.firstPostId && (
+        <RewardListDialog
+          open={rewardListOpen}
+          onOpenChange={setRewardListOpen}
+          postId={topic.firstPostId}
+        />
+      )}
     </>
   );
 }

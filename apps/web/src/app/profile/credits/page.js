@@ -19,13 +19,13 @@ import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
 import { toast } from 'sonner';
 import TimeAgo from '@/components/forum/TimeAgo';
+import Link from 'next/link';
 
 export default function CreditsPage() {
   const { user } = useAuth();
   const [balance, setBalance] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -63,21 +63,6 @@ export default function CreditsPage() {
     }
   };
 
-  const handleCheckIn = async () => {
-    setIsCheckingIn(true);
-    try {
-      const result = await creditsApi.checkIn();
-      toast.success(result.message);
-      // 刷新余额和交易记录
-      await fetchBalance();
-      await fetchTransactions();
-    } catch (error) {
-      toast.error(error.message || '签到失败');
-    } finally {
-      setIsCheckingIn(false);
-    }
-  };
-
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
@@ -105,9 +90,17 @@ export default function CreditsPage() {
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold text-card-foreground mb-2">积分中心</h1>
-        <p className="text-muted-foreground">管理你的积分和交易记录</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-card-foreground mb-2">积分中心</h1>
+          <p className="text-muted-foreground">管理你的积分和交易记录</p>
+        </div>
+        <Link href="/rank">
+          <Button variant="outline" className="gap-2">
+            <Trophy className="h-4 w-4 text-yellow-500" />
+            查看排行榜
+          </Button>
+        </Link>
       </div>
 
       {/* 积分概览卡片 */}
@@ -163,34 +156,24 @@ export default function CreditsPage() {
             每日签到
           </CardTitle>
           <CardDescription>
-            连续签到可获得额外奖励，当前连续签到 {balance?.checkInStreak || 0} 天
+            每日首次访问自动签到，连续签到可获得额外奖励
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={handleCheckIn}
-            disabled={isCheckingIn}
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            {isCheckingIn ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                签到中...
-              </>
-            ) : (
-              <>
-                <Coins className="mr-2 h-4 w-4" />
-                立即签到
-              </>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">当前连续签到</span>
+              <span className="text-2xl font-bold">{balance?.checkInStreak || 0} 天</span>
+            </div>
+            {balance?.lastCheckInDate && (
+              <div className="flex flex-col border-l pl-4">
+                <span className="text-sm text-muted-foreground">上次签到</span>
+                <span className="text-sm font-medium">
+                  <TimeAgo date={balance.lastCheckInDate} />
+                </span>
+              </div>
             )}
-          </Button>
-          {balance?.lastCheckInDate && (
-            <p className="text-sm text-muted-foreground mt-2">
-              上次签到：
-              <TimeAgo date={balance.lastCheckInDate}  />
-            </p>
-          )}
+          </div>
         </CardContent>
       </Card>
 

@@ -36,6 +36,7 @@ export default function CreditsManagementPage() {
     limit: 20,
     total: 0,
   });
+  const [transactionSearchQuery, setTransactionSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     userId: null,
@@ -62,14 +63,21 @@ export default function CreditsManagementPage() {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const data = await creditsApi.getTransactions({
+      const params = {
         page: pagination.page,
         limit: pagination.limit,
-      });
-      setTransactions(data.items || []);
+      };
+      if (formData.userId) {
+        params.userId = formData.userId;
+      }
+      if (transactionSearchQuery) {
+        params.username = transactionSearchQuery;
+      }
+      const transactionsData = await creditsApi.admin.getTransactions(params);
+      setTransactions(transactionsData.items || []);
       setPagination((prev) => ({
         ...prev,
-        total: data.total || 0,
+        total: transactionsData.total || 0,
       }));
     } catch (error) {
       console.error('获取交易记录失败:', error);
@@ -313,9 +321,22 @@ export default function CreditsManagementPage() {
 
       {/* 交易记录 */}
       <Card>
-        <CardHeader>
-          <CardTitle>最近交易记录</CardTitle>
-          <CardDescription>查看系统中所有用户的积分交易记录</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>最近交易记录</CardTitle>
+            <CardDescription>查看系统中所有用户的积分交易记录</CardDescription>
+          </div>
+          <div className="flex w-full max-w-sm items-center space-x-2">
+            <Input
+              placeholder="搜索用户名..."
+              value={transactionSearchQuery}
+              onChange={(e) => setTransactionSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchTransactions()}
+            />
+            <Button size="icon" onClick={fetchTransactions}>
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (

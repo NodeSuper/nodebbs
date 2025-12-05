@@ -9,12 +9,35 @@ import {
   getPostRewards,
   getCreditRanking,
   getCreditConfig,
+  getAllTransactions,
+  isCreditSystemEnabled,
 } from '../../services/creditService.js';
 import db from '../../db/index.js';
 import { posts, users, creditSystemConfig, userCredits, creditTransactions, postRewards } from '../../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
 
 export default async function creditsRoutes(fastify, options) {
+  // ============ 公开接口 ============
+
+  // 获取积分系统状态
+  fastify.get('/status', {
+    schema: {
+      tags: ['credits'],
+      description: '获取积分系统启用状态',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const enabled = await isCreditSystemEnabled();
+    return { enabled };
+  });
+
   // ============ 用户接口 ============
 
   // 获取当前用户积分余额
@@ -72,7 +95,8 @@ export default async function creditsRoutes(fastify, options) {
       return result;
     } catch (error) {
       if (error.message === '今天已经签到过了') {
-        return reply.code(400).send({ error: error.message });
+        // return reply.code(400).send({ error: error.message });
+        return reply.code(200).send({ message: error.message });
       }
       if (error.message === '积分系统未启用') {
         return reply.code(403).send({ error: error.message });
@@ -226,12 +250,25 @@ export default async function creditsRoutes(fastify, options) {
           postId: { type: 'number' },
         },
       },
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', default: 1 },
+          limit: { type: 'number', default: 20, maximum: 100 },
+        },
+      },
     },
   }, async (request, reply) => {
     try {
       const { postId } = request.params;
-      const rewards = await getPostRewards(postId);
-      return { items: rewards };
+      const { page, limit } = request.query;
+      
+      const result = await getPostRewards(parseInt(postId), {
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 20
+      });
+      
+      return result;
     } catch (error) {
       fastify.log.error('[打赏列表] 查询失败:', error);
       return reply.code(500).send({ error: '查询失败' });
@@ -263,6 +300,33 @@ export default async function creditsRoutes(fastify, options) {
   });
 
   // ============ 管理员接口 ============
+
+  // 获取所有交易记录
+  fastify.get('/admin/transactions', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          type: { type: 'string' },
+          userId: { type: 'integer' },
+          username: { type: 'string' },
+        },
+      },
+    },
+    handler: async (request, reply) => {
+      const { page, limit, type, userId, username } = request.query;
+      const result = await getAllTransactions({
+        page,
+        limit,
+        type,
+        userId,
+        username,
+      });
+      return result;
+    },
+  });
 
   // 获取积分系统统计
   fastify.get('/admin/stats', {

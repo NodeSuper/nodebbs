@@ -15,6 +15,7 @@ import {
 import Header from '@/components/forum/Header';
 import Footer from '@/components/forum/Footer';
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
+import AutoCheckIn from '@/components/credits/AutoCheckIn';
 import { request } from '@/lib/server/api';
 
 // 强制动态渲染，因为需要读取 cookies
@@ -114,6 +115,7 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <SettingsProvider>
               <AppLayout>{children}</AppLayout>
+              <AutoCheckIn />
               <Toaster position='top-right' richColors />
             </SettingsProvider>
           </AuthProvider>

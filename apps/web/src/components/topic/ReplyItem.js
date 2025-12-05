@@ -28,9 +28,11 @@ import TimeAgo from '@/components/forum/TimeAgo';
 import ReportDialog from '@/components/moderation/ReportDialog';
 import { RewardDialog } from '@/components/credits/RewardDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { postApi } from '@/lib/api';
+import { postApi, creditsApi } from '@/lib/api';
 import { toast } from 'sonner';
 import MarkdownRender from '../common/MarkdownRender';
+
+import { RewardListDialog } from '@/components/credits/RewardListDialog';
 
 export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();
@@ -41,6 +43,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
   const [submitting, setSubmitting] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
+  const [rewardListOpen, setRewardListOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState({
     type: '',
     id: 0,
@@ -49,6 +52,28 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
 
   // 本地状态
   const [localReply, setLocalReply] = useState(reply);
+  const [rewardStats, setRewardStats] = useState({
+    totalAmount: 0,
+    totalCount: 0
+  });
+
+  // 获取打赏统计
+  const fetchRewardStats = async () => {
+    try {
+      const data = await creditsApi.getPostRewards(localReply.id);
+      setRewardStats({
+        totalAmount: data.totalAmount || 0,
+        totalCount: data.total || 0
+      });
+    } catch (error) {
+      console.error('获取打赏统计失败:', error);
+    }
+  };
+
+  // 初始化获取打赏统计
+  useState(() => {
+    fetchRewardStats();
+  }, [localReply.id]);
 
   // 检查审核状态
   const isPending = localReply.approvalStatus === 'pending';
@@ -351,7 +376,30 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
                   title='打赏'
                 >
                   <Coins className='h-3.5 w-3.5' />
+                  {rewardStats.totalAmount > 0 && (
+                    <span className='text-xs ml-1'>
+                      {rewardStats.totalAmount}
+                    </span>
+                  )}
                 </Button>
+              )}
+              
+              {/* 如果是作者且有打赏记录，显示查看记录按钮（仅图标） */}
+              {(isOwnReply && rewardStats.totalCount > 0) && (
+                 <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setRewardListOpen(true)}
+                  className='h-7 px-2 text-muted-foreground/60 hover:text-foreground hover:bg-muted/50'
+                  title='查看打赏记录'
+                 >
+                   <Coins className='h-3.5 w-3.5' />
+                   {rewardStats.totalAmount > 0 && (
+                     <span className='text-xs'>
+                       {rewardStats.totalAmount}
+                     </span>
+                   )}
+                 </Button>
               )}
 
               {/* 更多操作 */}
@@ -507,11 +555,23 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded }) {
         postId={localReply.id}
         postAuthor={localReply.userName || localReply.userUsername}
         onSuccess={() => {
-          // 打赏成功后可以刷新打赏列表（如果有的话）
+          // 打赏成功后刷新打赏列表和统计
+          fetchRewardStats();
           if (typeof window !== 'undefined' && window.__refreshRewards) {
             window.__refreshRewards();
           }
         }}
+        onViewHistory={() => {
+          setRewardDialogOpen(false);
+          setRewardListOpen(true);
+        }}
+      />
+      
+      {/* 打赏记录对话框 */}
+      <RewardListDialog
+        open={rewardListOpen}
+        onOpenChange={setRewardListOpen}
+        postId={localReply.id}
       />
     </>
   );

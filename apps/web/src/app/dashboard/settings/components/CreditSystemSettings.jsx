@@ -24,8 +24,10 @@ export function CreditSystemSettings() {
       // 转换为 key-value 对象
       const configMap = {};
       data.items.forEach((item) => {
+        const val = item.valueType === 'boolean' ? item.value === 'true' : Number(item.value);
         configMap[item.key] = {
-          value: item.valueType === 'boolean' ? item.value === 'true' : Number(item.value),
+          value: val,
+          serverValue: val,
           valueType: item.valueType,
           description: item.description,
         };
@@ -45,7 +47,7 @@ export function CreditSystemSettings() {
       await creditsApi.admin.updateConfig(key, value);
       setConfigs((prev) => ({
         ...prev,
-        [key]: { ...prev[key], value },
+        [key]: { ...prev[key], value, serverValue: value },
       }));
       toast.success('配置已保存');
     } catch (error) {
@@ -60,10 +62,34 @@ export function CreditSystemSettings() {
     handleUpdate(key, checked);
   };
 
-  const handleNumberChange = (key, value) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= 0) {
-      handleUpdate(key, numValue);
+  const handleLocalChange = (key, value) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], value },
+    }));
+  };
+
+  const handleBlur = (key, value) => {
+    const config = configs[key];
+    if (!config) return;
+
+    let newValue = value;
+    // 如果不是布尔值，转换为数字
+    if (typeof config.serverValue === 'number') {
+      newValue = Number(value);
+      // 简单的验证
+      if (isNaN(newValue) || newValue < 0) {
+        // 如果无效，重置为服务器值
+        setConfigs((prev) => ({
+          ...prev,
+          [key]: { ...prev[key], value: config.serverValue },
+        }));
+        return;
+      }
+    }
+
+    if (newValue !== config.serverValue) {
+      handleUpdate(key, newValue);
     }
   };
 
@@ -119,9 +145,9 @@ export function CreditSystemSettings() {
               id="check_in_base_amount"
               type="number"
               min="0"
-              value={configs.check_in_base_amount?.value || 0}
-              onChange={(e) => handleNumberChange('check_in_base_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('check_in_base_amount', e.target.value)}
+              value={configs.check_in_base_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('check_in_base_amount', e.target.value)}
+              onBlur={(e) => handleBlur('check_in_base_amount', e.target.value)}
               disabled={saving.check_in_base_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -136,9 +162,9 @@ export function CreditSystemSettings() {
               id="check_in_streak_bonus"
               type="number"
               min="0"
-              value={configs.check_in_streak_bonus?.value || 0}
-              onChange={(e) => handleNumberChange('check_in_streak_bonus', e.target.value)}
-              onBlur={(e) => handleNumberChange('check_in_streak_bonus', e.target.value)}
+              value={configs.check_in_streak_bonus?.value ?? ''}
+              onChange={(e) => handleLocalChange('check_in_streak_bonus', e.target.value)}
+              onBlur={(e) => handleBlur('check_in_streak_bonus', e.target.value)}
               disabled={saving.check_in_streak_bonus}
             />
             <p className="text-xs text-muted-foreground">
@@ -153,9 +179,9 @@ export function CreditSystemSettings() {
               id="post_topic_amount"
               type="number"
               min="0"
-              value={configs.post_topic_amount?.value || 0}
-              onChange={(e) => handleNumberChange('post_topic_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('post_topic_amount', e.target.value)}
+              value={configs.post_topic_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('post_topic_amount', e.target.value)}
+              onBlur={(e) => handleBlur('post_topic_amount', e.target.value)}
               disabled={saving.post_topic_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -170,9 +196,9 @@ export function CreditSystemSettings() {
               id="post_reply_amount"
               type="number"
               min="0"
-              value={configs.post_reply_amount?.value || 0}
-              onChange={(e) => handleNumberChange('post_reply_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('post_reply_amount', e.target.value)}
+              value={configs.post_reply_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('post_reply_amount', e.target.value)}
+              onBlur={(e) => handleBlur('post_reply_amount', e.target.value)}
               disabled={saving.post_reply_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -187,9 +213,9 @@ export function CreditSystemSettings() {
               id="receive_like_amount"
               type="number"
               min="0"
-              value={configs.receive_like_amount?.value || 0}
-              onChange={(e) => handleNumberChange('receive_like_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('receive_like_amount', e.target.value)}
+              value={configs.receive_like_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('receive_like_amount', e.target.value)}
+              onBlur={(e) => handleBlur('receive_like_amount', e.target.value)}
               disabled={saving.receive_like_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -204,9 +230,9 @@ export function CreditSystemSettings() {
               id="invite_reward_amount"
               type="number"
               min="0"
-              value={configs.invite_reward_amount?.value || 0}
-              onChange={(e) => handleNumberChange('invite_reward_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('invite_reward_amount', e.target.value)}
+              value={configs.invite_reward_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('invite_reward_amount', e.target.value)}
+              onBlur={(e) => handleBlur('invite_reward_amount', e.target.value)}
               disabled={saving.invite_reward_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -230,9 +256,9 @@ export function CreditSystemSettings() {
               id="reward_min_amount"
               type="number"
               min="1"
-              value={configs.reward_min_amount?.value || 1}
-              onChange={(e) => handleNumberChange('reward_min_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('reward_min_amount', e.target.value)}
+              value={configs.reward_min_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('reward_min_amount', e.target.value)}
+              onBlur={(e) => handleBlur('reward_min_amount', e.target.value)}
               disabled={saving.reward_min_amount}
             />
             <p className="text-xs text-muted-foreground">
@@ -247,9 +273,9 @@ export function CreditSystemSettings() {
               id="reward_max_amount"
               type="number"
               min="1"
-              value={configs.reward_max_amount?.value || 1000}
-              onChange={(e) => handleNumberChange('reward_max_amount', e.target.value)}
-              onBlur={(e) => handleNumberChange('reward_max_amount', e.target.value)}
+              value={configs.reward_max_amount?.value ?? ''}
+              onChange={(e) => handleLocalChange('reward_max_amount', e.target.value)}
+              onBlur={(e) => handleBlur('reward_max_amount', e.target.value)}
               disabled={saving.reward_max_amount}
             />
             <p className="text-xs text-muted-foreground">
