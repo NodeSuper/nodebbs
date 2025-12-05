@@ -23,6 +23,13 @@ export default async function (fastify, opts) {
     maxDepth: 1,
   })
 
+  // This loads all features defined in features
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'features'),
+    options: Object.assign({}, opts),
+    maxDepth: 1,
+  })
+
   // This loads all plugins defined in routes
   // define your routes in one of these
   fastify.register(AutoLoad, {
