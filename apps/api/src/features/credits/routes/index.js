@@ -311,7 +311,7 @@ export default async function creditsRoutes(fastify, options) {
       }
 
       // 批量查询打赏统计
-      console.log('批量查询打赏统计 - 输入 postIds:', postIds);
+      // console.log('批量查询打赏统计 - 输入 postIds:', postIds);
       
       const stats = await db
         .select({
@@ -323,7 +323,7 @@ export default async function creditsRoutes(fastify, options) {
         .where(inArray(postRewards.postId, postIds))
         .groupBy(postRewards.postId);
 
-      console.log('批量查询打赏统计 - 查询结果:', stats);
+      // console.log('批量查询打赏统计 - 查询结果:', stats);
 
       // 转换为 Map 格式方便前端使用
       const statsMap = {};
@@ -352,14 +352,14 @@ export default async function creditsRoutes(fastify, options) {
         });
       }
 
-      console.log('批量查询打赏统计 - 最终结果:', statsMap);
+      // console.log('批量查询打赏统计 - 最终结果:', statsMap);
       return statsMap;
     } catch (error) {
-      console.log('批量打赏统计错误详情:', {
-        message: error.message,
-        stack: error.stack,
-        postIds: request.body?.postIds,
-      });
+      // console.log('批量打赏统计错误详情:', {
+      //   message: error.message,
+      //   stack: error.stack,
+      //   postIds: request.body?.postIds,
+      // });
       fastify.log.error('[批量打赏统计] 查询失败:', error);
       return reply.code(500).send({ error: '查询失败: ' + error.message });
     }
