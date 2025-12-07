@@ -127,7 +127,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                 placeholder="勋章名称"
                 {...register('name', { required: '请输入勋章名称' })} 
               />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -137,7 +137,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                 placeholder="例如: checkin-master" 
                 {...register('slug', { required: '请输入唯一标识 (Slug)' })} 
               />
-              {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+              {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
             </div>
           </div>
 
@@ -170,7 +170,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                 placeholder="/images/badges/example.png" 
                 {...register('iconUrl', { required: '请输入图标 URL' })} 
               />
-              {errors.iconUrl && <p className="text-sm text-red-500">{errors.iconUrl.message}</p>}
+              {errors.iconUrl && <p className="text-sm text-destructive">{errors.iconUrl.message}</p>}
             </div>
           </div>
 
@@ -185,10 +185,10 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
           </div>
 
           {/* 解锁条件构建器 */}
-          <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+          <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-slate-900">解锁条件配置</h3>
-                <span className="text-xs text-slate-500">配置自动获取规则</span>
+                <h3 className="text-sm font-medium text-foreground">解锁条件配置</h3>
+                <span className="text-xs text-muted-foreground">配置自动获取规则</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8">
@@ -199,7 +199,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                   control={control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="bg-white">
+                      <SelectTrigger className="bg-background">
                         <SelectValue placeholder="选择类型" />
                       </SelectTrigger>
                       <SelectContent>
@@ -221,7 +221,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                   <Input 
                     id="_threshold" 
                     type="number" 
-                    className="bg-white"
+                    className="bg-background"
                     placeholder="例如: 10" 
                     {...register('_threshold', { 
                         required: watch('_conditionType') !== 'manual' ? '请输入阈值' : false,
@@ -233,7 +233,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
             </div>
             
              {watch('_conditionType') !== 'manual' && (
-                <div className="text-xs text-slate-500 font-mono bg-white p-2 rounded border truncate">
+                <div className="text-xs text-muted-foreground font-mono bg-background p-2 rounded border truncate">
                 预览: {JSON.stringify({
                     type: watch('_conditionType') || 'manual',
                     threshold: Number(watch('_threshold') || 0)
@@ -253,7 +253,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
               <p className="text-[10px] text-muted-foreground">数字越小排序越靠前</p>
             </div>
 
-            <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-white h-[42px]">
+            <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background h-[42px]">
               <div className="space-y-0.5">
                 <Label htmlFor="isActive" className="cursor-pointer">启用状态</Label>
               </div>

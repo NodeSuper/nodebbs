@@ -131,6 +131,7 @@ export function ShopItemTable({ items, loading, pagination, onEdit, onDelete }) 
     {
       label: '操作',
       key: 'operation',
+      align: 'right',
       render: (value, row) => (
         <div className="flex items-center gap-2">
           <Button
@@ -183,7 +184,7 @@ export function ShopItemTable({ items, loading, pagination, onEdit, onDelete }) 
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deleting ? (
                 <>

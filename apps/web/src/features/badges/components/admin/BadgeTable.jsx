@@ -3,6 +3,7 @@ import { DataTable } from '@/components/forum/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2 } from 'lucide-react';
+import { Edit } from 'lucide-react';
 
 export function BadgeTable({ items, loading, onEdit, onDelete }) {
   const columns = [
@@ -57,7 +58,7 @@ export function BadgeTable({ items, loading, onEdit, onDelete }) {
             size="icon"
             onClick={() => onEdit(item)}
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
