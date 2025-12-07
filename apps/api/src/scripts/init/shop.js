@@ -84,6 +84,39 @@ export const DEFAULT_SHOP_ITEMS = [
       borderColor: 'linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8)',
       animation: 'spin' 
     })
+  },
+  // 新增：图片头像框示例
+  {
+    type: 'avatar_frame',
+    name: '神龙降世',
+    description: '霸气的金色神龙环绕（图片演示）',
+    price: 1500,
+    imageUrl: 'https://placehold.co/300x300', // 仅作封面示意，实际框使用 metadata.imageUrl
+    stock: null,
+    isActive: true,
+    displayOrder: 10,
+    metadata: JSON.stringify({
+      type: 'image',
+      imageUrl: 'https://placehold.co/300x300', // 注：用户需替换为真实有效的 GIF/APNG 链接
+      scale: 1.45,
+      yOffset: '-2px'
+    })
+  },
+  {
+    type: 'avatar_frame',
+    name: '故障艺术',
+    description: '赛博朋克风格故障效果（混合模式演示）',
+    price: 1200,
+    imageUrl: '',
+    stock: null,
+    isActive: true,
+    displayOrder: 11,
+    metadata: JSON.stringify({
+      type: 'image',
+      imageUrl: 'https://placehold.co/300x300', // 需替换有效链接
+      scale: 1.2,
+      blendMode: 'screen' 
+    })
   }
 ];
 

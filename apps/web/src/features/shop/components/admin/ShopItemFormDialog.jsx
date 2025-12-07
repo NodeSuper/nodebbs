@@ -24,6 +24,7 @@ import Image from 'next/image';
 import { ITEM_TYPES, getItemTypeLabel } from '../../utils/itemTypes';
 import { badgesApi } from '@/features/badges/api';
 import UserAvatar from '@/components/forum/UserAvatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Form dialog for creating/editing shop items
@@ -48,6 +49,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
     metadata: '',
   });
 
+  const { user } = useAuth();
   const [badges, setBadges] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(false);
 
@@ -158,7 +160,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
 
           {/* Avatar Frame Preview */}
           {formData.type === ITEM_TYPES.AVATAR_FRAME && (
-            <div className="flex items-center gap-4 p-4 bg-muted rounded-lg border">
+            <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
               <div className="flex-1 space-y-1">
                 <Label>头像框预览</Label>
                 <p className="text-xs text-muted-foreground">
@@ -168,9 +170,9 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
                    <UserAvatar 
-                      name="Preview" 
+                      name={user?.name || user?.username || 'Preview'} 
                       size="lg" 
-                      url={formData.imageUrl || undefined}
+                      url={user?.avatar}
                       frameMetadata={(() => {
                         try {
                           return formData.metadata ? JSON.parse(formData.metadata) : null;
@@ -183,9 +185,9 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
                 </div>
                 <div className="flex flex-col items-center gap-1">
                    <UserAvatar 
-                      name="Preview" 
+                      name={user?.name || user?.username || 'Preview'} 
                       size="md" 
-                      url={formData.imageUrl || undefined}
+                      url={user?.avatar}
                       frameMetadata={(() => {
                         try {
                           return formData.metadata ? JSON.parse(formData.metadata) : null;

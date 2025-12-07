@@ -137,14 +137,60 @@ export default function UserAvatar({
     return classes.join(' ');
   };
 
+  // 检查是否是图片类型的头像框
+  const isImageFrame = () => {
+    const frame = parseFrameMetadata();
+    return frame && (frame.type === 'image' || frame.imageUrl);
+  };
+
+  const frame = parseFrameMetadata();
   const avatarUrl = getAvatarUrl();
   const sizeClass = sizeClasses[size] || sizeClasses.md;
   const frameStyle = getFrameStyle();
   const frameClassName = getFrameClassName();
-  const hasFrame = frameMetadata && Object.keys(frameStyle).length > 0;
+  const hasCssFrame = frame && !isImageFrame() && Object.keys(frameStyle).length > 0;
+  
+  // 图片头像框处理
+  if (isImageFrame()) {
+    const scale = frame.scale || 1.35; // 默认放大 1.35 倍以包围头像
+    const yOffset = frame.yOffset || '0px';
+    
+    return (
+      <div className={cn('relative inline-flex items-center justify-center', sizeClass, className)}>
+        {/* 头像本体 */}
+        <Avatar className="w-full h-full">
+          {avatarUrl && (
+            <AvatarImage
+              src={avatarUrl}
+              alt={name || '用户头像'}
+              className="object-cover"
+            />
+          )}
+          <AvatarFallback className="bg-muted text-muted-foreground">
+            {getFallbackText()}
+          </AvatarFallback>
+        </Avatar>
 
-  // 如果有头像框，包装在一个容器中
-  if (hasFrame) {
+        {/* 图片头像框 (绝对定位覆盖在上方) */}
+        <img 
+          src={frame.imageUrl} 
+          alt="Avatar Frame"
+          className="absolute pointer-events-none select-none z-10 max-w-none"
+          style={{
+            width: `${scale * 100}%`,
+            height: `${scale * 100}%`,
+            top: '50%',
+            left: '50%',
+            transform: `translate(-50%, calc(-50% + ${yOffset}))`,
+            mixBlendMode: frame.blendMode || 'normal',
+          }}
+        />
+      </div>
+    );
+  }
+
+  // CSS 样式头像框
+  if (hasCssFrame) {
     return (
       <div
         className={cn('inline-block p-0.5', sizeClass, frameClassName, className)}
