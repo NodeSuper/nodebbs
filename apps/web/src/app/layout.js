@@ -42,12 +42,12 @@ export async function generateMetadata({ params }) {
   return {
     title: {
       template: `%s | ${name}`,
-      default: $title, // a default is required when creating a template
+      default: name, // a default is required when creating a template
     },
     description,
-    applicationName: $title,
+    applicationName: name,
     appleWebApp: {
-      title: $title,
+      title: name,
     },
     icons: {
       icon: '/logo.svg',
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: {
         template: `%s | ${name}`,
-        default: $title,
+        default: name,
       },
       description,
       siteName: name,
