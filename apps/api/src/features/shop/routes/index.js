@@ -224,7 +224,7 @@ export default async function shopRoutes(fastify, options) {
     }
   });
 
-  // Route removed: /users/:userId/equipped-items (Data consolidated into /api/users/:username)
+  // 路由移除: /users/:userId/equipped-items (数据合并到 /api/users/:username)
 
   // ============ 管理员接口 ============
 
@@ -310,7 +310,7 @@ export default async function shopRoutes(fastify, options) {
           price: { type: 'integer', minimum: 0 },
           type: { type: 'string' },
           imageUrl: { type: 'string' },
-          stock: { type: ['integer', 'string', 'null'] }, // string for handling form inputs sometimes
+          stock: { type: ['integer', 'string', 'null'] }, // string 用于处理表单输入的情况
           isActive: { type: 'boolean' },
           displayOrder: { type: 'integer' },
           metadata: { type: 'string' },

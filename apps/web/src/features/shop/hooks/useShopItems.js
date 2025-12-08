@@ -3,7 +3,7 @@ import { shopApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * Hook to fetch shop items with filtering
+ * 带有筛选功能的获取商品列表 Hook
  * @param {Object} options - { type, page, limit, isAdmin }
  * @returns {Object} { items, total, loading, error, refetch }
  */

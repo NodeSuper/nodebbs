@@ -4,14 +4,14 @@ import { users, topics, posts, userCredits, shopItems } from '../../../db/schema
 import { eq, and, sql } from 'drizzle-orm';
 
 /**
- * Grant a badge to a user
- * @param {string} userId - User ID
- * @param {string} badgeId - Badge ID
- * @param {string} source - Source of the badge (e.g. 'system', 'admin', 'event')
- * @returns {Promise<object>} The newly granted badge record
+ * 授予用户徽章
+ * @param {string} userId - 用户 ID
+ * @param {string} badgeId - 徽章 ID
+ * @param {string} source - 徽章来源 (例如 'system', 'admin', 'event')
+ * @returns {Promise<object>} 新授予的徽章记录
  */
 export async function grantBadge(userId, badgeId, source = 'system') {
-  // Check if already owned
+  // 检查是否已拥有
   const [existing] = await db
     .select()
     .from(userBadges)
@@ -36,12 +36,12 @@ export async function grantBadge(userId, badgeId, source = 'system') {
 }
 
 /**
- * Get all badges (optionally filtered by category)
+ * 获取所有徽章（可选按类别筛选）
  * @param {Object} options
- * @param {number} options.page - Page number
- * @param {number} options.limit - Items per page
- * @param {string} [options.category] - Filter by category
- * @param {boolean} [options.includeInactive] - Whether to include inactive badges (default: false)
+ * @param {number} options.page - 页码
+ * @param {number} options.limit - 每页数量
+ * @param {string} [options.category] - 按类别筛选
+ * @param {boolean} [options.includeInactive] - 是否包含未激活的徽章 (默认: false)
  */
 export async function getBadges(options = {}) {
   const { page = 1, limit = 20, category = null, includeInactive = false } = options;
@@ -82,7 +82,7 @@ export async function getBadges(options = {}) {
 }
 
 /**
- * Get badges owned by a user
+ * 获取用户拥有的徽章
  */
 export async function getUserBadges(userId) {
   return await db
@@ -99,7 +99,7 @@ export async function getUserBadges(userId) {
 }
 
 /**
- * Create a new badge
+ * 创建新徽章
  */
 export async function createBadge(data) {
   const [badge] = await db.insert(badges).values(data).returning();
@@ -107,7 +107,7 @@ export async function createBadge(data) {
 }
 
 /**
- * Update a badge
+ * 更新徽章
  */
 export async function updateBadge(id, data) {
   const [badge] = await db
@@ -124,11 +124,11 @@ export async function updateBadge(id, data) {
 // ... existing code ...
 
 /**
- * Check and grant eligible badges for a user
- * @param {string} userId - User ID
+ * 检查并授予用户符合条件的徽章
+ * @param {string} userId - 用户 ID
  */
 export async function checkBadgeConditions(userId) {
-  // 1. Fetch User Stats
+  // 1. 获取用户统计信息
   const [user] = await db
     .select({
       id: users.id,
@@ -139,41 +139,41 @@ export async function checkBadgeConditions(userId) {
 
   if (!user) return;
 
-  // Count Posts
+  // 统计帖子数
   const [{ count: postCount }] = await db
     .select({ count: sql`count(*)` })
     .from(posts)
     .where(and(eq(posts.userId, userId), eq(posts.isDeleted, false)));
 
-  // Count Topics
+  // 统计话题数
   const [{ count: topicCount }] = await db
     .select({ count: sql`count(*)` })
     .from(topics)
     .where(and(eq(topics.userId, userId), eq(topics.isDeleted, false)));
 
-  // Count Likes Received (Sum of likeCount on user's posts)
+  // 统计收到的点赞数 (用户帖子的点赞总和)
   const [{ sum: likeCount }] = await db
     .select({ sum: sql`sum(${posts.likeCount})` })
     .from(posts)
     .where(and(eq(posts.userId, userId), eq(posts.isDeleted, false)));
 
-  // Get Check-in Streak
+  // 获取签到连胜
   const [creditInfo] = await db
     .select({ streak: userCredits.checkInStreak })
     .from(userCredits)
     .where(eq(userCredits.userId, userId));
   const checkinStreak = creditInfo ? creditInfo.streak : 0;
 
-  // Calculate Registration Days
+  // 计算注册天数
   const daysRegistered = Math.floor((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24));
 
-  // 2. Fetch All Active Badges
+  // 2. 获取所有激活的徽章
   const allBadges = await db
     .select()
     .from(badges)
     .where(eq(badges.isActive, true));
 
-  // 3. Evaluate Conditions
+  // 3. 评估条件
   const newBadges = [];
 
   for (const badge of allBadges) {
@@ -205,10 +205,10 @@ export async function checkBadgeConditions(userId) {
       }
 
       if (qualified) {
-        // Try to grant badge (idempotent)
+        // 尝试授予徽章 (幂等)
         const result = await grantBadge(userId, badge.id, 'system_rule');
         if (result && result.earnedAt > new Date(Date.now() - 1000)) { 
-           // If earnedAt is very recent, it means it was just inserted
+           // 如果 earnedAt 非常接近，说明是刚刚插入的
            newBadges.push(badge);
         }
       }
@@ -221,11 +221,11 @@ export async function checkBadgeConditions(userId) {
 }
 
 /**
- * Delete a badge
+ * 删除徽章
  */
 export async function deleteBadge(id) {
-  // 1. Find shop items that might be linked to this badge
-  // We fetch all active badge-type items and check their metadata
+  // 1. 查找可能关联此徽章的商店商品
+  // 获取所有激活的徽章类型商品并检查其元数据
   const allBadgeItems = await db
     .select()
     .from(shopItems)
@@ -239,7 +239,7 @@ export async function deleteBadge(id) {
       if (typeof meta === 'string') {
         try { meta = JSON.parse(meta); } catch (e) { /* ignore */ }
       }
-      // Verify double encoding just in case
+      // 以防万一，验证双重编码
       if (typeof meta === 'string') {
         try { meta = JSON.parse(meta); } catch (e) { /* ignore */ }
       }
@@ -252,7 +252,7 @@ export async function deleteBadge(id) {
     }
   }
 
-  // 2. Disable found items (Soft Disable)
+  // 2. 禁用相关商品 (软禁用)
   if (itemsToDisable.length > 0) {
     await db
       .update(shopItems)
@@ -260,7 +260,7 @@ export async function deleteBadge(id) {
       .where(sql`${shopItems.id} IN ${itemsToDisable}`);
   }
 
-  // 3. Delete the badge (Cascade will handle user_badges)
+  // 3. 删除徽章 (级联删除将处理 user_badges)
   await db.delete(badges).where(eq(badges.id, id));
   return true;
 }

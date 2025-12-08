@@ -6,14 +6,14 @@ import { ItemInventoryCard } from './ItemInventoryCard';
 import { getItemTypeLabel } from '@/features/shop/utils/itemTypes';
 
 /**
- * Grid of user's items
+ * 用户物品网格
  * @param {Object} props
- * @param {Array} props.items - Array of user items
- * @param {Function} props.onEquip - Callback when equip button clicked
- * @param {Function} props.onUnequip - Callback when unequip button clicked
- * @param {number} props.actioningItemId - ID of item currently being actioned
- * @param {boolean} props.loading - Loading state
- * @param {string} props.itemType - Current item type filter
+ * @param {Array} props.items - 用户物品数组
+ * @param {Function} props.onEquip - 点击装备按钮时的回调
+ * @param {Function} props.onUnequip - 点击卸下按钮时的回调
+ * @param {number} props.actioningItemId - 当前正在操作的物品 ID
+ * @param {boolean} props.loading - 加载状态
+ * @param {string} props.itemType - 当前物品类型筛选
  */
 export function ItemInventoryGrid({ items, onEquip, onUnequip, actioningItemId, loading, itemType }) {
   if (loading) {

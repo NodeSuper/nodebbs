@@ -3,7 +3,7 @@ import { shopApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * Hook to fetch user's purchased items
+ * 获取用户已购买物品的 Hook
  * @param {Object} options - { type }
  * @returns {Object} { items, loading, error, refetch }
  */

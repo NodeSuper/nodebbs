@@ -1,5 +1,5 @@
 /**
- * Credits system custom hooks
+ * 积分系统自定义 Hooks
  */
 
 export { useCreditsBalance } from './useCreditsBalance';

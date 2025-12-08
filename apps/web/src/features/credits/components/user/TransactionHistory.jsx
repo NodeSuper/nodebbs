@@ -15,12 +15,12 @@ import { TransactionTypeBadge } from '../shared/TransactionTypeBadge';
 import { formatCreditsWithSign, getCreditsColorClass } from '../../utils/formatters';
 
 /**
- * User transaction history table with pagination
+ * 带分页的用户交易历史表格
  * @param {Object} props
- * @param {Array} props.transactions - Array of transaction objects
- * @param {boolean} props.loading - Loading state
- * @param {Object} props.pagination - { page, total, limit }
- * @param {Function} props.onPageChange - Callback for page change
+ * @param {Array} props.transactions - 交易对象数组
+ * @param {boolean} props.loading - 加载状态
+ * @param {Object} props.pagination - 分页信息 { page, total, limit }
+ * @param {Function} props.onPageChange - 页面改变时的回调
  */
 export function TransactionHistory({ transactions, loading, pagination, onPageChange }) {
   const { page, total, limit } = pagination;
@@ -72,7 +72,7 @@ export function TransactionHistory({ transactions, loading, pagination, onPageCh
               </Table>
             </div>
 
-            {/* Pagination */}
+            {/* 分页 */}
             {totalPages > 1 && (
               <div className="mt-4">
                 <Pager

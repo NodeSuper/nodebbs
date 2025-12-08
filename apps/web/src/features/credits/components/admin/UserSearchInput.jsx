@@ -7,10 +7,10 @@ import { userApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * User search input with autocomplete
+ * 带自动完成的用户搜索输入框
  * @param {Object} props
- * @param {Function} props.onSelectUser - Callback when user is selected
- * @param {Object} props.selectedUser - Currently selected user object
+ * @param {Function} props.onSelectUser - 选择用户时的回调
+ * @param {Object} props.selectedUser - 当前选择的用户对象
  */
 export function UserSearchInput({ onSelectUser, selectedUser }) {
   const [searchQuery, setSearchQuery] = useState('');

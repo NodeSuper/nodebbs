@@ -3,7 +3,7 @@ import { creditsApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * Hook to fetch and manage user's credits balance
+ * 获取和管理用户积分余额的 Hook
  * @returns {Object} { balance, loading, error, refetch }
  */
 export function useCreditsBalance() {

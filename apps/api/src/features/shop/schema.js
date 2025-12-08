@@ -10,7 +10,7 @@ import {
 import { relations } from 'drizzle-orm';
 import { users } from '../../db/schema.js';
 
-// ============ Common Fields (Duplicated to avoid circular dep) ============
+// ============ 公共字段 (重复定义以避免循环依赖) ============
 const $id = integer('id').primaryKey().generatedAlwaysAsIdentity();
 
 const $createdAt = timestamp('created_at', {

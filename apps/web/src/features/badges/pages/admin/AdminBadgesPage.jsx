@@ -26,7 +26,7 @@ export default function AdminBadgesPage() {
   const [dialogMode, setDialogMode] = useState('create');
   const [selectedItem, setSelectedItem] = useState(null);
   
-  // Confirmation Dialog State
+  // 确认对话框状态
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [badgeIdToDelete, setBadgeIdToDelete] = useState(null);
 
@@ -76,13 +76,13 @@ export default function AdminBadgesPage() {
     }
   };
 
-  // Trigger Confirmation Dialog
+  // 触发确认对话框
   const handleDelete = (id) => {
     setBadgeIdToDelete(id);
     setDeleteDialogOpen(true);
   };
 
-  // Execute actual delete
+  // 执行实际删除
   const confirmDelete = async () => {
     if (!badgeIdToDelete) return;
     
@@ -91,7 +91,7 @@ export default function AdminBadgesPage() {
       toast.success('勋章删除成功，关联商品已下架');
       fetchData();
     } catch (err) {
-        // Handle specific 403 error for cleaner UI
+        // 处理特定的 403 错误以优化 UI 显示
         if (err.status === 403 || err.message?.includes('创始人')) {
              toast.error('操作被拒绝：只有创始人可以删除勋章');
         } else {
@@ -124,7 +124,7 @@ export default function AdminBadgesPage() {
         items={items}
         loading={loading}
         onEdit={openEditDialog}
-        onDelete={handleDelete}  // Now passes the item object or id, handled by wrapper
+        onDelete={handleDelete}  // 现在传递项目对象或 ID，由包装器处理
       />
 
       <BadgeFormDialog
@@ -135,7 +135,7 @@ export default function AdminBadgesPage() {
         onSubmit={handleSubmit}
       />
       
-      {/* Delete Confirmation Alert */}
+      {/* 删除确认警告 */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

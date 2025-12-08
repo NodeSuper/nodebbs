@@ -16,7 +16,7 @@ export default async function badgeListeners(fastify) {
           const { notifications } = await import('../../db/schema.js');
           const db = (await import('../../db/index.js')).default;
 
-          // Create notifications for each new badge
+          // 为每个新徽章创建通知
           for (const badge of newBadges) {
             await db.insert(notifications).values({
               userId,
@@ -39,14 +39,14 @@ export default async function badgeListeners(fastify) {
     }
   };
 
-  // Listen to events that might trigger a badge
+  // 监听可能触发徽章的事件
   fastify.eventBus.on('post.created', handleActivity);
   fastify.eventBus.on('topic.created', handleActivity);
   fastify.eventBus.on('post.liked', (payload) => {
-     // For 'like_received_count', payload might contain ownerId of the post
+     // 对于 'like_received_count'，payload 可能包含帖子的 ownerId
      if (payload.postOwnerId) {
         handleActivity({ userId: payload.postOwnerId });
      }
   });
-  fastify.eventBus.on('user.login', handleActivity); // For check-in streak or login days
+  fastify.eventBus.on('user.login', handleActivity); // 用于签到连胜或登录天数
 }

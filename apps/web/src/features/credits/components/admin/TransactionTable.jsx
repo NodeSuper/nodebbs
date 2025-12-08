@@ -9,14 +9,14 @@ import { TransactionTypeBadge } from '../shared/TransactionTypeBadge';
 import { formatCreditsWithSign, getCreditsColorClass } from '../../utils/formatters';
 
 /**
- * Transaction history table for admin with search
+ * 带有搜索功能的管理员交易历史表格
  * @param {Object} props
- * @param {Array} props.transactions - Array of transactions
- * @param {boolean} props.loading - Loading state
- * @param {Object} props.pagination - { page, total, limit, onPageChange }
- * @param {string} props.searchQuery - Search query
- * @param {Function} props.onSearchChange - Callback when search query changes
- * @param {Function} props.onSearch - Callback when search button clicked
+ * @param {Array} props.transactions - 交易记录数组
+ * @param {boolean} props.loading - 加载状态
+ * @param {Object} props.pagination - 分页信息 { page, total, limit, onPageChange }
+ * @param {string} props.searchQuery - 搜索关键词
+ * @param {Function} props.onSearchChange - 搜索关键词改变时的回调
+ * @param {Function} props.onSearch - 点击搜索按钮时的回调
  */
 export function TransactionTable({ transactions, loading, pagination, searchQuery, onSearchChange, onSearch }) {
   const columns = [

@@ -317,7 +317,7 @@ export async function getUserEquippedItems(userId) {
     // Reuse getUserItems logic with isEquipped=true
     const result = await getUserItems(userId, { 
       page: 1, 
-      limit: 100, // Assume max 100 equipped items
+      limit: 100, // 假设最大装备数量为 100
       isEquipped: true 
     });
     return result.items || [];
@@ -626,9 +626,9 @@ export async function giftItem(senderId, receiverId, itemId, message) {
           itemId: item.id,
           itemName: item.name,
           message,
-          senderName: senderCredit?.username // senderCredit doesn't have username, let's skip or fetch sender if needed. 
+          senderName: senderCredit?.username // senderCredit 没有 username，如果需要可以跳过或获取 sender。
           // Actually senderId is enough for notification 'triggeredByUserId' usually, but let's keep it simple.
-          // Wait, 'triggeredByUserId' is set, so frontend can resolve user.
+          // 注意：'triggeredByUserId' 已设置，前端可以解析用户。
         })
       });
 
@@ -637,7 +637,7 @@ export async function giftItem(senderId, receiverId, itemId, message) {
         let badgeId = null;
         try {
           let meta = item.metadata ? JSON.parse(item.metadata) : {};
-          // double-encoding check
+          // 二次编码检查
           if (typeof meta === 'string') {
              try { meta = JSON.parse(meta); } catch (e) { /* ignore */ }
           }
@@ -652,8 +652,8 @@ export async function giftItem(senderId, receiverId, itemId, message) {
              await grantBadge(receiverId, badgeId, 'shop_gift');
            } catch (err) {
              console.error('[商城] 赠送勋章虽然商品已发放但勋章授予失败:', err);
-             // We don't throw here to avoid rolling back the gift itself if badge grant fails
-             // (Depends on policy, but usually safe to soft-fail secondary effect)
+              // 这里不抛出错误，以避免如果勋章授予失败回滚礼物本身
+              // (取决于策略，但通常忽略次要影响是安全的)
            }
         }
       }

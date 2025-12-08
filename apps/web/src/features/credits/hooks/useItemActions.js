@@ -3,7 +3,7 @@ import { shopApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * Hook to handle item equip/unequip actions
+ * 处理物品装备/卸下操作的 Hook
  * @returns {Object} { equip, unequip, actioning, actioningItemId }
  */
 export function useItemActions() {

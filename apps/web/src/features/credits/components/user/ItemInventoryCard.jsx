@@ -7,12 +7,12 @@ import { getItemTypeLabel, isItemExpired } from '@/features/shop/utils/itemTypes
 import TimeAgo from '@/components/forum/TimeAgo';
 
 /**
- * User item card with equip/unequip controls
+ * 带有装备/卸下控制的用户物品卡片
  * @param {Object} props
- * @param {Object} props.item - User item object
- * @param {Function} props.onEquip - Callback when equip button clicked
- * @param {Function} props.onUnequip - Callback when unequip button clicked
- * @param {boolean} props.actioning - Action in progress
+ * @param {Object} props.item - 用户物品对象
+ * @param {Function} props.onEquip - 点击装备按钮时的回调
+ * @param {Function} props.onUnequip - 点击卸下按钮时的回调
+ * @param {boolean} props.actioning - 操作进行中
  */
 export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
   const expired = isItemExpired(item.expiresAt);
@@ -75,7 +75,7 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
           </div>
         )}
 
-        {/* Gift Info */}
+        {/* 礼物信息 */}
         {(() => {
           try {
             if (item.metadata) {
@@ -99,7 +99,7 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
               }
             }
           } catch (e) {
-            // ignore parsing error
+            // 忽略解析错误
           }
           return null;
         })()}

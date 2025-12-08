@@ -3,7 +3,7 @@ import { creditsApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 /**
- * Hook to fetch credits transactions with pagination
+ * 带有分页的获取积分交易记录的 Hook
  * @param {Object} options - { page, limit, userId, username }
  * @returns {Object} { transactions, total, loading, error, refetch }
  */

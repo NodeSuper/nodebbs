@@ -27,14 +27,14 @@ import UserAvatar from '@/components/forum/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Form dialog for creating/editing shop items
+ * 创建/编辑商品的表单对话框
  * @param {Object} props
- * @param {boolean} props.open - Dialog open state
- * @param {Function} props.onOpenChange - Callback when open state changes
- * @param {'create'|'edit'} props.mode - Form mode
- * @param {Object} props.initialData - Initial form data for edit mode
- * @param {Function} props.onSubmit - Callback when form submitted
- * @param {boolean} props.submitting - Submission in progress
+ * @param {boolean} props.open - 对话框打开状态
+ * @param {Function} props.onOpenChange - 打开状态改变时的回调
+ * @param {'create'|'edit'} props.mode - 表单模式
+ * @param {Object} props.initialData - 编辑模式下的初始表单数据
+ * @param {Function} props.onSubmit - 表单提交时的回调
+ * @param {boolean} props.submitting - 提交进行中
  */
 export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSubmit, submitting }) {
   const [formData, setFormData] = useState({
@@ -53,7 +53,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
   const [badges, setBadges] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(false);
 
-  // Fetch badges when type is badge
+  // 当类型为勋章时获取勋章列表
   useEffect(() => {
     if (open && formData.type === 'badge') {
       fetchBadges();
@@ -133,7 +133,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Item Type */}
+          {/* 商品类型 */}
           <div className="space-y-2">
             <Label htmlFor="type">商品类型 *</Label>
             <Select
@@ -158,7 +158,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </Select>
           </div>
 
-          {/* Avatar Frame Preview */}
+          {/* 头像框预览 */}
           {formData.type === ITEM_TYPES.AVATAR_FRAME && (
             <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
               <div className="flex-1 space-y-1">
@@ -202,7 +202,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </div>
           )}
 
-          {/* Badge Selector (Only for Badge Type) */}
+          {/* 勋章选择器（仅限勋章类型） */}
           {formData.type === 'badge' && (
             <div className="space-y-2 p-4 bg-muted rounded-lg border">
               <Label>关联勋章</Label>
@@ -243,7 +243,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </div>
           )}
 
-          {/* Name */}
+          {/* 名称 */}
           <div className="space-y-2">
             <Label htmlFor="name">商品名称 *</Label>
             <Input
@@ -256,7 +256,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             />
           </div>
 
-          {/* Description */}
+          {/* 描述 */}
           <div className="space-y-2">
             <Label htmlFor="description">商品描述</Label>
             <Textarea
@@ -274,9 +274,9 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             />
           </div>
 
-          {/* Grid for Numbers */}
+          {/* 数值网格 */}
           <div className="grid grid-cols-3 gap-4">
-            {/* Price */}
+            {/* 价格 */}
             <div className="space-y-2">
               <Label htmlFor="price">价格（积分）*</Label>
               <Input
@@ -291,7 +291,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
               />
             </div>
 
-            {/* Stock */}
+            {/* 库存 */}
             <div className="space-y-2">
               <Label htmlFor="stock">库存</Label>
               <Input
@@ -309,7 +309,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
               />
             </div>
 
-            {/* Display Order */}
+            {/* 显示顺序 */}
             <div className="space-y-2">
               <Label htmlFor="displayOrder">显示排序</Label>
               <Input
@@ -327,7 +327,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* 图片 URL */}
           <div className="space-y-2">
             <Label htmlFor="imageUrl">图片URL</Label>
             <div className="flex gap-4">
@@ -354,7 +354,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </div>
           </div>
 
-          {/* Metadata */}
+          {/* 元数据 */}
           <div className="space-y-2">
             <Label htmlFor="metadata">元数据（JSON格式）</Label>
             <Textarea
@@ -373,7 +373,7 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </p>
           </div>
 
-          {/* Is Active */}
+          {/* 是否上架 */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="isActive">是否上架</Label>

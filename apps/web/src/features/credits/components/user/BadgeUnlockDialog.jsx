@@ -10,11 +10,11 @@ import confetti from 'canvas-confetti';
 import { useEffect } from 'react';
 
 /**
- * Badge Unlock Animation Dialog
+ * 徽章解锁动画对话框
  * @param {Object} props
  * @param {boolean} props.open
  * @param {Function} props.onOpenChange
- * @param {Object} props.badgeItem - The badge shop item
+ * @param {Object} props.badgeItem - 徽章商品对象
  */
 export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
   useEffect(() => {
@@ -30,7 +30,7 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
     const count = 200;
     const defaults = {
       origin: { y: 0.7 },
-      zIndex: 9999, // Ensure it's above dialog
+      zIndex: 9999, // 确保在对话框之上
     };
 
     function fire(particleRatio, opts) {
@@ -72,10 +72,10 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
       <DialogContent className="sm:max-w-md border-0 bg-transparent shadow-none">
         <div className="relative flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-xl overflow-hidden">
           
-          {/* Shine Effect */}
+          {/* 光效 */}
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-yellow-500/5 to-transparent animate-pulse pointer-events-none" />
 
-          {/* Badge Animation */}
+          {/* 徽章动画 */}
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -87,7 +87,7 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
             }}
             className="relative w-40 h-40 mb-6"
           >
-            {/* Glow behind badge */}
+            {/* 徽章背后的发光 */}
             <div className="absolute inset-0 bg-yellow-500/30 blur-3xl rounded-full" />
             
             <img
@@ -114,7 +114,7 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
             </p>
           </motion.div>
 
-          {/* Action Button */}
+          {/* 操作按钮 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

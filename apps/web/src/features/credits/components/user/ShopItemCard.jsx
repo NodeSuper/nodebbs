@@ -6,12 +6,12 @@ import { CreditsBadge } from '../shared/CreditsBadge';
 import { getItemTypeLabel } from '@/features/shop/utils/itemTypes';
 
 /**
- * Single shop item card with purchase button
+ * 带有购买按钮的单个商品卡片
  * @param {Object} props
- * @param {Object} props.item - Shop item object
- * @param {number} props.userBalance - User's current balance
- * @param {Function} props.onPurchase - Callback when purchase button clicked
- * @param {boolean} props.isAuthenticated - Whether user is authenticated
+ * @param {Object} props.item - 商品对象
+ * @param {number} props.userBalance - 用户当前余额
+ * @param {Function} props.onPurchase - 点击购买按钮时的回调
+ * @param {boolean} props.isAuthenticated - 用户是否已认证
  */
 export function ShopItemCard({ item, userBalance, onPurchase, isAuthenticated }) {
   const isOutOfStock = item.stock !== null && item.stock <= 0;

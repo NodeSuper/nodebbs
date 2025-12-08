@@ -11,23 +11,23 @@ import { users, userItems, shopItems, userBadges, badges as badgeSchema } from '
 import { isCreditSystemEnabled } from './services/creditService.js';
 
 /**
- * Credits Plugin
- * Handles credit system logic, routes, and event listeners.
+ * 积分插件
+ * 处理积分系统逻辑、路由和事件监听器。
  */
 async function creditsPlugin(fastify, options) {
-  // Register Credit Enrichment (Single)
+  // 注册积分增强 (单用户)
   userEnricher.register('credits', async (user) => {
-    // 1. Check if system enabled
+    // 1. 检查系统是否已启用
     const isEnabled = await isCreditSystemEnabled();
     
-    // Initialize defaults to ensure consistent shape
+    // 初始化默认值以确保结构一致
     if (user.avatarFrame === undefined) user.avatarFrame = null;
     if (user.badges === undefined) user.badges = [];
 
     if (!isEnabled) return;
     
     try {
-        // 2. Fetch Avatar Frame
+        // 2. 获取头像框
         const [foundAvatarFrame] = await db
           .select({
             id: userItems.id,
@@ -49,7 +49,7 @@ async function creditsPlugin(fastify, options) {
 
         user.avatarFrame = foundAvatarFrame || null;
 
-        // 3. Fetch Badges
+        // 3. 获取徽章
         const badges = await db
           .select({
             id: userBadges.id,
@@ -77,12 +77,12 @@ async function creditsPlugin(fastify, options) {
     }
   });
 
-  // Register Batch Enrichment
+  // 注册批量增强
   userEnricher.registerBatch('credits', async (usersList) => {
-      // 1. Check if system enabled
+      // 1. 检查系统是否已启用
       const isEnabled = await isCreditSystemEnabled();
 
-      // Initialize defaults for all users
+      // 为所有用户初始化默认值
       usersList.forEach(u => {
           if (u.avatarFrame === undefined) u.avatarFrame = null;
           if (u.badges === undefined) u.badges = [];
@@ -93,7 +93,7 @@ async function creditsPlugin(fastify, options) {
       const userIds = usersList.map(u => u.id);
 
       try {
-          // 2. Batch Fetch Avatar Frames
+          // 2. 批量获取头像框
           const frames = await db
             .select({
               userId: userItems.userId,
@@ -112,8 +112,8 @@ async function creditsPlugin(fastify, options) {
           const frameMap = new Map();
           frames.forEach(f => frameMap.set(f.userId, f));
 
-          // 3. Batch Fetch Badges
-          // Note: Assuming we want distributed badges. If just top badges, logic might differ but basic list is okay.
+          // 3. 批量获取徽章
+          // 注意：假设我们需要分发的徽章。如果只是热门徽章，逻辑可能会有所不同，但基本列表是可以的。
           const badges = await db
             .select({
                 userId: userBadges.userId,
@@ -140,7 +140,7 @@ async function creditsPlugin(fastify, options) {
              badgeMap.get(b.userId).push(b);
           });
 
-          // 4. Map back to users
+          // 4. 映射回用户
           usersList.forEach(u => {
              if (frameMap.has(u.id)) {
                  u.avatarFrame = { itemMetadata: frameMap.get(u.id).itemMetadata };
@@ -155,10 +155,10 @@ async function creditsPlugin(fastify, options) {
       }
   });
 
-  // Register routes
+  // 注册路由
   fastify.register(creditsRoutes, { prefix: '/api/credits' });
 
-  // Register event listeners
+  // 注册事件监听器
   await registerCreditListeners(fastify);
 
 }

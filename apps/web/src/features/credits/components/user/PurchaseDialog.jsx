@@ -19,14 +19,14 @@ import UserAvatar from '@/components/forum/UserAvatar';
 import { searchApi } from '@/lib/api';
 
 /**
- * Purchase confirmation dialog
+ * 购买确认对话框
  * @param {Object} props
- * @param {boolean} props.open - Dialog open state
- * @param {Object} props.item - Shop item to purchase
- * @param {number} props.userBalance - User's current balance
- * @param {Function} props.onConfirm - Callback when confirmed. Receives { isGift, receiverId, message } for gifts.
- * @param {Function} props.onCancel - Callback when cancelled
- * @param {boolean} props.purchasing - Purchase in progress
+ * @param {boolean} props.open - 对话框打开状态
+ * @param {Object} props.item - 要购买的商品
+ * @param {number} props.userBalance - 用户当前余额
+ * @param {Function} props.onConfirm - 确认时的回调。如果是赠送，包含 { isGift, receiverId, message }。
+ * @param {Function} props.onCancel - 取消时的回调
+ * @param {boolean} props.purchasing - 购买进行中
  */
 export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, purchasing }) {
   const [mode, setMode] = useState('buy'); // 'buy' | 'gift'
@@ -36,7 +36,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
 
-  // Reset state when dialog opens/closes
+  // 对话框打开/关闭时重置状态
   useEffect(() => {
     if (open) {
       setMode('buy');
@@ -47,7 +47,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
     }
   }, [open]);
 
-  // Search users
+  // 搜索用户
   useEffect(() => {
     const searchUsers = async () => {
       if (!searchQuery.trim()) {
@@ -57,14 +57,14 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
       
       setSearching(true);
       try {
-        // Use searchApi to find users. Assuming it returns { users: [] } or just [] 
-        // Based on api.js: searchApi.search(query, type, page, limit)
-        // Backend expects 'users' (plural), and returns { users: { items: [] } }
+        // 使用 searchApi 查找用户。假设它返回 { users: [] } 或仅 []
+        // 基于 api.js: searchApi.search(query, type, page, limit)
+        // 后端期望 'users' (复数)，并返回 { users: { items: [] } }
         const res = await searchApi.search(searchQuery, 'users', 1, 5);
         if (res && res.users && Array.isArray(res.users.items)) {
            setSearchResults(res.users.items);
         } else if (res && Array.isArray(res.users)) {
-            // Fallback in case API changes
+            // 如果 API 更改，则进行回退处理
            setSearchResults(res.users);
         } else {
            setSearchResults([]);
@@ -90,7 +90,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
       if (!receiver) return;
       onConfirm({ isGift: true, receiverId: receiver.id, message });
     } else {
-      onConfirm({}); // Normal purchase
+      onConfirm({}); // 普通购买
     }
   };
 
@@ -111,7 +111,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
           </TabsList>
           
           <div className="mt-4 space-y-4">
-             {/* Item Info */}
+             {/* 商品信息 */}
             <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
               {item.imageUrl && (
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
@@ -151,7 +151,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
                     />
                   </div>
                   
-                  {/* Search Results */}
+                  {/* 搜索结果 */}
                   {searchQuery && (
                     <div className="border rounded-md mt-2 max-h-[200px] overflow-y-auto">
                       {searching ? (
@@ -214,7 +214,7 @@ export function PurchaseDialog({ open, item, userBalance, onConfirm, onCancel, p
               )}
             </TabsContent>
 
-             {/* Balance Info */}
+             {/* 余额信息 */}
             {userBalance !== null && (
               <div className="flex items-center justify-between py-2 text-sm border-t">
                 <span className="text-muted-foreground">当前余额</span>

@@ -15,13 +15,13 @@ import { Loader2, Plus, Minus } from 'lucide-react';
 import { UserSearchInput } from './UserSearchInput';
 
 /**
- * Unified dialog for granting or deducting credits
+ * 用于发放或扣除积分的统一对话框
  * @param {Object} props
- * @param {boolean} props.open - Dialog open state
- * @param {Function} props.onOpenChange - Callback when open state changes
- * @param {Function} props.onSubmit - Callback when form submitted (userId, amount, description)
- * @param {boolean} props.submitting - Submission in progress
- * @param {'grant' | 'deduct'} props.mode - Operation mode
+ * @param {boolean} props.open - 对话框打开状态
+ * @param {Function} props.onOpenChange - 打开状态改变时的回调
+ * @param {Function} props.onSubmit - 表单提交时的回调 (userId, amount, description)
+ * @param {boolean} props.submitting - 提交进行中
+ * @param {'grant' | 'deduct'} props.mode - 操作模式
  */
 export function CreditsOperationDialog({ open, onOpenChange, onSubmit, submitting, mode = 'grant' }) {
   const [formData, setFormData] = useState({
