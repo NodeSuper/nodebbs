@@ -600,7 +600,7 @@ export const moderationApi = {
 
   // 获取审核日志列表
   async getLogs(params = {}) {
-    // params: { targetType, action, targetId, moderatorId, page, limit }
+    // params: { targetType, action, targetId, moderatorId, page, limit, search }
     return apiClient.get('/moderation/logs', params);
   },
 
