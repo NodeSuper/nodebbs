@@ -23,10 +23,11 @@ export function FormDialog({
   disabled = false,
   submitClassName = '',
   footer = undefined, // Custom footer content. Pass null to hide footer.
+  onInteractOutside,
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={maxWidth}>
+      <DialogContent className={maxWidth} onInteractOutside={onInteractOutside}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
