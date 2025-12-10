@@ -19,14 +19,12 @@ export default async function HomePage({ searchParams }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.p) || 1;
   const sort = resolvedParams.sort || 'latest';
-  const categoryId = resolvedParams.category;
-  const LIMIT = 20;
+  const LIMIT = 50;
 
   // 服务端获取数据
   const data = await getTopicsData({
     page,
     sort,
-    categoryId,
     limit: LIMIT,
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/forum/DataTable';
@@ -51,19 +52,19 @@ export default function AdminTopicsPage() {
   const [deleting, setDeleting] = useState(false);
   const limit = 20;
 
-  // 防抖搜索词 - 只对搜索输入应用防抖
-  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  // 防抖搜索词
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  // 搜索输入防抖
+  // 搜索词变化时重置页码
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // 数据请求 - page 和 statusFilter 立即响应，searchQuery 使用防抖值
+  // 数据请求 - page 和 statusFilter 立即响应，debouncedSearch 变化也会触发（因为已经在 fetchTopics 中使用了，但这里需要确保重新获取）
+  // 注意：当 debouncedSearch 变化导致的 setPage(1) 会触发这里的 useEffect (如果 page 改变了)。
+  // 如果 page 本来就是 1，setPage(1) 不会触发重渲染，所以我们需要将 debouncedSearch 加入依赖。
   useEffect(() => {
     fetchTopics();
   }, [page, statusFilter, debouncedSearch]);
@@ -405,10 +406,7 @@ export default function AdminTopicsPage() {
         loading={loading}
         search={{
           value: searchQuery,
-          onChange: (value) => {
-            setSearchQuery(value);
-            setPage(1); // 搜索时重置到第一页
-          },
+          onChange: (value) => setSearchQuery(value),
           placeholder: '搜索话题标题...',
         }}
         filter={{

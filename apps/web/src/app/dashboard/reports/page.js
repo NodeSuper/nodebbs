@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/forum/DataTable';
@@ -42,7 +43,11 @@ export default function ReportsManagement() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [reportType, setReportType] = useState('all');
-  const [status, setStatus] = useState('pending');
+  const [status, setStatus] = useState('all');
+  // 搜索
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
   const limit = 20;
 
   // 处理对话框
@@ -56,15 +61,22 @@ export default function ReportsManagement() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [detailReport, setDetailReport] = useState(null);
 
-  // 数据请求 - 过滤器变化时立即响应
+  // 搜索词变化时重置页码
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
+
+  // 数据请求 - 过滤器变化时立即响应，debouncedSearch 变化也会触发 fetch
   useEffect(() => {
     fetchReports();
-  }, [page, reportType, status]);
+  }, [page, reportType, status, debouncedSearch]);
 
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const data = await moderationApi.getReports(reportType, status, page, limit);
+      const data = await moderationApi.getReports(reportType, status, page, limit, debouncedSearch);
       setReports(data.items || []);
       setTotal(data.total || 0);
     } catch (err) {
@@ -314,7 +326,7 @@ export default function ReportsManagement() {
   // 多个独立过滤器配置
   const filters = [
     {
-      label: '举报类型',
+      // label: '举报类型',
       value: reportType,
       onChange: (value) => {
         setReportType(value);
@@ -329,7 +341,7 @@ export default function ReportsManagement() {
       width: 'w-full sm:w-[150px]',
     },
     {
-      label: '处理状态',
+      // label: '处理状态',
       value: status,
       onChange: (value) => {
         setStatus(value);
@@ -360,6 +372,11 @@ export default function ReportsManagement() {
         data={reports}
         loading={loading}
         filters={filters}
+        search={{
+          value: search,
+          onChange: (value) => setSearch(value),
+          placeholder: '搜索举报原因...',
+        }}
         pagination={{
           page,
           total,

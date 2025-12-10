@@ -15,7 +15,7 @@ export const metadata = {
 export default async function TrendingPage({ searchParams }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.p) || 1;
-  const LIMIT = 20;
+  const LIMIT = 50;
 
   // 服务端获取数据
   const data = await getTopicsData({

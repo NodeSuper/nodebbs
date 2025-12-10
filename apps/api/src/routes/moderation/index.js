@@ -1,6 +1,7 @@
 import db from '../../db/index.js';
 import { reports, posts, topics, users, notifications, moderationLogs } from '../../db/schema.js';
-import { eq, sql, desc, and, ne, like, or } from 'drizzle-orm';
+import { eq, sql, desc, and, ne, like, or, inArray } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 // 生成举报通知消息
 function getReportNotificationMessage(reportType, action) {
@@ -450,42 +451,7 @@ export default async function moderationRoutes(fastify, options) {
     return { message: '用户角色已更新', user: updated };
   });
 
-  // Get first admin (founder) info
-  fastify.get('/first-admin', {
-    preHandler: [fastify.requireAdmin],
-    schema: {
-      tags: ['moderation'],
-      description: '获取第一个管理员（创始人）信息',
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'number' },
-            username: { type: 'string' },
-            createdAt: { type: 'string' }
-          }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    const [firstAdmin] = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        createdAt: users.createdAt
-      })
-      .from(users)
-      .where(eq(users.role, 'admin'))
-      .orderBy(users.createdAt)
-      .limit(1);
 
-    if (!firstAdmin) {
-      return reply.code(404).send({ error: '未找到管理员' });
-    }
-
-    return firstAdmin;
-  });
 
   // ============= 内容审核接口 =============
 
@@ -864,7 +830,8 @@ export default async function moderationRoutes(fastify, options) {
           targetId: { type: 'number' },
           moderatorId: { type: 'number' },
           page: { type: 'number', default: 1 },
-          limit: { type: 'number', default: 20, maximum: 100 }
+          limit: { type: 'number', default: 20, maximum: 100 },
+          search: { type: 'string' }
         }
       }
     }
@@ -875,7 +842,8 @@ export default async function moderationRoutes(fastify, options) {
       targetId,
       moderatorId,
       page = 1,
-      limit = 20
+      limit = 20,
+      search
     } = request.query;
     const offset = (page - 1) * limit;
 
@@ -893,6 +861,15 @@ export default async function moderationRoutes(fastify, options) {
     if (moderatorId) {
       conditions.push(eq(moderationLogs.moderatorId, moderatorId));
     }
+    if (search && search.trim()) {
+      conditions.push(like(users.username, `%${search.trim()}%`));
+    }
+
+    // 为多态连接创建别名
+    const targetUsers = alias(users, 'targetUsers');
+    const topicAuthors = alias(users, 'topicAuthors');
+    const postAuthors = alias(users, 'postAuthors');
+    const postTopics = alias(topics, 'postTopics');
 
     // 获取日志列表
     let query = db
@@ -908,10 +885,32 @@ export default async function moderationRoutes(fastify, options) {
         createdAt: moderationLogs.createdAt,
         moderatorUsername: users.username,
         moderatorName: users.name,
-        moderatorRole: users.role
+        moderatorRole: users.role,
+        // 话题信息
+        topicTitle: topics.title,
+        topicSlug: topics.slug,
+        topicAuthor: topicAuthors.username,
+        // 回复信息
+        postContent: sql`LEFT(${posts.content}, 100)`,
+        postAuthor: postAuthors.username,
+        postTopicId: posts.topicId,
+        postTopicTitle: postTopics.title,
+        // 用户信息
+        targetUserUsername: targetUsers.username,
+        targetUserName: targetUsers.name,
+        targetUserRole: targetUsers.role
       })
       .from(moderationLogs)
-      .innerJoin(users, eq(moderationLogs.moderatorId, users.id));
+      .innerJoin(users, eq(moderationLogs.moderatorId, users.id))
+      // 关联话题
+      .leftJoin(topics, and(eq(moderationLogs.targetId, topics.id), eq(moderationLogs.targetType, 'topic')))
+      .leftJoin(topicAuthors, eq(topics.userId, topicAuthors.id))
+      // 关联回复
+      .leftJoin(posts, and(eq(moderationLogs.targetId, posts.id), eq(moderationLogs.targetType, 'post')))
+      .leftJoin(postAuthors, eq(posts.userId, postAuthors.id))
+      .leftJoin(postTopics, eq(posts.topicId, postTopics.id))
+      // 关联用户
+      .leftJoin(targetUsers, and(eq(moderationLogs.targetId, targetUsers.id), eq(moderationLogs.targetType, 'user')));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
@@ -922,59 +921,50 @@ export default async function moderationRoutes(fastify, options) {
       .limit(limit)
       .offset(offset);
 
-    // 获取目标详情（话题标题、用户名等）
-    const enrichedLogs = await Promise.all(logsList.map(async (log) => {
+    // 格式化结果
+    const enrichedLogs = logsList.map(log => {
       let targetInfo = null;
 
-      if (log.targetType === 'topic') {
-        const [topic] = await db
-          .select({
-            title: topics.title,
-            slug: topics.slug,
-            authorUsername: users.username
-          })
-          .from(topics)
-          .leftJoin(users, eq(topics.userId, users.id))
-          .where(eq(topics.id, log.targetId))
-          .limit(1);
-        targetInfo = topic;
-      } else if (log.targetType === 'post') {
-        const [post] = await db
-          .select({
-            content: sql`LEFT(${posts.content}, 100)`,
-            authorUsername: users.username,
-            topicId: posts.topicId,
-            topicTitle: topics.title
-          })
-          .from(posts)
-          .leftJoin(users, eq(posts.userId, users.id))
-          .leftJoin(topics, eq(posts.topicId, topics.id))
-          .where(eq(posts.id, log.targetId))
-          .limit(1);
-        targetInfo = post;
-      } else if (log.targetType === 'user') {
-        const [user] = await db
-          .select({
-            username: users.username,
-            name: users.name,
-            role: users.role
-          })
-          .from(users)
-          .where(eq(users.id, log.targetId))
-          .limit(1);
-        targetInfo = user;
+      if (log.targetType === 'topic' && log.topicTitle) {
+        targetInfo = {
+          title: log.topicTitle,
+          slug: log.topicSlug,
+          authorUsername: log.topicAuthor
+        };
+      } else if (log.targetType === 'post' && log.postContent) {
+        targetInfo = {
+          content: log.postContent,
+          authorUsername: log.postAuthor,
+          topicId: log.postTopicId,
+          topicTitle: log.postTopicTitle
+        };
+      } else if (log.targetType === 'user' && log.targetUserUsername) {
+        targetInfo = {
+          username: log.targetUserUsername,
+          name: log.targetUserName,
+          role: log.targetUserRole
+        };
       }
 
+      // 清理扁平化字段
+      const {
+        topicTitle, topicSlug, topicAuthor,
+        postContent, postAuthor, postTopicId, postTopicTitle,
+        targetUserUsername, targetUserName, targetUserRole,
+        ...cleanLog
+      } = log;
+
       return {
-        ...log,
+        ...cleanLog,
         targetInfo
       };
-    }));
+    });
 
     // 获取总数
     let countQuery = db
       .select({ count: sql`count(*)` })
-      .from(moderationLogs);
+      .from(moderationLogs)
+      .innerJoin(users, eq(moderationLogs.moderatorId, users.id));
 
     if (conditions.length > 0) {
       countQuery = countQuery.where(and(...conditions));

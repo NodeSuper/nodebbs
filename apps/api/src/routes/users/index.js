@@ -145,6 +145,7 @@ export default async function userRoutes(fastify, options) {
       .limit(limit)
       .offset(offset);
 
+
     // Get total count
     let countQuery = db.select({ count: sql`count(*)` }).from(users);
     if (conditions.length > 0) {
@@ -152,8 +153,43 @@ export default async function userRoutes(fastify, options) {
     }
     const [{ count }] = await countQuery;
 
+    // 获取创始人（第一个管理员）ID
+    const [firstAdmin] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, 'admin'))
+      .orderBy(users.createdAt) // 按创建时间排序
+      .limit(1);
+    
+    const founderId = firstAdmin?.id;
+    const currentUserId = request.user.id;
+    const isCurrentUserFounder = currentUserId === founderId;
+
+    // 添加权限标识
+    const enrichedItems = usersList.map(user => {
+      const isFounder = user.id === founderId;
+      
+      // 计算管理权限
+      let canManage = true;
+      
+      // 1. 任何人不能管理自己（通过列表操作），应使用个人设置
+      if (user.id === currentUserId) canManage = false;
+      
+      // 2. 只有创始人可以管理其他管理员
+      if (user.role === 'admin' && !isCurrentUserFounder) canManage = false;
+      
+      // 3. 任何人不能管理创始人
+      if (isFounder) canManage = false;
+
+      return {
+        ...user,
+        isFounder,
+        canManage
+      };
+    });
+
     return {
-      items: usersList,
+      items: enrichedItems,
       page,
       limit,
       total: Number(count)

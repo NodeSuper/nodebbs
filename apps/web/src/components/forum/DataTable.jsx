@@ -140,7 +140,7 @@ export function DataTable({
                 </label>
               )}
               <Select value={filterItem.value} onValueChange={filterItem.onChange}>
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

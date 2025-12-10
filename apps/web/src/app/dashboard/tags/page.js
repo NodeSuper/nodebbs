@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ export default function TagsManagement() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [showDialog, setShowDialog] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -49,6 +51,14 @@ export default function TagsManagement() {
   });
 
   useEffect(() => {
+    if (page === 1) {
+      fetchTags();
+    } else {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     fetchTags();
   }, [page]);
 
@@ -56,7 +66,7 @@ export default function TagsManagement() {
     setLoading(true);
     try {
       const params = { page, limit };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
 
       const data = await tagApi.getList(params);
       setTags(data.items);
@@ -245,13 +255,7 @@ export default function TagsManagement() {
         loading={loading}
         search={{
           value: search,
-          onChange: (value) => {
-            setSearch(value);
-            if (!value) {
-              setPage(1);
-              fetchTags();
-            }
-          },
+          onChange: (value) => setSearch(value),
           placeholder: '搜索标签...',
         }}
         pagination={{

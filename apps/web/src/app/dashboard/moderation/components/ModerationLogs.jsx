@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -33,16 +35,26 @@ export function ModerationLogs() {
     targetType: 'all',
     action: 'all',
   });
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
+  // 搜索词变化时重置页码
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
 
   useEffect(() => {
     loadLogs();
-  }, [page, pageSize, filters]);
+  }, [page, pageSize, filters, debouncedSearch]);
 
   const loadLogs = async () => {
     setLoading(true);
     try {
       const data = await moderationApi.getLogs({
         ...filters,
+        search: debouncedSearch,
         page,
         limit: pageSize,
       });
@@ -77,26 +89,37 @@ export function ModerationLogs() {
   return (
     <div className='space-y-4'>
       {/* 筛选器 */}
-      <div className='flex gap-4 items-center'>
-        <div className='flex items-center gap-2'>
-          <span className='text-sm text-muted-foreground'>类型:</span>
-          <Select
-            value={filters.targetType}
-            onValueChange={(value) => handleFilterChange('targetType', value)}
-          >
-            <SelectTrigger className='w-[140px]'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>全部</SelectItem>
-              <SelectItem value='topic'>话题</SelectItem>
-              <SelectItem value='post'>回复</SelectItem>
-              <SelectItem value='user'>用户</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className='flex flex-wrap gap-4 items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <div className='w-[200px]'>
+            <Input
+              placeholder='搜索操作人用户名...'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
+        
+        <div className='flex items-center gap-4'>
+          <div className='flex items-center gap-2'>
+            <span className='text-sm text-muted-foreground'>类型:</span>
+            <Select
+              value={filters.targetType}
+              onValueChange={(value) => handleFilterChange('targetType', value)}
+            >
+              <SelectTrigger className='w-[140px]'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>全部</SelectItem>
+                <SelectItem value='topic'>话题</SelectItem>
+                <SelectItem value='post'>回复</SelectItem>
+                <SelectItem value='user'>用户</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2'>
           <span className='text-sm text-muted-foreground'>操作:</span>
           <Select
             value={filters.action}
@@ -117,6 +140,7 @@ export function ModerationLogs() {
               <SelectItem value='unpin'>取消置顶</SelectItem>
             </SelectContent>
           </Select>
+        </div>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/forum/DataTable';
@@ -51,6 +52,7 @@ export default function UsersManagement() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -61,7 +63,6 @@ export default function UsersManagement() {
   const [deleteType, setDeleteType] = useState('soft'); // 'soft' or 'hard'
   const [newRole, setNewRole] = useState('user');
   const [submitting, setSubmitting] = useState(false);
-  const [firstAdminId, setFirstAdminId] = useState(null);
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
   const [userForm, setUserForm] = useState({
@@ -75,24 +76,22 @@ export default function UsersManagement() {
   const limit = 20;
 
   useEffect(() => {
-    fetchFirstAdmin();
+    if (page === 1) {
+      fetchUsers();
+    } else {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     fetchUsers();
   }, [page, roleFilter, statusFilter]);
-
-  const fetchFirstAdmin = async () => {
-    try {
-      const data = await moderationApi.getFirstAdmin();
-      setFirstAdminId(data.id);
-    } catch (err) {
-      console.error('获取第一个管理员信息失败:', err);
-    }
-  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const params = { page, limit };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (roleFilter !== 'all') params.role = roleFilter;
       if (statusFilter === 'banned') params.isBanned = true;
       if (statusFilter === 'active') params.isBanned = false;
@@ -279,18 +278,9 @@ export default function UsersManagement() {
     }
   };
 
-  // 检查用户是否是第一个管理员（创始人）
-  const isFirstAdmin = (user) => {
-    return user.role === 'admin' && user.id === firstAdminId;
-  };
-
   // 检查是否可以修改该用户
   const canModifyUser = (user) => {
-    // 不能修改第一个管理员
-    if (isFirstAdmin(user)) {
-      return false;
-    }
-    return true;
+    return !!user.canManage;
   };
 
   const getRoleLabel = (role) => {
@@ -364,7 +354,7 @@ export default function UsersManagement() {
                 <Badge variant={getRoleBadgeVariant(value)} className="text-xs">
                   {getRoleLabel(value)}
                 </Badge>
-                {isFirstAdmin(user) && (
+                {user.isFounder && (
                   <Badge variant="outline" className="text-xs">
                     创始人
                   </Badge>
@@ -481,13 +471,7 @@ export default function UsersManagement() {
         loading={loading}
         search={{
           value: search,
-          onChange: (value) => {
-            setSearch(value);
-            if (!value) {
-              setPage(1);
-              fetchUsers();
-            }
-          },
+          onChange: (value) => setSearch(value),
           placeholder: '搜索用户名、邮箱或姓名...',
         }}
         filter={{

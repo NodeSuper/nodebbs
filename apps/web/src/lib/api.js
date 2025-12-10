@@ -548,8 +548,8 @@ export const moderationApi = {
   },
 
   // 获取举报列表 (版主/管理员)
-  async getReports(reportType = 'all', status = 'pending', page = 1, limit = 20) {
-    return apiClient.get('/moderation/reports', { reportType, status, page, limit });
+  async getReports(reportType = 'all', status = 'pending', page = 1, limit = 20, search = '') {
+    return apiClient.get('/moderation/reports', { reportType, status, page, limit, search });
   },
 
   // 处理举报 (版主/管理员)
@@ -570,11 +570,6 @@ export const moderationApi = {
   // 修改用户角色 (管理员)
   async changeUserRole(id, role) {
     return apiClient.patch(`/moderation/users/${id}/role`, { role });
-  },
-
-  // 获取第一个管理员（创始人）信息
-  async getFirstAdmin() {
-    return apiClient.get('/moderation/first-admin');
   },
 
   // ============= 内容审核 API =============
@@ -600,7 +595,7 @@ export const moderationApi = {
 
   // 获取审核日志列表
   async getLogs(params = {}) {
-    // params: { targetType, action, targetId, moderatorId, page, limit }
+    // params: { targetType, action, targetId, moderatorId, page, limit, search }
     return apiClient.get('/moderation/logs', params);
   },
 

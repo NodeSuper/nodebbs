@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/forum/DataTable';
@@ -49,16 +50,14 @@ export default function AdminPostsPage() {
   const limit = 20;
 
   // 防抖搜索词
-  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  // 搜索输入防抖
+  // 搜索词变化时重置页码
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
 
   // 数据请求
   useEffect(() => {
@@ -303,10 +302,7 @@ export default function AdminPostsPage() {
         loading={loading}
         search={{
           value: searchQuery,
-          onChange: (value) => {
-            setSearchQuery(value);
-            setPage(1);
-          },
+          onChange: (value) => setSearchQuery(value),
           placeholder: '搜索回复内容...',
         }}
         filter={{
