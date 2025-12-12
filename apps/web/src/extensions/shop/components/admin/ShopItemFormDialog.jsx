@@ -17,6 +17,7 @@ import { badgesApi } from '@/extensions/badges/api';
 import UserAvatar from '@/components/forum/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { FormDialog } from '@/components/common/FormDialog';
+import { ImageUpload } from '@/components/common/ImageUpload';
 
 /**
  * 创建/编辑商品的表单对话框
@@ -319,30 +320,25 @@ export function ShopItemFormDialog({ open, onOpenChange, mode, initialData, onSu
             </div>
           </div>
 
-          {/* 图片 URL */}
+          {/* 图片上传 */}
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">图片URL</Label>
-            <div className="flex gap-4">
-                <div className="flex-1">
-                    <Input
-                      id="imageUrl"
-                      value={formData.imageUrl}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
-                      }
-                      placeholder="https://..."
-                    />
-                </div>
-                {formData.imageUrl && (
-                  <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-muted border shrink-0">
-                    <Image
-                      src={formData.imageUrl}
-                      alt="预览"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                )}
+            <Label htmlFor="imageUrl">商品图片</Label>
+            <ImageUpload
+              value={formData.imageUrl}
+              onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+              type={formData.type === ITEM_TYPES.AVATAR_FRAME ? 'frame' : 'item'}
+              placeholder="上传商品图片"
+            />
+            <div className="flex gap-2">
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
+                }
+                placeholder="或手动输入图片 URL"
+                className="text-xs h-8"
+              />
             </div>
           </div>
 

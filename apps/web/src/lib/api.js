@@ -756,6 +756,30 @@ export const dashboardApi = {
   },
 };
 
+// ============= 通用上传 API =============
+export const uploadApi = {
+  async upload(file, type = 'common') {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // 构建 URL，包含 type 参数
+    const url = `${apiClient.baseURL}/upload?type=${type}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include', // 携带 Cookie
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || data.error || '上传失败');
+    }
+
+    return response.json();
+  },
+};
+
 // ============= 邀请码 API =============
 export const invitationsApi = {
   // 生成邀请码

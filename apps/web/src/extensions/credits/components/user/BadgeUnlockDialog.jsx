@@ -103,14 +103,14 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
             transition={{ delay: 0.3 }}
             className="text-center space-y-2 z-10"
           >
-            <h2 className="text-2xl font-bold text-yellow-500 tracking-wider uppercase">
-              Badge Unlocked!
+            <h2 className="text-2xl font-bold text-yellow-500 tracking-wider">
+              解锁新勋章！
             </h2>
             <h3 className="text-xl font-semibold text-white">
               {badgeItem.name}
             </h3>
             <p className="text-sm text-yellow-200/80 max-w-[250px] mx-auto">
-              {badgeItem.description || "You've collected a new badge!"}
+              {badgeItem.description || "恭喜！你获得了新的勋章！"}
             </p>
           </motion.div>
 
@@ -125,7 +125,7 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
                className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-semibold border-0 shadow-[0_0_20px_rgba(234,179,8,0.4)] hover:shadow-[0_0_30px_rgba(234,179,8,0.6)]"
                onClick={() => onOpenChange(false)}
              >
-               Awesome!
+               太棒了！
              </Button>
           </motion.div>
         

@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['http://localhost:3300'],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**", // 匹配所有域名
+      },
+      {
+        protocol: "http",
+        hostname: "**",
       },
     ],
   },

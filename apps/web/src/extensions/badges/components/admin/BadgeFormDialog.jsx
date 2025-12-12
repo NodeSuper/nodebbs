@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import { FormDialog } from '@/components/common/FormDialog';
+import { ImageUpload } from '@/components/common/ImageUpload';
 
 export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmit }) {
   const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm({
@@ -151,7 +152,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
       open={open}
       onOpenChange={onOpenChange}
       title={mode === 'create' ? '新建勋章' : '编辑勋章'}
-      maxWidth="max-w-lg max-h-[90vh] overflow-y-auto"
+      maxWidth="md:max-w-3xl max-h-[90vh] overflow-y-auto"
       submitText={mode === 'create' ? '创建' : '保存'}
       onSubmit={handleSubmit(onFormSubmit)}
     >
@@ -159,7 +160,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
           {/* 基本信息 */}
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">基本信息</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="name">名称</Label>
                 <Input 
@@ -200,17 +201,34 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                   )}
                 />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="iconUrl">图标 URL</Label>
-                <Input 
-                  id="iconUrl" 
-                  placeholder="/images/badges/example.png" 
-                  {...register('iconUrl', { required: '请输入图标 URL' })} 
+            <div className="space-y-2">
+                <Label htmlFor="iconUrl">图标</Label>
+                <Controller
+                  name="iconUrl"
+                  control={control}
+                  rules={{ required: '请上传图标' }}
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      <ImageUpload
+                        value={field.value}
+                        onChange={field.onChange}
+                        type="badge"
+                        placeholder="上传勋章图标"
+                      />
+                      <Input 
+                        id="iconUrl" 
+                        placeholder="或输入图片 URL" 
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  )}
                 />
                 {errors.iconUrl && <p className="text-sm text-destructive">{errors.iconUrl.message}</p>}
               </div>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">描述</Label>
@@ -283,7 +301,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">被动效果 (可选)</h4>
             <div className="space-y-4 rounded-md border p-4 bg-muted/10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="_effectCheckInBonus">签到额外积分</Label>
                   <div className="flex items-center gap-2">

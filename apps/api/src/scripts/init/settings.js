@@ -66,6 +66,13 @@ export const SETTING_KEYS = {
     description: '二维码登录请求的有效期（秒），默认5分钟',
     category: 'features',
   },
+  UPLOAD_ALLOWED_ROLES: {
+    key: 'upload_allowed_roles',
+    value: JSON.stringify(['admin', 'moderator', 'vip']),
+    valueType: 'json',
+    description: '允许上传文件的角色列表',
+    category: 'features',
+  },
 
   // 用户设置
   ALLOW_USERNAME_CHANGE: {

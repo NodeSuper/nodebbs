@@ -66,6 +66,11 @@ const SETTING_KEYS = {
     accessLevel: ACCESS_LEVEL.PUBLIC,
     category: 'features',
   },
+  UPLOAD_ALLOWED_ROLES: {
+    key: 'upload_allowed_roles',
+    accessLevel: ACCESS_LEVEL.ADMIN,
+    category: 'features',
+  },
 
   // 用户设置 - 用户名修改
   ALLOW_USERNAME_CHANGE: {
@@ -235,6 +240,12 @@ export default async function settingsRoutes(fastify) {
             value = setting.value === 'true';
           } else if (setting.valueType === 'number') {
             value = parseFloat(setting.value);
+          } else if (setting.valueType === 'json') {
+            try {
+              value = JSON.parse(setting.value);
+            } catch (e) {
+              value = setting.value;
+            }
           }
           acc[setting.key] = {
             value,
@@ -307,6 +318,12 @@ export default async function settingsRoutes(fastify) {
           value = setting.value === 'true';
         } else if (setting.valueType === 'number') {
           value = parseFloat(setting.value);
+        } else if (setting.valueType === 'json') {
+          try {
+            value = JSON.parse(setting.value);
+          } catch (e) {
+            value = setting.value; // Fallback to string if parse fails
+          }
         }
 
         return {
@@ -383,6 +400,11 @@ export default async function settingsRoutes(fastify) {
             return reply.code(400).send({ error: '值类型必须为 number' });
           }
           stringValue = value.toString();
+        } else if (existing.valueType === 'json') {
+          if (typeof value !== 'object' && !Array.isArray(value)) {
+            return reply.code(400).send({ error: '值类型必须为 json (object or array)' });
+          }
+          stringValue = JSON.stringify(value);
         } else {
           if (typeof value !== 'string') {
             return reply.code(400).send({ error: '值类型必须为 string' });
