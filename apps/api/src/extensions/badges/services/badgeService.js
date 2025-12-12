@@ -265,4 +265,62 @@ export async function deleteBadge(id) {
   return true;
 }
 
+/**
+ * 获取用户所有被动效果
+ * @param {number} userId
+ * @returns {Promise<Object>} { checkInBonus: 0, checkInBonusPercent: 0, replyCostReductionPercent: 0, ... }
+ */
+export async function getPassiveEffects(userId) {
+  try {
+    // 1. 获取用户拥有的所有徽章
+    const userBadgeList = await getUserBadges(userId);
+    
+    // 2. 初始化效果汇总
+    const effects = {
+      checkInBonus: 0, // 签到额外固定积分
+      checkInBonusPercent: 0, // 签到额外百分比
+      replyCostReductionPercent: 0, // 回复消耗减免百分比
+    };
+
+    // 3. 遍历徽章计算效果
+    for (const item of userBadgeList) {
+      const badge = item.badge;
+      if (!badge.isActive) continue;
+
+      // 解析元数据中的 effects 字段
+      // 假设结构: metadata: { effects: { checkInBonus: 10, ... } }
+      try {
+        if (!badge.metadata) continue;
+        
+        const metadata = typeof badge.metadata === 'string' 
+          ? JSON.parse(badge.metadata) 
+          : badge.metadata;
+
+        if (metadata.effects) {
+          const badgeEffects = metadata.effects;
+          
+          if (badgeEffects.checkInBonus) {
+            effects.checkInBonus += Number(badgeEffects.checkInBonus) || 0;
+          }
+          if (badgeEffects.checkInBonusPercent) {
+            effects.checkInBonusPercent += Number(badgeEffects.checkInBonusPercent) || 0;
+          }
+          if (badgeEffects.replyCostReductionPercent) {
+            effects.replyCostReductionPercent += Number(badgeEffects.replyCostReductionPercent) || 0;
+          }
+        }
+      } catch (e) {
+        console.warn(`Badge ${badge.id} metadata parse error:`, e);
+      }
+    }
+
+    // 限制百分比上限 (例如减免不能超过 100%)
+    if (effects.replyCostReductionPercent > 100) effects.replyCostReductionPercent = 100;
+
+    return effects;
+  } catch (error) {
+    console.error('[Badge] Get passive effects failed:', error);
+    return {};
+  }
+}
 

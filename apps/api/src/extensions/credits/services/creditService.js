@@ -9,6 +9,7 @@ import {
   shopItems,
 } from '../../../db/schema.js';
 import { eq, sql, desc, ilike, and, inArray } from 'drizzle-orm';
+import { grantBadge, getPassiveEffects } from '../../badges/services/badgeService.js';
 
 /**
  * 获取积分系统配置
@@ -429,6 +430,9 @@ export async function checkIn(userId) {
   }
 
   try {
+    // 1. 获取用户被动效果 (Badge Effects)
+    const effects = await getPassiveEffects(userId);
+    
     return await db.transaction(async (tx) => {
       // 获取用户积分账户
       let [credit] = await tx
@@ -462,7 +466,6 @@ export async function checkIn(userId) {
         if (lastCheckIn.getTime() === today.getTime()) {
           // 今日已签到静默处理，返回成功
           return {message: 'done'};
-          // throw new Error('今天已经签到过了');
         }
       }
 
@@ -484,9 +487,20 @@ export async function checkIn(userId) {
       const baseAmount = await getCreditConfig('check_in_base_amount', 10);
       const streakBonus = await getCreditConfig('check_in_streak_bonus', 5);
 
-      // 计算奖励（基础+连续签到奖励）
-      const bonusAmount = Math.min(newStreak - 1, 6) * streakBonus; // 最多7天额外奖励
-      const totalAmount = baseAmount + bonusAmount;
+      // 计算基础奖励（基础+连续签到奖励）
+      let bonusAmount = Math.min(newStreak - 1, 6) * streakBonus; // 最多7天额外奖励
+      
+      // 应用被动效果加成
+      let effectBonus = 0;
+      if (effects.checkInBonus) {
+        effectBonus += effects.checkInBonus;
+      }
+      if (effects.checkInBonusPercent) {
+        const baseTotal = baseAmount + bonusAmount;
+        effectBonus += Math.floor(baseTotal * (effects.checkInBonusPercent / 100));
+      }
+
+      const totalAmount = baseAmount + bonusAmount + effectBonus;
 
       // 计算新余额
       const newBalance = credit.balance + totalAmount;
@@ -514,7 +528,9 @@ export async function checkIn(userId) {
         metadata: JSON.stringify({
           checkInStreak: newStreak,
           baseAmount,
-          bonusAmount,
+          streakBonus: bonusAmount,
+          effectBonus,
+          appliedEffects: effects
         }),
       });
 
@@ -522,7 +538,7 @@ export async function checkIn(userId) {
         amount: totalAmount,
         balance: newBalance,
         checkInStreak: newStreak,
-        message: `签到成功！获得 ${totalAmount} 积分（连续签到${newStreak}天）`,
+        message: `签到成功！获得 ${totalAmount} 积分${effectBonus > 0 ? ` (含徽章加成 ${effectBonus} 分)` : ''}`,
       };
     });
   } catch (error) {

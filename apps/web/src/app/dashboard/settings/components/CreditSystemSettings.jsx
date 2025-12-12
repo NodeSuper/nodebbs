@@ -78,9 +78,18 @@ export function CreditSystemSettings() {
     if (typeof config.serverValue === 'number') {
       newValue = Number(value);
       // 简单的验证
-      if (isNaN(newValue) || newValue < 0) {
+      if (isNaN(newValue)) {
         // 如果无效，重置为服务器值
         setConfigs((prev) => ({
+          ...prev,
+          [key]: { ...prev[key], value: config.serverValue },
+        }));
+        return;
+      }
+
+      // 对于非 post_reply_amount 的字段，仍然保持非负限制（可选，为了安全）
+      if (key !== 'post_reply_amount' && newValue < 0) {
+         setConfigs((prev) => ({
           ...prev,
           [key]: { ...prev[key], value: config.serverValue },
         }));
@@ -189,20 +198,20 @@ export function CreditSystemSettings() {
             </p>
           </div>
 
-          {/* 发布回复奖励 */}
+          {/* 发布回复积分变动 */}
           <div className="grid gap-2">
-            <Label htmlFor="post_reply_amount">发布回复奖励</Label>
+            <Label htmlFor="post_reply_amount">发布回复积分变动</Label>
             <Input
               id="post_reply_amount"
               type="number"
-              min="0"
+              // min="0" // Allow negative
               value={configs.post_reply_amount?.value ?? ''}
               onChange={(e) => handleLocalChange('post_reply_amount', e.target.value)}
               onBlur={(e) => handleBlur('post_reply_amount', e.target.value)}
               disabled={saving.post_reply_amount}
             />
             <p className="text-xs text-muted-foreground">
-              {configs.post_reply_amount?.description}
+              {configs.post_reply_amount?.description || '正数=奖励，负数=扣费'}
             </p>
           </div>
 
@@ -242,13 +251,15 @@ export function CreditSystemSettings() {
         </CardContent>
       </Card>
 
-      {/* 消费规则 */}
+          {/* 消费规则 */}
       <Card>
         <CardHeader>
           <CardTitle>消费规则</CardTitle>
           <CardDescription>配置积分消费的限制</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+
+
           {/* 打赏最小金额 */}
           <div className="grid gap-2">
             <Label htmlFor="reward_min_amount">打赏最小金额</Label>

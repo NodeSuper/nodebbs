@@ -41,9 +41,21 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
     }
   };
 
+  // 解析元数据的辅助函数
+  const parseMetadata = (jsonStr) => {
+    try {
+      return typeof jsonStr === 'string' ? JSON.parse(jsonStr) : (jsonStr || {});
+    } catch {
+      return {};
+    }
+  };
+
   useEffect(() => {
     if (open && mode === 'edit' && initialData) {
-      const parsed = parseCondition(initialData.unlockCondition);
+      const parsedCondition = parseCondition(initialData.unlockCondition);
+      const parsedMetadata = parseMetadata(initialData.metadata);
+      const effects = parsedMetadata.effects || {};
+
       reset({
         name: initialData.name,
         slug: initialData.slug,
@@ -51,9 +63,14 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
         iconUrl: initialData.iconUrl,
         category: initialData.category || 'general',
         unlockCondition: initialData.unlockCondition || '{}',
-        // UI 辅助字段
-        _conditionType: parsed.type,
-        _threshold: parsed.threshold,
+        // UI 辅助字段 - 条件
+        _conditionType: parsedCondition.type,
+        _threshold: parsedCondition.threshold,
+        // UI 辅助字段 - 特效
+        _effectCheckInBonus: effects.checkInBonus || 0,
+        _effectCheckInBonusPercent: effects.checkInBonusPercent || 0,
+        _effectReplyCostReduction: effects.replyCostReductionPercent || 0,
+        
         displayOrder: initialData.displayOrder || 0,
         isActive: initialData.isActive !== false,
       });
@@ -67,6 +84,11 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
         unlockCondition: '{"type": "manual"}',
         _conditionType: 'manual',
         _threshold: 0,
+        // UI 辅助字段 - 特效
+        _effectCheckInBonus: 0,
+        _effectCheckInBonusPercent: 0,
+        _effectReplyCostReduction: 0,
+        
         displayOrder: 0,
         isActive: true,
       });
@@ -75,7 +97,7 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
 
   const onFormSubmit = async (data) => {
     try {
-      // 从 UI 字段构建 JSON
+      // 从 UI 字段构建 JSON (Condition)
       const conditionObj = {
         type: data._conditionType,
       };
@@ -84,18 +106,39 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
         conditionObj.threshold = Number(data._threshold);
       }
       
+      // 构建 Metadata (Effects)
+      let currentMetadata = {};
+      if (mode === 'edit' && initialData && initialData.metadata) {
+         currentMetadata = parseMetadata(initialData.metadata);
+      }
+      
+      const effects = {};
+      if (data._effectCheckInBonus > 0) effects.checkInBonus = data._effectCheckInBonus;
+      if (data._effectCheckInBonusPercent > 0) effects.checkInBonusPercent = data._effectCheckInBonusPercent;
+      if (data._effectReplyCostReduction > 0) effects.replyCostReductionPercent = data._effectReplyCostReduction;
+
+      const metadataObj = {
+        ...currentMetadata,
+        effects: Object.keys(effects).length > 0 ? effects : undefined
+      };
+      
       const finalData = {
         ...data,
-        unlockCondition: JSON.stringify(conditionObj)
+        unlockCondition: JSON.stringify(conditionObj),
+        metadata: JSON.stringify(metadataObj)
       };
       
       // 移除辅助字段
       delete finalData._conditionType;
       delete finalData._threshold;
+      delete finalData._effectCheckInBonus;
+      delete finalData._effectCheckInBonusPercent;
+      delete finalData._effectReplyCostReduction;
 
       await onSubmit(finalData);
     } catch (error) {
        // handled by parent
+       console.error("Form submit error", error);
     }
   };
   
@@ -235,6 +278,60 @@ export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmi
                 </div>
              )}
           </div>
+
+
+                {/* Passive Effects Configuration */}
+          <div className="space-y-4 rounded-md border p-4">
+            <h4 className="mb-2 text-sm font-medium">被动效果 (可选)</h4>
+            
+            {/* Check-in Bonus */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="_effectCheckInBonus">签到额外积分</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="_effectCheckInBonus"
+                    type="number"
+                    placeholder="例如: 5"
+                    {...register('_effectCheckInBonus', { valueAsNumber: true })}
+                  />
+                  <span className="text-sm text-muted-foreground">分</span>
+                </div>
+                <p className="text-xs text-muted-foreground">固定数值，例如 5 表示额外加 5 分</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="_effectCheckInBonusPercent">签到积分加成</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="_effectCheckInBonusPercent"
+                    type="number"
+                    placeholder="例如: 10"
+                    {...register('_effectCheckInBonusPercent', { valueAsNumber: true })}
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+                 <p className="text-xs text-muted-foreground">百分比，例如 10 表示额外加 10%</p>
+              </div>
+            </div>
+
+            {/* Reply Cost Reduction */}
+            <div className="space-y-2">
+              <Label htmlFor="_effectReplyCostReduction">回复扣费减免</Label>
+               <div className="flex items-center gap-2">
+                <Input
+                  id="_effectReplyCostReduction"
+                  type="number"
+                  placeholder="例如: 50"
+                  max="100"
+                  {...register('_effectReplyCostReduction', { valueAsNumber: true, max: 100 })}
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">百分比，例如 50 表示减免 50% 的费用</p>
+            </div>
+          </div>
+
           
           <div className="grid grid-cols-2 gap-4 items-end">
             <div className="space-y-2">

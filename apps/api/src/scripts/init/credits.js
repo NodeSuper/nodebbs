@@ -41,7 +41,7 @@ export const DEFAULT_CREDIT_CONFIGS = [
     key: 'post_reply_amount',
     value: '2',
     valueType: 'number',
-    description: '发布回复奖励',
+    description: '发布回复的积分变动 (正数=奖励，负数=扣费)',
     category: 'earning',
   },
   {

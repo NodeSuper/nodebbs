@@ -37,14 +37,25 @@ export async function registerCreditListeners(fastify) {
 
       fastify.log.debug(`[积分系统] 处理回复创建奖励: PostID=${post.id}, UserID=${post.userId}`);
 
-      await grantCredits({
-        userId: post.userId,
-        amount: 2, // TODO: Read from config
-        type: 'post_reply',
-        relatedPostId: post.id,
-        relatedTopicId: post.topicId,
-        description: '发布回复',
-      });
+      // 读取配置
+      // Note: getCreditConfig comes from services, we need to import it.
+      // Assuming getCreditConfig is available or we use fastify context if properly decorated, 
+      // but simpler to just import.
+      const { getCreditConfig } = await import('./services/creditService.js');
+      const replyAmount = await getCreditConfig('post_reply_amount', 2);
+
+      if (replyAmount > 0) {
+        await grantCredits({
+          userId: post.userId,
+          amount: Number(replyAmount),
+          type: 'post_reply',
+          relatedPostId: post.id,
+          relatedTopicId: post.topicId,
+          description: '发布回复',
+        });
+      } else {
+         fastify.log.debug(`[积分系统] 回复奖励未开启或为扣费模式: Amount=${replyAmount}`);
+      }
     } catch (error) {
       fastify.log.error(error, `[积分系统] 发放回复奖励失败: PostID=${post.id}`);
     }
