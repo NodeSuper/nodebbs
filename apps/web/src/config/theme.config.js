@@ -7,6 +7,7 @@ export const THEMES = [
   { value: 'default', label: '默认', class: '' },
   { value: 'sunrise', label: '晨曦', class: 'sunrise' },
   { value: 'iceblue', label: '冰蓝', class: 'iceblue' },
+  { value: 'nord', label: 'Nord', class: 'nord' },
 ];
 
 export const FONT_SIZES = [
