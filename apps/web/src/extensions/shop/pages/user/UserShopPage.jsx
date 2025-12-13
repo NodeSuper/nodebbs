@@ -6,11 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { shopApi, rewardsApi, ledgerApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { useShopItems } from '@/extensions/shop/hooks/useShopItems';
-import { BalanceCard } from '@/extensions/rewards/components/user/BalanceCard';
+import { BalanceCard } from '@/extensions/ledger/components/user/BalanceCard';
 import { ItemTypeSelector } from '@/extensions/shop/components/shared/ItemTypeSelector';
-import { ShopItemGrid } from '@/extensions/rewards/components/user/ShopItemGrid';
-import { PurchaseDialog } from '@/extensions/rewards/components/user/PurchaseDialog';
-import { BadgeUnlockDialog } from '@/extensions/rewards/components/user/BadgeUnlockDialog';
+import { PurchaseDialog } from '../../components/user/PurchaseDialog';
+import { BadgeUnlockDialog } from '../../components/user/BadgeUnlockDialog';
 
 export default function UserShopPage() {
   const { isAuthenticated } = useAuth();

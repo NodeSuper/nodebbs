@@ -5,7 +5,7 @@ import { Package } from 'lucide-react';
 import { useUserItems } from '@/extensions/shop/hooks/useUserItems';
 import { useItemActions } from '@/extensions/shop/hooks/useItemActions';
 import { ItemTypeSelector } from '@/extensions/shop/components/shared/ItemTypeSelector';
-import { ItemInventoryGrid } from '@/extensions/rewards/components/user/ItemInventoryGrid';
+import { ItemInventoryGrid } from '../../components/user/ItemInventoryGrid';
 
 export default function UserItemsPage() {
   const [itemType, setItemType] = useState('all');

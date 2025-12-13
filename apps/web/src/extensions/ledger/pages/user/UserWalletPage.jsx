@@ -8,7 +8,7 @@ import { Wallet, Loader2, Trophy, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { ledgerApi } from '../../api';
 import { rewardsApi } from '@/lib/api';
-import { CheckInStatus } from '../../../rewards/components/user/CheckInStatus';
+import { CheckInStatus } from '../../components/user/CheckInStatus';
 import { LedgerTransactionTable } from '../../components/common/LedgerTransactionTable';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
