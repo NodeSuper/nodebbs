@@ -41,25 +41,12 @@ export async function getOrCreateUserCheckIn(userId) {
 }
 
 /**
- * 获取用户积分余额 (Delegates to Ledger)
- */
-export async function getUserBalance(fastify, userId) {
-  try {
-    const account = await fastify.ledger.getAccount(userId, 'credits');
-    return account.balance;
-  } catch (error) {
-    console.error('[奖励服务] 获取余额失败:', error);
-    throw error;
-  }
-}
-
-/**
- * 发放奖励 (Wrapper around Ledger Grant)
+ * 发放奖励 (Ledger 发放包装器)
  */
 export async function grantReward(fastify, {
   userId,
   amount,
-  type, // 'check_in', 'post_topic', etc.
+  type, // 'check_in', 'post_topic' 等
   description,
   relatedUserId,
   relatedTopicId,
@@ -90,7 +77,7 @@ export async function grantReward(fastify, {
 }
 
 /**
- * 扣除积分 (Wrapper around Ledger Deduct)
+ * 扣除积分 (Ledger 扣除包装器)
  */
 export async function deductCredits(fastify, {
   userId,
@@ -116,7 +103,7 @@ export async function deductCredits(fastify, {
 }
 
 /**
- * 转账积分 (Wrapper around Ledger Transfer)
+ * 转账积分 (Ledger 转账包装器)
  */
 export async function transferCredits(fastify, {
   fromUserId,
@@ -156,23 +143,23 @@ export async function checkIn(fastify, userId) {
   const systemEnabled = await fastify.ledger.isCurrencyActive('credits');
   if (!systemEnabled) throw new Error('奖励系统未启用');
 
-  // Need separate transaction for CheckIn Logic OR combine?
-  // Since Ledger handles its own transaction, we risk atomicity if we split checkIn update and grant.
-  // Ideally we should pass `tx` to Ledger. Since we can't properly do that without changing Ledger API (which we decided not to touch now),
-  // we will execute CheckIn tracking FIRST. If it succeeds, we call Ledger.
-  // If Ledger fails, we should ROLLBACK CheckIn.
-  // But CheckIn committed.
-  // So we must use nested transaction logic or simple sequence.
-  // Best bet: Calculate everything, START transaction, update checkIn, then call Ledger.
-  // But Ledger starts its own transaction.
-  // Safe approach: Update checkIn first inside a transaction. Then outside transaction call Ledger.
-  // If Ledger fails, user got a streak update but no money.
-  // Retries? 
-  // Acceptable for now.
+  // 需要单独的事务处理签到逻辑还是合并？
+  // 由于 Ledger 处理自己的事务，如果我们拆分 checkIn 更新和发放，会有原子性风险。
+  // 理想情况下我们应该传递 `tx` 给 Ledger。由于我们不能在不更改 Ledger API（我们决定现在不碰它）的情况下正确做到这一点，
+  // 我们将首先执行签到跟踪。如果成功，我们调用 Ledger。
+  // 如果 Ledger 失败，我们应该回滚签到。
+  // 但签到已经提交了。
+  // 所以我们必须使用嵌套事务逻辑或简单的序列。
+  // 最好的办法：计算所有内容，开始事务，更新 checkIn，然后调用 Ledger。
+  // 但 Ledger 启动它自己的事务。
+  // 安全的方法：首先在事务内更新 checkIn。然后在事务外调用 Ledger。
+  // 如果 Ledger 失败，用户得到了连胜更新但没有钱。
+  // 重试？
+  // 目前可以接受。
 
   const effects = await getPassiveEffects(userId);
 
-  // 1. Update Check-In Data (Transactional)
+  // 1. 更新签到数据 (事务性)
   const result = await db.transaction(async (tx) => {
       let [checkInData] = await tx
         .select()
@@ -221,7 +208,7 @@ export async function checkIn(fastify, userId) {
     return { message: 'done' };
   }
 
-  // 2. Grant Reward (Ledger)
+  // 2. 发放奖励 (Ledger)
   try {
     const baseAmount = await fastify.ledger.getCurrencyConfig('credits', 'check_in_base_amount', 10);
     const streakBonus = await fastify.ledger.getCurrencyConfig('credits', 'check_in_streak_bonus', 5);
@@ -262,119 +249,17 @@ export async function checkIn(fastify, userId) {
 
   } catch (error) {
     console.error('CheckIn Grant Failed after Streak Update:', error);
-    // TODO: Rollback streak? Or just let user keep streak? Keeping streak is safer UX than losing streak + no money.
-    // They can try again tomorrow? No, streak tracks "lastCheckInDate".
-    // If we fail here, user "Checked in" but got no money.
-    // Ideally we should fix this manually.
+    // TODO: 回滚连胜？或者只是让用户保留连胜？保留连胜比失去连胜且没有积分的用户体验更安全。
+    // 他们明天可以再试一次？不，连胜追踪的是 "lastCheckInDate"。
+    // 如果我们在这里失败，用户“签到了”但没有拿到钱。
+    // 理想情况下我们应该手动修复这个问题。
     throw new Error('签到成功但发放积分失败，请联系管理员');
   }
 }
 
 /**
- * 获取用户交易记录 (Query Ledger sysTransactions)
- */
-export async function getUserTransactions(fastify, userId, options = {}) {
-  const { page = 1, limit = 20, type = null } = options;
-  const offset = (page - 1) * limit;
-
-  try {
-    // We only care about 'credits' currency for now in this view
-    const conditions = [
-      eq(sysTransactions.userId, userId),
-      eq(sysTransactions.currencyCode, 'credits')
-    ];
-
-    if (type) {
-      conditions.push(eq(sysTransactions.type, type));
-    }
-
-    const items = await db
-      .select()
-      .from(sysTransactions)
-      .where(and(...conditions))
-      .orderBy(desc(sysTransactions.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
-      .from(sysTransactions)
-      .where(and(...conditions));
-
-    return {
-      items,
-      page,
-      limit,
-      total: Number(count),
-    };
-  } catch (error) {
-    console.error('[交易记录] 查询失败:', error);
-    throw error;
-  }
-}
-
-/**
- * 获取所有交易记录 (Admin)
- */
-export async function getAllTransactions(options = {}) {
-  const { page = 1, limit = 20, type = null, userId = null, username = null } = options;
-  const offset = (page - 1) * limit;
-
-  try {
-    let query = db
-      .select({
-        id: sysTransactions.id,
-        userId: sysTransactions.userId,
-        username: users.username,
-        amount: sysTransactions.amount,
-        balance: sysTransactions.balanceAfter, // balance_after
-        type: sysTransactions.type,
-        currency: sysTransactions.currencyCode,
-        description: sysTransactions.description,
-        createdAt: sysTransactions.createdAt,
-        metadata: sysTransactions.metadata,
-      })
-      .from(sysTransactions)
-      .innerJoin(users, eq(sysTransactions.userId, users.id))
-      .where(eq(sysTransactions.currencyCode, 'credits')); // Default view credits
-
-    const conditions = [eq(sysTransactions.currencyCode, 'credits')];
-
-    if (userId) conditions.push(eq(sysTransactions.userId, userId));
-    if (username) conditions.push(ilike(users.username, `%${username}%`));
-    if (type) conditions.push(eq(sysTransactions.type, type));
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    const items = await query
-      .orderBy(desc(sysTransactions.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Count logic ... simplified
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
-      .from(sysTransactions)
-      .innerJoin(users, eq(sysTransactions.userId, users.id)) // Join needed for username filter
-      .where(and(...conditions));
-
-    return {
-      items,
-      page,
-      limit,
-      total: Number(count),
-    };
-  } catch (error) {
-    console.error('[所有交易记录] 查询失败:', error);
-    throw error;
-  }
-}
-
-/**
- * 获取帖子的打赏列表 (Uses postRewards table + sysTransactions via logic?)
- * Actually postRewards table stores the record of tipping.
+ * 获取帖子的打赏列表 (使用 postRewards 表 + 通过逻辑关联 sysTransactions？)
+ * 实际上 postRewards 表存储了打赏记录。
  */
 export async function getPostRewards(postId, options = {}) {
   const { page = 1, limit = 20 } = options;
@@ -398,7 +283,7 @@ export async function getPostRewards(postId, options = {}) {
       .limit(limit)
       .offset(offset);
 
-    // Fetch frames (same as before)
+    // 获取头像框（与之前相同）
     const userIds = [...new Set(rewards.map(r => r.fromUserId))];
     if (userIds.length > 0) {
       const frames = await db
@@ -448,7 +333,7 @@ export async function getPostRewards(postId, options = {}) {
 }
 
 /**
- * 获取积分排行榜 (Query sysAccounts)
+ * 获取积分排行榜 (查询 sysAccounts)
  */
 export async function getCreditRanking(options = {}) {
   const { limit = 50, type = 'balance' } = options;
@@ -463,7 +348,7 @@ export async function getCreditRanking(options = {}) {
         avatar: users.avatar,
         balance: sysAccounts.balance,
         totalEarned: sysAccounts.totalEarned,
-        // checkInStreak: userCheckIns.checkInStreak // We need join with userCheckIns if we want streak
+        // checkInStreak: userCheckIns.checkInStreak // 如果我们想要连胜数据，我们需要关联 userCheckIns 表
       })
       .from(sysAccounts)
       .innerJoin(users, eq(sysAccounts.userId, users.id))
