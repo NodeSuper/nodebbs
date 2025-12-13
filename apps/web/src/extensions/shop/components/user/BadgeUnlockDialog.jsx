@@ -69,7 +69,7 @@ export function BadgeUnlockDialog({ open, onOpenChange, badgeItem }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md border-0 bg-transparent shadow-none">
+      <DialogContent className="sm:max-w-md border-0 bg-transparent shadow-none" showCloseButton={false}>
         <div className="relative flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-xl overflow-hidden">
           
           {/* 光效 */}

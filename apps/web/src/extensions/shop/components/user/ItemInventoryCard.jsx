@@ -111,7 +111,7 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
               variant="secondary"
               onClick={() => (window.location.href = '/profile/badges')}
             >
-              <Medal className="mr-2 h-4 w-4" />
+              <Medal className="h-4 w-4" />
               查看勋章
             </Button>
           ) : (
@@ -125,17 +125,17 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
             >
               {actioning ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   {item.isEquipped ? '卸下中...' : '装备中...'}
                 </>
               ) : item.isEquipped ? (
                 <>
-                  <X className="mr-2 h-4 w-4" />
+                  <X className="h-4 w-4" />
                   卸下
                 </>
               ) : (
                 <>
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check className="h-4 w-4" />
                   装备
                 </>
               )}

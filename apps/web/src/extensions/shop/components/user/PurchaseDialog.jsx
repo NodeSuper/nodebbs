@@ -118,7 +118,7 @@ export function PurchaseDialog({ open, item, accounts = [], onConfirm, onCancel,
               </>
             ) : (
               <>
-                {mode === 'gift' ? <Gift className="mr-2 h-4 w-4" /> : <Check className="mr-2 h-4 w-4" />}
+                {mode === 'gift' ? <Gift className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                 {mode === 'gift' ? '确认赠送' : '确认购买'}
               </>
             )}

@@ -17,7 +17,7 @@ export function ItemTypeSelector({ value, onChange, showAll = true, excludedType
 
   return (
     <Tabs value={value} onValueChange={onChange}>
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid grid-cols-4">
         {options.map((option) => (
           <TabsTrigger key={option.value} value={option.value} className="gap-2">
             {option.value !== 'all' && <ItemTypeIcon type={option.value} className="h-4 w-4" />}
@@ -25,7 +25,7 @@ export function ItemTypeSelector({ value, onChange, showAll = true, excludedType
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent value={value}>
+      <TabsContent value={value} className='mt-3'>
         {children}
       </TabsContent>
     </Tabs>
