@@ -29,7 +29,7 @@ export async function generateMetadata({ params }) {
   let description = $description;
 
   try {
-    const settings = await request('/api/settings');
+    const settings = await request('/settings');
     if (settings?.site_name?.value) {
       name = settings.site_name.value;
     }
@@ -71,8 +71,8 @@ async function AppLayout({ children }) {
   let apiInfo = null;
   try {
     const [settingsData, apiData] = await Promise.all([
-      request('/api/settings'),
-      request('/api/'),
+      request('/settings'),
+      request('/'),
     ]);
     settings = settingsData;
     apiInfo = apiData;

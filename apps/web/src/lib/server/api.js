@@ -1,10 +1,11 @@
 // SSR请求专用
 import { cookies } from 'next/headers';
+import { getApiBaseUrl } from '../api-url';
 
 export const request = async (endpoint, options = {}) => {
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7100';
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseURL = getApiBaseUrl();
+  const url = `${baseURL}${endpoint}`;
+  
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -52,5 +53,5 @@ export const getCurrentUser = async () => {
     return null;
   }
 
-  return request('/api/auth/me');
+  return request('/auth/me');
 };
