@@ -1,9 +1,6 @@
 import ScalarAPI from '@/components/common/ScalarAPI';
-import { getApiHost } from '@/lib/api-url';
-
 export default function ApiReference() {
-  const apiHost = getApiHost();
-  const url = `${apiHost}/docs/json`;
+  const url = `/docs/json`;
   const config = {
     url,
     theme: 'alternate',
