@@ -14,22 +14,7 @@ const nextConfig = {
   },
   // 启用 standalone 输出模式，用于 Docker 部署
   output: 'standalone',
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.SERVER_API_URL || "http://localhost:7100"}/api/:path*`,
-      },
-      {
-        source: "/uploads/:path*",
-        destination: `${process.env.SERVER_API_URL || "http://localhost:7100"}/uploads/:path*`,
-      },
-      {
-        source: "/docs/:path*",
-        destination: `${process.env.SERVER_API_URL || "http://localhost:7100"}/docs/:path*`,
-      },
-    ];
-  },
+  // 代理逻辑已迁移至 src/proxy.js，以支持 Docker 运行时环境变量动态注入
 };
 
 export default nextConfig;
