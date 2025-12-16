@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "release": "git add . && git commit -m \"chore: release v$(node -p 'require(\"./package.json\").version')\" && git tag v$(node -p 'require(\"./package.json\").version') && git push && git push --tags"
   },
   "devDependencies": {
     "turbo": "^2.6.0"
@@ -12,7 +13,7 @@
   "engines": {
     "node": ">=22"
   },
-  "author": "qianshan w",
+  "author": "wengqianshan",
   "license": "MIT",
   "repository": {
     "type": "git",
