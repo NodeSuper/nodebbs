@@ -96,6 +96,11 @@ services:
       TZ: Asia/Shanghai
     ports:
       - "${WEB_PORT:-3100}:3100"
+    # volumes:
+      # 自定义资源挂载（如有需要，请取消注释并在同级目录下创建 web 文件夹及对应文件）
+      # - ./web/favicon.ico:/app/apps/web/public/favicon.ico
+      # - ./web/logo.svg:/app/apps/web/public/logo.svg
+      # - ./web/apple-touch-icon.png:/app/apps/web/public/apple-touch-icon.png
     depends_on:
       api:
         condition: service_healthy
