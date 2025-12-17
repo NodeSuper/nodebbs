@@ -928,14 +928,14 @@ export default async function oauthRoutes(fastify, options) {
         frontendRedirectUrl.searchParams.set('token', authToken);
         frontendRedirectUrl.searchParams.set('status', 'success');
 
-        return reply.redirect(302, frontendRedirectUrl.toString());
+        return reply.redirect(frontendRedirectUrl.toString());
 
       } catch (error) {
         fastify.log.error(error);
         const errorRedirectUrl = new URL(`${frontendUrl}/auth/apple/callback`);
         errorRedirectUrl.searchParams.set('error', error.message || 'Login failed');
         errorRedirectUrl.searchParams.set('status', 'error');
-        return reply.redirect(302, errorRedirectUrl.toString());
+        return reply.redirect(errorRedirectUrl.toString());
       }
     }
   );
