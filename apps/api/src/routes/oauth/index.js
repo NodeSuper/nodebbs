@@ -11,6 +11,7 @@ import db from '../../db/index.js';
 import { oauthProviders } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
+import { isProd } from '../../utils/env.js';
 
 /**
  * OAuth 认证路由
@@ -366,6 +367,15 @@ export default async function oauthRoutes(fastify, options) {
 
         const authorizationUri = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
+        // 设置 state cookie 防止 CSRF
+        reply.setCookie('oauth_state', state, {
+          path: '/',
+          httpOnly: true,
+          secure: isProd,
+          maxAge: 600, // 10 minutes
+          sameSite: 'lax',
+        });
+
         return { authorizationUri };
       } catch (error) {
         fastify.log.error(error);
@@ -616,8 +626,17 @@ export default async function oauthRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      try {
+        try {
         const { code, state } = request.body;
+        const savedState = request.cookies.oauth_state;
+
+        // 验证 state 防止 CSRF
+        if (!state || state !== savedState) {
+           return reply.code(400).send({ error: '无效的 state 参数，可能的 CSRF 攻击' });
+        }
+        
+        // 清除 cookie
+        reply.clearCookie('oauth_state');
 
         // 从数据库获取 Google 配置
         const providerConfig = await fastify.getOAuthProviderConfig('google');
@@ -653,27 +672,29 @@ export default async function oauthRoutes(fastify, options) {
           throw new Error(token.error_description || token.error);
         }
 
-        // 获取用户信息
-        const userInfoResponse = await fetch(
-          'https://www.googleapis.com/oauth2/v2/userinfo',
-          {
-            headers: {
-              Authorization: `Bearer ${token.access_token}`,
-            },
-          }
-        );
-
-        if (!userInfoResponse.ok) {
-          throw new Error('Failed to fetch Google user info');
+        // 直接从 id_token 解析用户信息，避免再次请求 userinfo 接口
+        const idToken = token.id_token;
+        if (!idToken) {
+           throw new Error('No id_token received');
         }
-
-        const googleUser = await userInfoResponse.json();
+        
+        // 简单解码 (生产环境建议验证签名)
+        const googleUser = jwt.decode(idToken);
+        if (!googleUser) {
+           throw new Error('Failed to decode id_token');
+        }
 
         const result = await handleOAuthLogin(
           fastify,
           'google',
-          googleUser.id,
-          normalizeOAuthProfile('google', googleUser),
+          googleUser.sub, // Google id_token 中的 sub 即为用户 ID
+          normalizeOAuthProfile('google', {
+             id: googleUser.sub,
+             email: googleUser.email,
+             verified_email: googleUser.email_verified,
+             name: googleUser.name,
+             picture: googleUser.picture,
+          }), 
           {
             accessToken: token.access_token,
             refreshToken: token.refresh_token,
