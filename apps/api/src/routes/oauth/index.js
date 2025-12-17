@@ -454,13 +454,13 @@ export default async function oauthRoutes(fastify, options) {
 
         const authorizationUri = `https://appleid.apple.com/auth/authorize?${params.toString()}`;
 
-        // 设置 state cookie 防止 CSRF (与 Google 逻辑保持一致)
+        // 设置 state cookie 防止 CSRF (Apple 回调是 POST，必须用 None 否则无法携带 cookie)
         reply.setCookie('oauth_state', state, {
           path: '/',
           httpOnly: true,
-          secure: isProd,
+          secure: true, // SameSite=None 必须配合 Secure
           maxAge: 600, // 10 minutes
-          sameSite: 'lax',
+          sameSite: 'none',
         });
 
         return { authorizationUri };
