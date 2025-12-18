@@ -172,6 +172,7 @@ function CodeBlock({ language, code, ...rest }) {
         variant='ghost'
         size='sm'
         className='absolute text-accent right-2 top-2 shrink opacity-0 group-hover:opacity-100 transition'
+        type='button'
       >
         {copied ? '已复制' : <Copy className='w-4 h-4' />}
       </Button>
