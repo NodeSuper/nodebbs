@@ -9,7 +9,7 @@ import {
   BookOpen,
   Plus,
 } from 'lucide-react';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { Pager } from '@/components/common/Pagination';
 import Time from '@/components/common/Time';
 

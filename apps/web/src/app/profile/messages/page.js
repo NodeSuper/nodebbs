@@ -20,7 +20,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { messageApi } from '@/lib/api';
 import { toast } from 'sonner';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';

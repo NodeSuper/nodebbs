@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FormDialog } from '@/components/common/FormDialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { rewardsApi } from '@/lib/api';
 import { Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DataTable } from '@/components/common/DataTable';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import {
   Select,
   SelectContent,

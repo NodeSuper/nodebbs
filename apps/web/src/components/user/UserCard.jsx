@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import UserBadge from '@/extensions/badges/components/Badge';
 import { cn } from '@/lib/utils';
 

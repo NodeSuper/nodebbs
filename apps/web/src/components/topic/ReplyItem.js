@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import ReportDialog from '@/components/moderation/ReportDialog';
 import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
 import { useAuth } from '@/contexts/AuthContext';

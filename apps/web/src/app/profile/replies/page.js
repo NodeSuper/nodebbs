@@ -8,7 +8,7 @@ import { MessageCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { postApi } from '@/lib/api';
 import { toast } from 'sonner';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
 import Time from '@/components/common/Time';

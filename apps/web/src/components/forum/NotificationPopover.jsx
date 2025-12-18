@@ -12,7 +12,7 @@ import { Bell, Check, X, Trash2, Settings, MessageCircle, Heart, UserPlus, Medal
 import { notificationApi } from '@/lib/api';
 import Link from 'next/link';
 import { Loading } from '../common/Loading';
-import UserAvatar from './UserAvatar';
+import UserAvatar from '../user/UserAvatar';
 import Time from '../common/Time';
 
 export default function NotificationPopover() {

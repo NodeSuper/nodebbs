@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, Check, Search, X, Gift } from 'lucide-react';
 import { CreditsBadge } from '../../../ledger/components/common/CreditsBadge';
 import { getItemTypeLabel } from '@/extensions/shop/utils/itemTypes';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { searchApi } from '@/lib/api';
 
 /**

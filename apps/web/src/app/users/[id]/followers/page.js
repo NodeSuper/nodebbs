@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { userApi } from '@/lib/api';
 import { Loader2, ArrowLeft, Users } from 'lucide-react';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 
 export default function FollowersPage() {
   const params = useParams();

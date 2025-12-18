@@ -15,7 +15,7 @@ import Image from 'next/image';
 import { ITEM_TYPES, getItemTypeLabel } from '../../utils/itemTypes';
 import { badgesApi } from '@/extensions/badges/api';
 import { ledgerApi } from '@/extensions/ledger/api';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { FormDialog } from '@/components/common/FormDialog';
 import { ImageUpload } from '@/components/common/ImageUpload';

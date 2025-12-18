@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Lock, Archive, Loader2 } from 'lucide-react';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { postApi, topicApi } from '@/lib/api';
 import { toast } from 'sonner';

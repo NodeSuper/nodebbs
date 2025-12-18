@@ -18,7 +18,7 @@ import {
   Hash,
 } from 'lucide-react';
 import Link from 'next/link';
-import UserAvatar from '@/components/forum/UserAvatar';
+import UserAvatar from '@/components/user/UserAvatar';
 import { Loading } from '@/components/common/Loading';
 
 function SearchResults() {
