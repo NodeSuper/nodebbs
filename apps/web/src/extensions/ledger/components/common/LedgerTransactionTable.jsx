@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/forum/DataTable';
 import { Loading } from '@/components/common/Loading';
-import TimeAgo from '@/components/forum/TimeAgo';
 import { TransactionTypeBadge } from './TransactionTypeBadge';
+import Time from '@/components/forum/Time';
 
 // 简单的辅助函数，避免依赖 rewards 扩展
 function formatAmount(amount) {
@@ -87,7 +87,7 @@ export function LedgerTransactionTable({
     {
       label: '时间',
       key: 'createdAt',
-      render: (value) => <TimeAgo date={value} />,
+      render: (value) => <Time date={value} fromNow />,
     },
   ];
 

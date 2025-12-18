@@ -9,9 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { postApi } from '@/lib/api';
 import { toast } from 'sonner';
 import UserAvatar from '@/components/forum/UserAvatar';
-import TimeAgo from '@/components/forum/TimeAgo';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
+import Time from '@/components/forum/Time';
 
 export default function RepliesPage() {
   const { user } = useAuth();
@@ -123,7 +123,7 @@ export default function RepliesPage() {
                           {reply.userName || reply.username}
                         </span>
                         <span className='text-xs text-muted-foreground'>
-                          <TimeAgo date={reply.createdAt} />
+                          <Time date={reply.createdAt} fromNow />
                         </span>
                         {reply.likeCount > 0 && (
                           <Badge variant='outline' className='text-xs'>

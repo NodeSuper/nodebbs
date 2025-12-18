@@ -6,9 +6,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import UserAvatar from '@/components/forum/UserAvatar';
 import { rewardsApi } from '@/lib/api';
 import { Coins, Loader2 } from 'lucide-react';
-import TimeAgo from '@/components/forum/TimeAgo';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Time from '@/components/forum/Time';
 
 const PAGE_LIMIT = 10;
 
@@ -114,7 +114,7 @@ export function RewardListDialog({ open, onOpenChange, postId }) {
                       </p>
                     )}
                     <div className="text-xs text-muted-foreground/60 mt-1">
-                      <TimeAgo date={reward.createdAt} />
+                      <Time date={reward.createdAt} fromNow />
                     </div>
                   </div>
                 </div>

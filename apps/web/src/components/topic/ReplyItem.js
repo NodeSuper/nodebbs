@@ -24,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import UserAvatar from '@/components/forum/UserAvatar';
-import TimeAgo from '@/components/forum/TimeAgo';
 import ReportDialog from '@/components/moderation/ReportDialog';
 import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +32,7 @@ import { toast } from 'sonner';
 import MarkdownRender from '../common/MarkdownRender';
 
 import { RewardListDialog } from '@/extensions/rewards/components/RewardListDialog';
+import Time from '../forum/Time';
 
 export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isRewardEnabled, rewardStats, onRewardSuccess }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();
@@ -239,7 +239,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                 </Link>
                 <span className='text-muted-foreground/30'>·</span>
                 <span className='text-xs'>
-                  <TimeAgo date={localReply.createdAt} />
+                  <Time date={localReply.createdAt} fromNow />
                 </span>
                 <span className='text-muted-foreground/30'>·</span>
                 <span className='text-xs font-mono text-muted-foreground/50'>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Check, X, Medal, Gift } from 'lucide-react';
 import { ItemTypeIcon } from '@/extensions/shop/components/shared/ItemTypeIcon';
 import { getItemTypeLabel, isItemExpired } from '@/extensions/shop/utils/itemTypes';
-import TimeAgo from '@/components/forum/TimeAgo';
+import Time from '@/components/forum/Time';
 
 /**
  * 带有装备/卸下控制的用户物品卡片
@@ -62,7 +62,7 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
         <div className="w-full flex items-center justify-between text-sm text-muted-foreground">
           <span>获得时间</span>
           <span>
-            <TimeAgo date={item.createdAt} />
+            <Time date={item.createdAt} fromNow />
           </span>
         </div>
 
@@ -70,7 +70,7 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
           <div className="w-full flex items-center justify-between text-sm text-muted-foreground">
             <span>过期时间</span>
             <span className={expired ? 'text-destructive' : ''}>
-              {expired ? '已过期' : <TimeAgo date={item.expiresAt} />}
+              {expired ? '已过期' : <Time date={item.expiresAt} fromNow />}
             </span>
           </div>
         )}

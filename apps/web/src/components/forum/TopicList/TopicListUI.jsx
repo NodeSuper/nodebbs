@@ -10,8 +10,8 @@ import {
   Plus,
 } from 'lucide-react';
 import UserAvatar from '../UserAvatar';
-import TimeAgo from '../TimeAgo';
 import { Pager } from '@/components/common/Pagination';
+import Time from '../Time';
 
 // 空状态组件
 export function EmptyState() {
@@ -139,7 +139,7 @@ export function TopicItem({ topic }) {
             <span className='text-muted-foreground/50'>·</span>
 
             {/* 发布时间 */}
-            <TimeAgo date={topic.createdAt || topic.lastPostAt} />
+            <Time date={topic.createdAt || topic.lastPostAt} fromNow />
 
             {/* 标签 */}
             {topic.tags?.length > 0 && (
@@ -186,7 +186,7 @@ export function TopicItem({ topic }) {
 
           {topic.lastPostAt && (
             <div className='text-xs text-muted-foreground/60 whitespace-nowrap'>
-              最后回复 <TimeAgo date={topic.lastPostAt} />
+              最后回复 <Time date={topic.lastPostAt} fromNow />
             </div>
           )}
         </div>

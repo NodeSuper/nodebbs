@@ -13,7 +13,6 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import TimeAgo from '@/components/forum/TimeAgo';
 import MarkdownRender from '@/components/common/MarkdownRender';
 import { useAuth } from '@/contexts/AuthContext';
 import { postApi } from '@/lib/api';
@@ -23,6 +22,7 @@ import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
 import { RewardListDialog } from '@/extensions/rewards/components/RewardListDialog';
 import { rewardsApi } from '@/lib/api';
 import { Coins } from 'lucide-react';
+import Time from '../forum/Time';
 
 export default function TopicContent({ topic, isRewardEnabled, rewardStats, onRewardSuccess }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();
@@ -167,7 +167,7 @@ export default function TopicContent({ topic, isRewardEnabled, rewardStats, onRe
                 {topic.userName || topic.username}
               </Link>
               <span className='opacity-70'>
-                发布于 <TimeAgo date={topic.createdAt} />
+                发布于 <Time date={topic.createdAt} fromNow />
               </span>
               {topic.approvalStatus === 'pending' && (
                 <>

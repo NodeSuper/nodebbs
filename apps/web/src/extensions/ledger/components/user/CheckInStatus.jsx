@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
-import TimeAgo from '@/components/forum/TimeAgo';
+import Time from '@/components/forum/Time';
 
 /**
  * Display check-in streak and last check-in
@@ -30,7 +30,7 @@ export function CheckInStatus({ checkInStreak, lastCheckInDate }) {
             <div className="flex flex-col border-l pl-4">
               <span className="text-sm text-muted-foreground">上次签到</span>
               <span className="text-sm font-medium">
-                <TimeAgo date={lastCheckInDate} />
+                <Time date={lastCheckInDate} fromNow />
               </span>
             </div>
           )}
