@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar } from 'lucide-react';
-import StickySidebar from '@/components/forum/StickySidebar';
+import StickySidebar from '@/components/common/StickySidebar';
 import Time from '@/components/common/Time';
 import SendMessageButton from '@/components/user/SendMessageButton';
 import BlockUserButton from '@/components/user/BlockUserButton';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import StickySidebar from '@/components/forum/StickySidebar';
+import StickySidebar from '@/components/common/StickySidebar';
 import TopicContent from '@/components/topic/TopicContent';
 import ReplySection from '@/components/topic/ReplySection';
 import TopicSidebarWrapper from '@/components/topic/TopicSidebarWrapper';

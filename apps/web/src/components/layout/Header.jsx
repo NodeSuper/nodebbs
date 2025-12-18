@@ -31,7 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import NotificationPopover from '@/components/forum/NotificationPopover';
-import ThemeSwitcher from '@/components/forum/ThemeSwitcher';
+import ThemeSwitcher from '@/components/common/ThemeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loading } from '../common/Loading';
 

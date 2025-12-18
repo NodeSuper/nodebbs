@@ -1,6 +1,6 @@
 import { getCategoriesData, getStatsData } from '@/lib/server/topics';
-import { Sidebar } from '@/components/forum/Sidebar';
-import StickySidebar from '@/components/forum/StickySidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
+import StickySidebar from '@/components/common/StickySidebar';
 
 export default async function HomeLayout({ children }) {
   // 并行获取分类和统计数据

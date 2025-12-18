@@ -1,6 +1,6 @@
-import ProfileSidebar from '@/components/profile/ProfileSidebar';
+import ProfileSidebar from '@/components/layout/ProfileSidebar';
 import RequireAuth from '@/components/auth/RequireAuth';
-import StickySidebar from '@/components/forum/StickySidebar';
+import StickySidebar from '@/components/common/StickySidebar';
 
 export const metadata = {
   title: '个人中心',

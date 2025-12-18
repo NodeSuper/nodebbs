@@ -1,5 +1,5 @@
-import StickySidebar from '@/components/forum/StickySidebar';
-import DashboardSidebar from '@/components/forum/DashboardSidebar';
+import StickySidebar from '@/components/common/StickySidebar';
+import DashboardSidebar from '@/components/layout/DashboardSidebar';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 
 export const metadata = {

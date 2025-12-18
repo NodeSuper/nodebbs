@@ -12,8 +12,8 @@ import {
   STORAGE_KEYS,
 } from '@/config/theme.config';
 
-import Header from '@/components/forum/Header';
-import Footer from '@/components/forum/Footer';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
 import AutoCheckIn from '@/extensions/rewards/components/AutoCheckIn';
 import { request, getCurrentUser } from '@/lib/server/api';
