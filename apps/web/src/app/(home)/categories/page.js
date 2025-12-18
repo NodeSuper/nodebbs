@@ -11,7 +11,7 @@ import {
   Eye,
 } from 'lucide-react';
 import Link from 'next/link';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 
 export default function CategoriesPage() {

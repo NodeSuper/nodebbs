@@ -2,7 +2,7 @@
 
 import { Calendar } from 'lucide-react';
 import StickySidebar from '@/components/forum/StickySidebar';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 import SendMessageButton from '@/components/user/SendMessageButton';
 import BlockUserButton from '@/components/user/BlockUserButton';
 import ReportUserButton from '@/components/user/ReportUserButton';

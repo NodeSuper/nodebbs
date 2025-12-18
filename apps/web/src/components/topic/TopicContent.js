@@ -22,7 +22,7 @@ import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
 import { RewardListDialog } from '@/extensions/rewards/components/RewardListDialog';
 import { rewardsApi } from '@/lib/api';
 import { Coins } from 'lucide-react';
-import Time from '../forum/Time';
+import Time from '../common/Time';
 
 export default function TopicContent({ topic, isRewardEnabled, rewardStats, onRewardSuccess }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();

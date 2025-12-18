@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { userApi } from '@/lib/api';
 import { toast } from 'sonner';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export function ProfileTab({
   user,

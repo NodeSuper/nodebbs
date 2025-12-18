@@ -1,7 +1,7 @@
 import { MessageSquare, Eye, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
 

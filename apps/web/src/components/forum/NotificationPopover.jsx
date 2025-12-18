@@ -13,7 +13,7 @@ import { notificationApi } from '@/lib/api';
 import Link from 'next/link';
 import { Loading } from '../common/Loading';
 import UserAvatar from './UserAvatar';
-import Time from './Time';
+import Time from '../common/Time';
 
 export default function NotificationPopover() {
   const [notifications, setNotifications] = useState([]);

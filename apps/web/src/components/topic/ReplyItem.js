@@ -32,7 +32,7 @@ import { toast } from 'sonner';
 import MarkdownRender from '../common/MarkdownRender';
 
 import { RewardListDialog } from '@/extensions/rewards/components/RewardListDialog';
-import Time from '../forum/Time';
+import Time from '../common/Time';
 
 export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isRewardEnabled, rewardStats, onRewardSuccess }) {
   const { user, isAuthenticated, openLoginDialog } = useAuth();

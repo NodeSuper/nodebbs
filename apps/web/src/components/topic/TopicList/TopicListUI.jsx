@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import UserAvatar from '@/components/forum/UserAvatar';
 import { Pager } from '@/components/common/Pagination';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 // 空状态组件
 export function EmptyState() {

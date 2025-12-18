@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 /**
  * Display check-in streak and last check-in

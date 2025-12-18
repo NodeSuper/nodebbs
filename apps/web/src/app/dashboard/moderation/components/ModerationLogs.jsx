@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export function ModerationLogs() {
   const [logs, setLogs] = useState([]);

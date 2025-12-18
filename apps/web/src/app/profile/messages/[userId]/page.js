@@ -11,7 +11,7 @@ import { messageApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import UserAvatar from '@/components/forum/UserAvatar';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 
 export default function MessageDetailPage() {

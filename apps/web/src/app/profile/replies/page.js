@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import UserAvatar from '@/components/forum/UserAvatar';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export default function RepliesPage() {
   const { user } = useAuth();

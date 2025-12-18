@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DataTable } from '@/components/common/DataTable';
 import { Loading } from '@/components/common/Loading';
 import { TransactionTypeBadge } from './TransactionTypeBadge';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 // 简单的辅助函数，避免依赖 rewards 扩展
 function formatAmount(amount) {

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Check, X, Medal, Gift } from 'lucide-react';
 import { ItemTypeIcon } from '@/extensions/shop/components/shared/ItemTypeIcon';
 import { getItemTypeLabel, isItemExpired } from '@/extensions/shop/utils/itemTypes';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 /**
  * 带有装备/卸下控制的用户物品卡片

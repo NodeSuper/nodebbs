@@ -28,7 +28,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Ban, ShieldCheck, UserCog, Trash2, MoreHorizontal, UserPlus, Pencil } from 'lucide-react';
 import { userApi, moderationApi } from '@/lib/api';
 import { toast } from 'sonner';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([]);

@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 /**
  * 通用勋章组件

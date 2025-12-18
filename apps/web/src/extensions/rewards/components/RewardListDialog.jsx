@@ -8,7 +8,7 @@ import { rewardsApi } from '@/lib/api';
 import { Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 const PAGE_LIMIT = 10;
 

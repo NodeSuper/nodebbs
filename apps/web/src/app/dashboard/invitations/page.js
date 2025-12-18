@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { invitationsApi } from '@/lib/api';
 import { toast } from 'sonner';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export default function AdminInvitationsPage() {
   const [codes, setCodes] = useState([]);

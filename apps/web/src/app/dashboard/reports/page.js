@@ -29,7 +29,7 @@ import {
   XSquare,
 } from 'lucide-react';
 import Link from 'next/link';
-import Time from '@/components/forum/Time';
+import Time from '@/components/common/Time';
 
 export default function ReportsManagement() {
   const [reports, setReports] = useState([]);
