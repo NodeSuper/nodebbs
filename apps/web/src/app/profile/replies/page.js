@@ -132,7 +132,7 @@ export default function RepliesPage() {
                         )}
                       </div>
 
-                      <div className='text-sm text-card-foreground leading-relaxed whitespace-pre-wrap'>
+                      <div className='text-sm text-card-foreground leading-relaxed break-all'>
                         {reply.content}
                       </div>
 

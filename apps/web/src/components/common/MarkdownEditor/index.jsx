@@ -421,7 +421,7 @@ export default function MarkdownEditor({
       {/* 内容区域 */}
       <div className="bg-card flex-1 relative">
         {isPreviewMode ? (
-          <article className='min-h-[300px] max-h-[calc(100vh-430px)] overflow-y-auto  p-4 border rounded-lg rounded-tl-none rounded-tr-none max-w-none prose prose-stone dark:prose-invert wrap-break-word break-all'>
+          <article className='min-h-[300px] lg:max-h-[calc(100vh-430px)] overflow-y-auto p-4 border rounded-lg rounded-tl-none rounded-tr-none max-w-none prose prose-stone dark:prose-invert break-all'>
             <MarkdownRender content={value || ''} />
           </article>
         ) : (
@@ -430,7 +430,7 @@ export default function MarkdownEditor({
             value={value}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            className='min-h-[300px] max-h-[calc(100vh-430px)] resize-none overflow-y-auto field-sizing-fixed rounded-tl-none rounded-tr-none sm:field-sizing-content wrap-break-word break-all'
+            className='min-h-[300px] lg:max-h-[calc(100vh-430px)] resize-none overflow-y-auto field-sizing-fixed rounded-tl-none rounded-tr-none sm:field-sizing-content break-all'
           />
         )}
       </div>

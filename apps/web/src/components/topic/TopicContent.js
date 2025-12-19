@@ -202,7 +202,7 @@ export default function TopicContent({ topic, isRewardEnabled, rewardStats, onRe
         data-post-number='1'
       >
         <div className='px-4 sm:px-6 py-5'>
-          <article className='max-w-none prose prose-stone dark:prose-invert wrap-break-word whitespace-pre-wrap'>
+          <article className='max-w-none prose prose-stone dark:prose-invert break-all'>
             <MarkdownRender content={topic.content} />
           </article>
 

@@ -470,7 +470,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
             )}
 
             {/* 回复内容 */}
-            <div className='max-w-none prose prose-stone dark:prose-invert wrap-break-word whitespace-pre-wrap'>
+            <div className='max-w-none prose prose-stone dark:prose-invert break-all'>
               <MarkdownRender content={localReply.content} />
             </div>
           </div>

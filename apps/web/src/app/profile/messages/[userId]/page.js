@@ -351,7 +351,7 @@ export default function MessageDetailPage() {
                               {msg.subject}
                             </div>
                           )}
-                          <p className='text-sm whitespace-pre-wrap break-words'>
+                          <p className='text-sm break-all'>
                             {msg.content}
                           </p>
 
