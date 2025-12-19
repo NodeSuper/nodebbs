@@ -35,6 +35,23 @@ function MarkdownRender({ content }) {
           );
         },
         audio: ({ node, src, ...props }) => {
+          // 处理网易云音乐
+          // 匹配: https://music.163.com/#/song?id=123456 或 https://music.163.com/song?id=123456
+          const neteaseMatch = src.match(/music\.163\.com\/.*[?&]id=(\d+)/);
+          if (neteaseMatch) {
+            return (
+              <div className="my-2" style={{ width: props.width || '100%' }}>
+                <iframe
+                  border="0"
+                  width="100%"
+                  height="86"
+                  src={`//music.163.com/outchain/player?type=2&id=${neteaseMatch[1]}&auto=0&height=66`}
+                  title="Netease Cloud Music"
+                />
+              </div>
+            );
+          }
+
           return (
             <audio
               controls
@@ -49,7 +66,7 @@ function MarkdownRender({ content }) {
         video: ({ node, src, title, ...props }) => {
           const { width, height, ...rest } = props;
           
-          // Helper to get style object
+          // 获取样式对象的辅助函数
           const getWrapperStyle = () => {
             const style = { maxWidth: '100%' };
             if (width) style.width = width;
@@ -57,7 +74,7 @@ function MarkdownRender({ content }) {
             return style;
           };
 
-          // Handle YouTube
+          // 处理 YouTube
           const youtubeMatch = src.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
           if (youtubeMatch) {
              return (
@@ -78,7 +95,7 @@ function MarkdownRender({ content }) {
              );
           }
 
-          // Handle Bilibili
+          // 处理 Bilibili
           const biliMatch = src.match(/bilibili\.com\/video\/(BV[0-9a-zA-Z]+)/);
           if (biliMatch) {
             return (
@@ -99,7 +116,7 @@ function MarkdownRender({ content }) {
             );
           }
           
-          // Default video tag
+          // 默认视频标签
           return (
              <video
                controls
@@ -115,7 +132,7 @@ function MarkdownRender({ content }) {
         },
         code(props) {
           const { children, className, node, ...rest } = props;
-          // Only handle inline code here since blocks are handled by pre
+          // 仅处理行内代码，因为代码块由 pre 标签处理
           return (
             <code 
               {...rest} 
@@ -131,9 +148,9 @@ function MarkdownRender({ content }) {
           if (codeNode && codeNode.tagName === 'code') {
              const className = codeNode.properties?.className || [];
              const match = /language-(\w+)/.exec((Array.isArray(className) ? className.join(' ') : className) || '');
-             const language = match ? match[1] : 'text'; // Default to text if no language
+             const language = match ? match[1] : 'text'; // 如果没有语言则默认为 text
              
-             // Extract text content from the code node
+             // 从代码节点中提取文本内容
              const code = codeNode.children[0]?.value || '';
 
              return (

@@ -238,7 +238,7 @@ export default function MarkdownEditor({
   };
 
   // 事件处理函数
-  const handlers = useMemo(() => ({
+  const handlers = {
     // ... 基础处理函数
     h1: () => insertBlock('# '),
     h2: () => insertBlock('## '),
@@ -274,7 +274,7 @@ export default function MarkdownEditor({
     image: (url) => insertBlock(`![Image](${url})`),
     video: (url) => insertBlock(`\n::video{src="${url}" width="100%"}\n`),
     audio: (url) => insertBlock(`\n::audio{src="${url}" width="100%"}\n`),
-  }), []);
+  };
 
   // 工具定义
   const tools = {
@@ -304,7 +304,7 @@ export default function MarkdownEditor({
     link: { icon: LinkIcon, title: '链接', type: 'popover', placeholder: '输入链接地址...' },
     image: { icon: ImageIcon, title: '图片', type: 'popover', placeholder: '输入图片地址...' },
     video: { icon: VideoIcon, title: '视频', type: 'popover', placeholder: '支持 Bilibili/YouTube/MP4' },
-    audio: { icon: MusicIcon, title: '音频', type: 'popover', placeholder: '输入音频地址 (MP3)...' },
+    audio: { icon: MusicIcon, title: '音频', type: 'popover', placeholder: '支持网易云音乐 / MP3 URL...' },
   };
 
   return (
