@@ -430,7 +430,7 @@ export default function MarkdownEditor({
             value={value}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            className='min-h-[300px] lg:max-h-[calc(100vh-430px)] resize-none overflow-y-auto field-sizing-fixed rounded-tl-none rounded-tr-none sm:field-sizing-content break-all'
+            className='min-h-[300px] max-h-[50vh] lg:max-h-[calc(100vh-430px)] resize-none overflow-y-auto field-sizing-fixed rounded-tl-none rounded-tr-none sm:field-sizing-content break-all'
           />
         )}
       </div>

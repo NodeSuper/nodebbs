@@ -69,6 +69,13 @@ export async function generateMetadata({ params }) {
   };
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 async function AppLayout({ children }) {
   let settings = null;
   let apiInfo = null;
