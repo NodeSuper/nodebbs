@@ -78,7 +78,7 @@ const AboutPage = () => {
               </div>
               <div>
                 <div className="text-sm text-muted-foreground mb-2 font-medium">步骤 2：一键部署</div>
-                <CodeBlock code="cd nodebbs && ./deploy.sh" />
+                <CodeBlock code="cd nodebbs && npx nodebbs" />
               </div>
             </div>
             <a
