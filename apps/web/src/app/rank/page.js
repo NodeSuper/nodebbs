@@ -9,6 +9,7 @@ import { rewardsApi } from '@/lib/api';
 import { Trophy, Coins, TrendingUp, Medal } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 import Link from 'next/link';
+import UserAvatar from '@/components/user/UserAvatar';
 
 export default function RankPage() {
   const [rankType, setRankType] = useState('balance');
@@ -95,15 +96,12 @@ export default function RankPage() {
                         </div>
 
                         {/* 用户头像 */}
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={user.avatar} alt={user.username} />
-                          <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
-                        </Avatar>
+                        <UserAvatar url={user.avatar} name={user.name} size="md" modifiers='embed,s_200x200' />
 
                         {/* 用户信息 */}
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-card-foreground truncate">
-                            {user.username}
+                            {user.name}
                           </div>
                           {user.checkInStreak > 0 && (
                             <div className="text-sm text-muted-foreground">
@@ -128,7 +126,7 @@ export default function RankPage() {
                         </div>
 
                         {/* 特殊标记 */}
-                        {index < 3 && (
+                        {/* {index < 3 && (
                           <div>
                             {index === 0 && (
                               <Badge className="bg-yellow-500 hover:bg-yellow-600">
@@ -146,7 +144,7 @@ export default function RankPage() {
                               </Badge>
                             )}
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </Link>
                   ))}

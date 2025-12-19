@@ -252,6 +252,7 @@ export async function getCreditRanking(options = {}) {
       .select({
         userId: sysAccounts.userId,
         username: users.username,
+        name: users.name,
         avatar: users.avatar,
         balance: sysAccounts.balance,
         totalEarned: sysAccounts.totalEarned,

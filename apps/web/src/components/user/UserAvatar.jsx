@@ -17,6 +17,7 @@ export default function UserAvatar({
   size = 'md',
   className = '',
   frameMetadata = null,
+  modifiers='embed,f_webp,s_200x200',
 }) {
   // 处理头像 URL
   const getAvatarUrl = () => {
@@ -29,7 +30,7 @@ export default function UserAvatar({
 
     // 否则拼接 API 基础 URL
     const apiHost = getApiHost();
-    const pathname = url.replace('/uploads/', '/uploads/embed,f_webp,s_200x200/');
+    const pathname = url.replace('/uploads/', `/uploads/${modifiers}/`);
     return `${apiHost}${pathname}`;
   };
 
