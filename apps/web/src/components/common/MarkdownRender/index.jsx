@@ -137,7 +137,7 @@ function MarkdownRender({ content }) {
              const code = codeNode.children[0]?.value || '';
 
              return (
-               <div className="not-prose">
+               <div className="not-prose w-full">
                  <CodeBlock language={language} code={code} />
                </div>
              );
@@ -166,12 +166,12 @@ function CodeBlock({ language, code, ...rest }) {
   };
 
   return (
-    <div className='relative group rounded-lg'>
+    <div className='relative group rounded-lg w-full max-w-full grid grid-cols-1 min-w-0'>
       <Button
         onClick={handleCopy}
         variant='ghost'
         size='sm'
-        className='absolute text-accent right-2 top-2 shrink opacity-0 group-hover:opacity-100 transition'
+        className='absolute text-accent right-2 top-2 shrink opacity-0 group-hover:opacity-100 transition z-10'
         type='button'
       >
         {copied ? '已复制' : <Copy className='w-4 h-4' />}
@@ -180,8 +180,9 @@ function CodeBlock({ language, code, ...rest }) {
         {...rest}
         language={language}
         style={tomorrow}
+        customStyle={{ margin: 0, overflowX: 'auto', maxWidth: '100%' }}
         PreTag='div'
-        className='rounded-xl border-[3px] border-border'
+        className='rounded-xl border-[3px] border-border overflow-x-auto max-w-full min-w-0'
       >
         {code}
       </SyntaxHighlighter>
