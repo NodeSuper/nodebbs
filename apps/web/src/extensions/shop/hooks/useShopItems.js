@@ -45,5 +45,6 @@ export function useShopItems(options = {}) {
     loading,
     error,
     refetch: fetchItems,
+    setItems, // Expose for optimistic updates
   };
 }

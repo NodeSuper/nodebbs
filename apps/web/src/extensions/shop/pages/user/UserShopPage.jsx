@@ -31,7 +31,7 @@ export default function UserShopPage() {
   const [purchasedItem, setPurchasedItem] = useState(null); // Track purchased item for success dialog
 
   const [accounts, setAccounts] = useState([]);
-  const { items, loading, refetch: refetchItems } = useShopItems({ type: itemType });
+  const { items, loading, refetch: refetchItems, setItems } = useShopItems({ type: itemType });
   
   const fetchAccounts = async () => {
     try {
@@ -83,11 +83,26 @@ export default function UserShopPage() {
       // 关闭购买对话框
       setBuyDialogOpen(false);
       
-      // 刷新数据
-      await Promise.all([
-          fetchAccounts(),
-          refetchItems()
-      ]);
+      // 刷新数据 - 仅刷新余额，商品列表使用乐观更新
+      fetchAccounts();
+      // refetchItems() // 不再全量刷新，避免闪烁
+
+      // 乐观更新：手动更新本地商品状态
+      if (!isGift && selectedItem) {
+          setItems(prevItems => prevItems.map(item => {
+              if (item.id === selectedItem.id) {
+                  const newStock = item.stock !== null ? Math.max(0, item.stock - 1) : null;
+                  // 对于一次性或唯一物品，购买后通常视为已拥有
+                  // 如果是可堆叠物品，这里逻辑可能需要根据 ownedCount 判断，但目前简化处理设为已拥有（或保持原样）
+                  return {
+                      ...item,
+                      stock: newStock,
+                      isOwned: true, // 简单处理：购买后即视为拥有（影响按钮状态）
+                  };
+              }
+              return item;
+          }));
+      }
 
       setSelectedItem(null);
       // setPurchasedItem(null); // Do not clear purchasedItem here, let the dialog handle it or clear when dialog closes
