@@ -54,15 +54,22 @@ export function getFrontendOrigin(request) {
       return origin;
   }
   
-  // 也允许当前后端 host (自身)
-  const selfOrigin = `${request.protocol || 'http'}://${request.hostname}`;
-  if (origin === selfOrigin) {
-      return origin;
+
+  
+  // 潜在攻击或配置错误：检测到的 origin 不在白名单中。
+  // 安全回退策略：
+
+  // 1. 优先使用白名单中的第一个静态域名 (最安全)
+  const allowedPatterns = parseAllowedOrigins(allowedOriginsStr);
+  const primaryDomain = allowedPatterns.find(p => typeof p === 'string' && !p.includes('*'));
+  if (primaryDomain) {
+      return primaryDomain;
   }
 
-  // 潜在攻击或配置错误：检测到的 origin 不在白名单中。
-  // 安全回退：返回后端自身的 origin 以防止开放重定向
-  return selfOrigin;
+  // 2. 如果白名单全是通配符或为空，才勉强使用 request.hostname
+  //    注意：前端此时需确保反向代理层过滤了非法 Host 头
+  const protocol = request.headers['x-forwarded-proto'] || request.protocol || 'http';
+  return `${protocol}://${request.hostname}`;
 }
 
 /**
