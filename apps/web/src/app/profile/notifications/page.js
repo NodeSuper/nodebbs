@@ -12,6 +12,7 @@ import {
   CheckCheck,
   Trash2,
   Loader2,
+  Coins,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { notificationApi } from '@/lib/api';
@@ -83,6 +84,8 @@ export default function NotificationsPage() {
         return <CheckCheck className='h-4 w-4 text-green-600' />;
       case 'report_dismissed':
         return <Bell className='h-4 w-4 text-muted-foreground' />;
+      case 'reward':
+        return <Coins className='h-4 w-4 text-yellow-500' />;
       default:
         return <Bell className='h-4 w-4' />;
     }

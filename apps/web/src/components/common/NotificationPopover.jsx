@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, X, Trash2, Settings, MessageCircle, Heart, UserPlus, Medal, Gift } from 'lucide-react';
+import { Bell, Check, X, Trash2, Settings, MessageCircle, Heart, UserPlus, Medal, Gift, Coins } from 'lucide-react';
 import { notificationApi } from '@/lib/api';
 import Link from 'next/link';
 import { Loading } from '../common/Loading';
@@ -118,6 +118,8 @@ export default function NotificationPopover() {
         return <Medal className='h-4 w-4 text-yellow-500' />;
       case 'gift_received':
         return <Gift className='h-4 w-4 text-pink-500' />;
+      case 'reward':
+        return <Coins className='h-4 w-4 text-yellow-500' />;
       default:
         return <Bell className='h-4 w-4' />;
     }
@@ -163,6 +165,8 @@ export default function NotificationPopover() {
         // message format: "你收到了一份礼物：ItemName"
         // We can just return the message as is, or simplify
         return notification.message;
+      case 'reward':
+        return notification.message || '打赏了你的帖子';
       default:
         return notification.message || '发送了一条通知';
     }
