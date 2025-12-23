@@ -210,6 +210,8 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
             ? 'border-chart-5/30 bg-chart-5/5'
             : isRejected
             ? 'border-destructive/30 bg-destructive/5'
+            : localReply.userRole === 'admin'
+            ? 'border-border'
             : 'border-border'
         }`}
         data-post-number={localReply.postNumber}
@@ -245,6 +247,27 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                 <span className='text-xs font-mono text-muted-foreground/50'>
                   #{localReply.postNumber}
                 </span>
+                
+               {/* OP 标识 */}
+               {localReply.topicUserId === localReply.userId && (
+                  <>
+                    <span className='text-muted-foreground/30'>·</span>
+                    <Badge variant="default" className="text-[11px] px-1.5 h-5 font-medium">
+                      OP
+                    </Badge>
+                  </>
+                )}
+
+                {/* 管理员标识 */}
+                {localReply.userRole === 'admin' && (
+                  <>
+                    <span className='text-muted-foreground/30'>·</span>
+                    <Badge variant="secondary" className="text-[11px] px-1.5 h-5 font-medium border-transparent">
+                      管理员
+                    </Badge>
+                  </>
+                )}
+
                 {/* 审核状态标记 */}
                 {isPending && (
                   <>

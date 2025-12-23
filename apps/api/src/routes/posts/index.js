@@ -223,6 +223,7 @@ export default async function postRoutes(fastify, options) {
     const selectFields = {
       id: posts.id,
       topicId: posts.topicId,
+      topicUserId: topics.userId,
       topicTitle: topics.title,
       topicSlug: topics.slug,
       userId: posts.userId,
