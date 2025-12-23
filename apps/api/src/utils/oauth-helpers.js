@@ -2,6 +2,7 @@ import db from '../db/index.js';
 import { users, accounts } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
+import { normalizeEmail } from './normalization.js';
 
 /**
  * 根据 OAuth 提供商和账号 ID 查找关联的用户
@@ -32,7 +33,7 @@ export async function findUserByEmail(email) {
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
+    .where(eq(users.email, normalizeEmail(email)))
     .limit(1);
 
   return user;
@@ -233,7 +234,7 @@ export function normalizeOAuthProfile(provider, rawProfile) {
     case 'github':
       return {
         id: rawProfile.id.toString(),
-        email: rawProfile.email,
+        email: normalizeEmail(rawProfile.email),
         name: rawProfile.name || rawProfile.login,
         username: rawProfile.login,
         avatar: rawProfile.avatar_url,
@@ -242,7 +243,7 @@ export function normalizeOAuthProfile(provider, rawProfile) {
     case 'google':
       return {
         id: rawProfile.sub || rawProfile.id,
-        email: rawProfile.email,
+        email: normalizeEmail(rawProfile.email),
         name: rawProfile.name,
         username: rawProfile.email?.split('@')[0],
         avatar: rawProfile.picture,
@@ -251,7 +252,7 @@ export function normalizeOAuthProfile(provider, rawProfile) {
     case 'apple':
       return {
         id: rawProfile.sub,
-        email: rawProfile.email,
+        email: normalizeEmail(rawProfile.email),
         name: rawProfile.name || rawProfile.email?.split('@')[0],
         username: rawProfile.email?.split('@')[0],
         avatar: null, // Apple 不提供头像
@@ -260,7 +261,7 @@ export function normalizeOAuthProfile(provider, rawProfile) {
     default:
       return {
         id: rawProfile.id?.toString(),
-        email: rawProfile.email,
+        email: normalizeEmail(rawProfile.email),
         name: rawProfile.name,
         username: rawProfile.username || rawProfile.email?.split('@')[0],
         avatar: rawProfile.avatar || rawProfile.picture,

@@ -16,8 +16,8 @@ import {
 } from '../../config/verificationCode.js';
 import {
   validateUsername,
-  normalizeUsername,
 } from '../../utils/validateUsername.js';
+import { normalizeEmail, normalizeIdentifier, normalizeUsername } from '../../utils/normalization.js';
 import { checkSpammer, formatSpamCheckMessage } from '../../utils/stopforumspam.js';
 import qrLoginRoutes from './qr-login.js';
 import { isDev } from '../../utils/env.js';
@@ -68,7 +68,11 @@ export default async function authRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { username, email, password, name, invitationCode } = request.body;
+      const { username, password, name, invitationCode } = request.body;
+      let { email } = request.body;
+
+      // 规范化邮箱
+      email = normalizeEmail(email);
 
       // 规范化并验证用户名格式
       const normalizedUsername = normalizeUsername(username);
@@ -302,7 +306,11 @@ export default async function authRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { identifier, password } = request.body;
+      let { identifier } = request.body;
+      const { password } = request.body;
+
+      // 规范化标识符 (Trim + Lowercase if email)
+      identifier = normalizeIdentifier(identifier);
 
       // 判断 identifier 是邮箱还是用户名
       const isEmail = identifier.includes('@');
@@ -494,11 +502,15 @@ export default async function authRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { email, code, password } = request.body;
+      let { email } = request.body;
+      const { code, password } = request.body;
+
+      // 规范化邮箱
+      email = normalizeEmail(email);
 
       // 验证验证码
       const result = await verifyCode(
-        email.toLowerCase(),
+        email,
         code,
         VerificationCodeType.EMAIL_PASSWORD_RESET
       );
@@ -513,7 +525,7 @@ export default async function authRoutes(fastify, options) {
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.email, email.toLowerCase()))
+        .where(eq(users.email, email))
         .limit(1);
 
       if (!user) {
@@ -528,7 +540,7 @@ export default async function authRoutes(fastify, options) {
         .where(eq(users.id, user.id));
 
       // 删除已使用的验证码
-      await deleteVerificationCode(email.toLowerCase(), VerificationCodeType.EMAIL_PASSWORD_RESET);
+      await deleteVerificationCode(email, VerificationCodeType.EMAIL_PASSWORD_RESET);
 
       // 清除用户缓存
       await fastify.clearUserCache(user.id);
@@ -672,7 +684,11 @@ export default async function authRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { identifier, type } = request.body;
+      let { identifier } = request.body;
+      const { type } = request.body;
+
+      // 规范化标识符
+      identifier = normalizeIdentifier(identifier);
 
       try {
         // 获取验证码配置
@@ -913,7 +929,11 @@ export default async function authRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { identifier, code, type } = request.body;
+      let { identifier } = request.body;
+      const { code, type } = request.body;
+
+      // 规范化标识符
+      identifier = normalizeIdentifier(identifier);
 
       try {
         // 获取验证码配置

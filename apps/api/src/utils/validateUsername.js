@@ -34,14 +34,7 @@ const RESERVED_USERNAMES = new Set([
   'nodebbs', 'forum', 'bbs', 'adminpanel', 'backend', 'front', 'service',
 ]);
 
-/**
- * 规范化用户名
- * - 转为小写
- * - 去除首尾空格
- */
-export function normalizeUsername(username) {
-  return username.trim().toLowerCase();
-}
+import { normalizeUsername } from './normalization.js';
 
 /**
  * 校验用户名是否合法

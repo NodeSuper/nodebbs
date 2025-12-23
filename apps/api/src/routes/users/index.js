@@ -7,6 +7,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { userEnricher } from '../../services/userEnricher.js';
+import { validateUsername } from '../../utils/validateUsername.js';
+import { normalizeEmail, normalizeUsername } from '../../utils/normalization.js';
+import { getSetting } from '../../utils/settings.js';
+import { VerificationCodeType } from '../../config/verificationCode.js';
+import { verifyCode, deleteVerificationCode } from '../../utils/verificationCode.js';
+import { moderationLogs } from '../../db/schema.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +56,9 @@ export default async function userRoutes(fastify, options) {
     const { username, email, password, name, role = 'user', isEmailVerified = false } = request.body;
 
     // 规范化并验证用户名格式
-    const { validateUsername, normalizeUsername } = await import('../../utils/validateUsername.js');
+    // 规范化邮箱
+    email = normalizeEmail(email);
+
     const normalizedUsername = normalizeUsername(username);
     const usernameValidation = validateUsername(normalizedUsername);
 
@@ -434,8 +442,6 @@ export default async function userRoutes(fastify, options) {
     const userId = request.user.id;
 
     // 获取系统设置
-    const { getSetting } = await import('../../utils/settings.js');
-
     const allowUsernameChange = await getSetting('allow_username_change', false);
     if (!allowUsernameChange) {
       return reply.code(403).send({ error: '系统暂不允许修改用户名' });
@@ -483,7 +489,6 @@ export default async function userRoutes(fastify, options) {
     }
 
     // 规范化并验证用户名格式
-    const { validateUsername, normalizeUsername } = await import('../../utils/validateUsername.js');
     const normalizedUsername = normalizeUsername(newUsername);
     const usernameValidation = validateUsername(normalizedUsername);
 
@@ -515,7 +520,6 @@ export default async function userRoutes(fastify, options) {
     await fastify.clearUserCache(userId);
 
     // 记录操作日志
-    const { moderationLogs } = await import('../../db/schema.js');
     await db.insert(moderationLogs).values({
       action: 'username_change',
       targetType: 'user',
@@ -581,8 +585,6 @@ export default async function userRoutes(fastify, options) {
     const userId = request.user.id;
 
     // 获取系统设置
-    const { getSetting } = await import('../../utils/settings.js');
-
     const allowEmailChange = await getSetting('allow_email_change', true);
     if (!allowEmailChange) {
       return reply.code(403).send({ error: '系统暂不允许修改邮箱' });
@@ -607,9 +609,6 @@ export default async function userRoutes(fastify, options) {
       }
     }
 
-    const { VerificationCodeType } = await import('../../config/verificationCode.js');
-    const { verifyCode, deleteVerificationCode } = await import('../../utils/verificationCode.js');
-
     try {
       // 步骤 1：验证旧邮箱验证码
       const oldEmailResult = await verifyCode(
@@ -630,7 +629,7 @@ export default async function userRoutes(fastify, options) {
         return reply.code(400).send({ error: '请输入有效的邮箱地址' });
       }
 
-      const newEmailLower = newEmail.toLowerCase();
+      const newEmailLower = normalizeEmail(newEmail);
 
       // 检查新邮箱是否已被其他用户使用
       const [existingUser] = await db.select().from(users).where(eq(users.email, newEmailLower)).limit(1);
@@ -674,7 +673,6 @@ export default async function userRoutes(fastify, options) {
       await fastify.clearUserCache(userId);
 
       // 记录操作日志
-      const { moderationLogs } = await import('../../db/schema.js');
       await db.insert(moderationLogs).values({
         action: 'email_change',
         targetType: 'user',
@@ -1216,7 +1214,6 @@ export default async function userRoutes(fastify, options) {
 
     // 如果修改用户名，需要验证格式和唯一性
     if (username !== undefined && username !== targetUser.username) {
-      const { validateUsername, normalizeUsername } = await import('../../utils/validateUsername.js');
       const normalizedUsername = normalizeUsername(username);
       const usernameValidation = validateUsername(normalizedUsername);
 
@@ -1234,12 +1231,14 @@ export default async function userRoutes(fastify, options) {
 
     // 如果修改邮箱，需要验证唯一性
     if (email !== undefined && email !== targetUser.email) {
-      const [existingEmail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      const normalizedEmail = normalizeEmail(email);
+      
+      const [existingEmail] = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
       if (existingEmail && existingEmail.id !== userId) {
         return reply.code(400).send({ error: '邮箱已被注册' });
       }
 
-      updates.email = email;
+      updates.email = normalizedEmail;
     }
 
     // 其他字段直接更新
