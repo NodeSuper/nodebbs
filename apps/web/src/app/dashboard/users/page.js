@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Ban, ShieldCheck, UserCog, Trash2, MoreHorizontal, UserPlus, Pencil } from 'lucide-react';
+import { Loader2, Ban, ShieldCheck, UserCog, Trash2, MoreHorizontal, UserPlus, Pencil, CheckCircle2, XCircle } from 'lucide-react';
 import { userApi, moderationApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Time from '@/components/common/Time';
@@ -354,8 +354,15 @@ export default function UsersManagement() {
             key: 'email',
             label: '邮箱',
             width: 'w-[200px]',
-            render: (value) => (
-              <span className="text-sm text-muted-foreground">{value}</span>
+            render: (value, user) => (
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-muted-foreground">{value}</span>
+                {user.isEmailVerified ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" aria-label="已验证" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5 text-muted-foreground/50" aria-label="未验证" />
+                )}
+              </div>
             ),
           },
           {

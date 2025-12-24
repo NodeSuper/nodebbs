@@ -132,6 +132,7 @@ export default async function userRoutes(fastify, options) {
       role: users.role,
       isBanned: users.isBanned,
       isDeleted: users.isDeleted,
+      isEmailVerified: users.isEmailVerified,
       createdAt: users.createdAt,
       lastSeenAt: users.lastSeenAt
     }).from(users);
