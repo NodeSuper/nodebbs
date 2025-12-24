@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '@/lib/api';
 import LoginDialog from '@/components/auth/LoginDialog';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +11,8 @@ export function AuthProvider({ children, initialUser }) {
   // 如果 initialUser 被传递（无论是 null 还是对象），说明服务端已经检查过了
   // 我们直接使用该状态，且不需要 loading
   const isHydrated = initialUser !== undefined;
+  
+  const { refreshSettings } = useSettings();
   
   const [user, setUser] = useState(initialUser || null);
   const [loading, setLoading] = useState(!isHydrated);
@@ -58,6 +61,8 @@ export function AuthProvider({ children, initialUser }) {
       setError(null);
       const response = await authApi.login(identifier, password);
       setUser(response.user);
+      // 登录成功刷新设置 (因为设置可能依赖用户角色)
+      refreshSettings();
       // 登录成功后关闭对话框
       setLoginDialogOpen(false);
       return { success: true, user: response.user };
@@ -65,7 +70,7 @@ export function AuthProvider({ children, initialUser }) {
       setError(err.message || '登录失败');
       return { success: false, error: err.message };
     }
-  }, []);
+  }, [refreshSettings]);
 
   // 注册
   const register = useCallback(async (data) => {
@@ -73,6 +78,8 @@ export function AuthProvider({ children, initialUser }) {
       setError(null);
       const response = await authApi.register(data);
       setUser(response.user);
+      // 注册成功刷新设置
+      refreshSettings();
       // 注册成功后关闭对话框
       setLoginDialogOpen(false);
       return { success: true, user: response.user };
@@ -80,14 +87,15 @@ export function AuthProvider({ children, initialUser }) {
       setError(err.message || '注册失败');
       return { success: false, error: err.message };
     }
-  }, []);
+  }, [refreshSettings]);
 
   // 登出
   const logout = useCallback(() => {
     authApi.logout();
     setUser(null);
     setError(null);
-  }, []);
+    refreshSettings();
+  }, [refreshSettings]);
 
   // 更新用户信息
   const updateUser = useCallback((userData) => {
@@ -110,9 +118,11 @@ export function AuthProvider({ children, initialUser }) {
   const setAuthData = useCallback((userData) => {
     // 设置用户数据
     setUser(userData);
+    // 刷新设置
+    refreshSettings();
     // 关闭登录对话框
     setLoginDialogOpen(false);
-  }, []);
+  }, [refreshSettings]);
 
   // 登录对话框控制
   const openLoginDialog = useCallback(() => setLoginDialogOpen(true), []);

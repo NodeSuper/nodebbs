@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FormDialog } from '@/components/common/FormDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { settingsApi, invitationsApi, oauthConfigApi } from '@/lib/api';
+import { useSettings } from '@/contexts/SettingsContext';
+import { invitationsApi, oauthConfigApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 // 导入子组件
@@ -17,10 +18,15 @@ import { ModeSwitcher } from './ModeSwitcher';
 
 export default function LoginDialog({ open, onOpenChange }) {
   const { login, register } = useAuth();
+  const { settings } = useSettings(); // 使用全局设置
   const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot-password'
   const [loginMethod, setLoginMethod] = useState('password'); // 'password', 'qr'
   const [oauthProviders, setOauthProviders] = useState([]);
-  const [qrLoginEnabled, setQrLoginEnabled] = useState(false);
+  
+  // 从 settings直接派生 (带有默认值)
+  const registrationMode = settings?.registration_mode?.value || 'open';
+  const qrLoginEnabled = settings?.qr_login_enabled?.value === true;
+
   const [formData, setFormData] = useState({
     identifier: '', // 用于登录的用户名或邮箱
     username: '',
@@ -33,44 +39,30 @@ export default function LoginDialog({ open, onOpenChange }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [registrationMode, setRegistrationMode] = useState('open');
-  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [loadingConfig, setLoadingConfig] = useState(true);
   const [invitationCodeStatus, setInvitationCodeStatus] = useState(null);
 
   const isLogin = mode === 'login';
   const isForgotPassword = mode === 'forgot-password';
 
-  // 获取注册模式设置和 OAuth 提供商
+  // 获取 OAuth 提供商
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchOauthConfig = async () => {
       try {
-        const [settings, oauthData] = await Promise.all([
-          settingsApi.getAll(),
-          oauthConfigApi.getProviders().catch(() => ({ items: [] })),
-        ]);
-
-        if (settings.registration_mode) {
-          setRegistrationMode(settings.registration_mode.value);
-        }
-
-        if (settings.qr_login_enabled) {
-          setQrLoginEnabled(settings.qr_login_enabled.value === true);
-        }
-
+        setLoadingConfig(true);
+        const oauthData = await oauthConfigApi.getProviders().catch(() => ({ items: [] }));
         if (oauthData.items) {
           setOauthProviders(oauthData.items);
         }
       } catch (error) {
-        console.error('Failed to fetch settings:', error);
-        // 默认开放注册
-        setRegistrationMode('open');
+        console.error('Failed to fetch oauth config:', error);
       } finally {
-        setLoadingSettings(false);
+        setLoadingConfig(false);
       }
     };
 
     if (open) {
-      fetchSettings();
+      fetchOauthConfig();
     }
   }, [open]);
 
@@ -357,12 +349,11 @@ export default function LoginDialog({ open, onOpenChange }) {
           </>
         )}
 
-        {/* 模式切换 */}
         <ModeSwitcher
           mode={mode}
           registrationMode={registrationMode}
           isLoading={isLoading}
-          loadingSettings={loadingSettings}
+          loadingSettings={loadingConfig}
           onModeChange={handleModeChange}
         />
     </FormDialog>

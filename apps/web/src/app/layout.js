@@ -29,10 +29,10 @@ export const viewport = {
 async function AppLayout({ children, settings, apiInfo }) {
   return (
     <div className='min-h-screen bg-background flex flex-col'>
-      <Header settings={settings} />
+      <Header />
       <EmailVerificationBanner />
       <div className='flex-1'>{children}</div>
-      <Footer settings={settings} version={apiInfo?.version} />
+      <Footer version={apiInfo?.version} />
     </div>
   );
 }
@@ -64,15 +64,15 @@ export default async function RootLayout({ children }) {
         )}
 
         <ThemeProvider>
-          <AuthProvider initialUser={user}>
-            <ExtensionProvider activeCurrencies={activeCurrencies}>
-              <SettingsProvider>
-                <AppLayout settings={settings} apiInfo={apiInfo}>{children}</AppLayout>
+          <SettingsProvider initialSettings={settings}>
+            <AuthProvider initialUser={user}>
+              <ExtensionProvider activeCurrencies={activeCurrencies}>
+                <AppLayout apiInfo={apiInfo}>{children}</AppLayout>
                 <AutoCheckIn />
                 <Toaster position='top-right' richColors />
-              </SettingsProvider>
-            </ExtensionProvider>
-          </AuthProvider>
+              </ExtensionProvider>
+            </AuthProvider>
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

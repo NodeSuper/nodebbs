@@ -5,9 +5,9 @@ import { settingsApi } from '@/lib/api';
 
 const SettingsContext = createContext(null);
 
-export function SettingsProvider({ children }) {
-  const [settings, setSettings] = useState({});
-  const [loading, setLoading] = useState(true);
+export function SettingsProvider({ children, initialSettings = null }) {
+  const [settings, setSettings] = useState(initialSettings || {});
+  const [loading, setLoading] = useState(!initialSettings);
   const [error, setError] = useState(null);
 
   // 加载设置
@@ -25,9 +25,11 @@ export function SettingsProvider({ children }) {
     }
   };
 
-  // 初始化时加载设置
+  // 初始化时加载设置 (如果没有初始数据)
   useEffect(() => {
-    loadSettings();
+    if (!initialSettings) {
+      loadSettings();
+    }
   }, []);
 
   // 获取单个设置的值

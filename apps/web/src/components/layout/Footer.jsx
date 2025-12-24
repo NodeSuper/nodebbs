@@ -2,9 +2,11 @@
 
 
 import Link from 'next/link';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Github } from 'lucide-react';
 
-export default function Footer({ settings, version }) {
+export default function Footer({ version }) {
+  const { settings } = useSettings();
   const currentYear = new Date().getFullYear();
 
   const footerLinks = [
