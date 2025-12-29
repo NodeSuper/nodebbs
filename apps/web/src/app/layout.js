@@ -1,5 +1,4 @@
 import './globals.css';
-import { Toaster } from 'sonner';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
@@ -11,6 +10,7 @@ import Footer from '@/components/layout/Footer';
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
 import AutoCheckIn from '@/extensions/rewards/components/AutoCheckIn';
 import { getLayoutData, generateThemeScript, getLayoutMetadata } from '@/lib/server/layout';
+import { Toaster } from '@/components/common/Toaster';
 
 // 强制动态渲染，因为需要读取 cookies
 export const dynamic = 'force-dynamic';
@@ -69,7 +69,7 @@ export default async function RootLayout({ children }) {
               <ExtensionProvider activeCurrencies={activeCurrencies}>
                 <AppLayout apiInfo={apiInfo}>{children}</AppLayout>
                 <AutoCheckIn />
-                <Toaster position='top-right' richColors />
+                <Toaster/>
               </ExtensionProvider>
             </AuthProvider>
           </SettingsProvider>
