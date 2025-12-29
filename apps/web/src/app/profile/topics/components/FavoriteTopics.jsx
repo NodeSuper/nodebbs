@@ -121,7 +121,7 @@ export function FavoriteTopics() {
       ) : topics.length > 0 ? (
         <>
           <Suspense fallback={<Loading text='加载中...' />}>
-            <TopicList data={topics} showHeader={false} />
+            <TopicList data={topics} />
           </Suspense>
 
           {totalPages > 1 && (

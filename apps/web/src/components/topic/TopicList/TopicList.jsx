@@ -35,12 +35,15 @@ export default function TopicList({
   defaultParams = {},
   limit = 20,
   showPagination = true,
-  showHeader = true,
   
   // 行为与回调
   useUrlPagination = false, // 是否使用 URL 分页 (SSR 模式设为 true)
   onDataLoaded,
   onPageChange: externalPageChange,
+  
+  // 皮肤配置
+  uiComponent: UIComponent = TopicListUI, // 允许注入自定义 UI 组件，默认为标准列表
+  ...restProps // 透传给 UI 组件的其他属性
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -175,15 +178,15 @@ export default function TopicList({
   }
 
   return (
-    <TopicListUI
+    <UIComponent
       topics={displayTopics}
       totalTopics={displayTotal}
       currentPage={displayPage}
       totalPages={displayTotalPages}
       limit={limit}
       showPagination={showPagination}
-      showHeader={showHeader}
       onPageChange={handlePageChange}
+      {...restProps}
     />
   );
 }

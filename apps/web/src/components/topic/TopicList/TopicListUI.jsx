@@ -32,34 +32,6 @@ export function EmptyState() {
   );
 }
 
-// 列表头部组件
-export function TopicListHeader({ totalTopics, pinnedTopics, lockedTopics }) {
-  return (
-    <div className='flex items-center justify-between px-4 py-2.5 bg-muted/30 border-b border-border'>
-      <div className='flex items-center space-x-4 text-xs'>
-        <div className='flex items-center space-x-1.5'>
-          <MessageSquare className='h-3.5 w-3.5 text-foreground' />
-          <span className='font-semibold text-foreground'>
-            {totalTopics} 个话题
-          </span>
-        </div>
-        {pinnedTopics > 0 && (
-          <div className='flex items-center space-x-1.5'>
-            <Pin className='h-3.5 w-3.5 text-chart-5' />
-            <span className='text-muted-foreground'>{pinnedTopics} 置顶</span>
-          </div>
-        )}
-        {lockedTopics > 0 && (
-          <div className='flex items-center space-x-1.5'>
-            <Lock className='h-3.5 w-3.5 text-muted-foreground' />
-            <span className='text-muted-foreground'>{lockedTopics} 已关闭</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // 单个话题项组件
 export function TopicItem({ topic }) {
   const categoryName =
@@ -219,7 +191,6 @@ export function TopicListUI({
   totalPages,
   limit,
   showPagination,
-  showHeader,
   onPageChange,
 }) {
   // 空状态
@@ -227,21 +198,9 @@ export function TopicListUI({
     return <EmptyState />;
   }
 
-  const pinnedTopics = topics.filter((t) => t.isPinned).length;
-  const lockedTopics = topics.filter((t) => t.isClosed).length;
-
   return (
     <>
       <div className='bg-card border border-border rounded-lg overflow-hidden w-full'>
-        {/* 列表头部 */}
-        {showHeader && (
-          <TopicListHeader
-            totalTopics={totalTopics}
-            pinnedTopics={pinnedTopics}
-            lockedTopics={lockedTopics}
-          />
-        )}
-
         {/* 话题列表 */}
         <div className='divide-y divide-border'>
           {topics.map((topic) => (
@@ -262,3 +221,4 @@ export function TopicListUI({
     </>
   );
 }
+

@@ -99,7 +99,7 @@ export default async function TagTopicListPage({ params, searchParams }) {
         totalPages={totalPages}
         limit={LIMIT}
         showPagination={true}
-        showHeader={true}
+        showPagination={true}
         useUrlPagination={true}
       />
     </div>

@@ -42,7 +42,7 @@ export default async function FeaturedPage({ searchParams }) {
         totalPages={totalPages}
         limit={LIMIT}
         showPagination={true}
-        showHeader={true}
+
         useUrlPagination={true}
       />
     </>

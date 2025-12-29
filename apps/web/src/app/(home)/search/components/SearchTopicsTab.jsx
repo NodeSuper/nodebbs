@@ -33,7 +33,7 @@ export function SearchTopicsTab({
         totalPages={totalPages}
         limit={limit}
         showPagination={total > limit}
-        showHeader={false}
+
         onPageChange={(p) => onLoadPage('topics', p)}
       />
     </div>

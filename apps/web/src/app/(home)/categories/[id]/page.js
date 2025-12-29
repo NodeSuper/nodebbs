@@ -75,7 +75,7 @@ export default async function CategoryPage({ params, searchParams }) {
         totalPages={totalPages}
         limit={LIMIT}
         showPagination={true}
-        showHeader={true}
+
         useUrlPagination={true}
       />
     </>

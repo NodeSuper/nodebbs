@@ -46,7 +46,7 @@ export default async function HomePage({ searchParams }) {
         totalPages={totalPages}
         limit={LIMIT}
         showPagination={true}
-        showHeader={true}
+
         useUrlPagination={true}
       />
     </>
