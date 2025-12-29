@@ -121,6 +121,23 @@ export async function getStatsData() {
 }
 
 /**
+ * 服务端获取热门标签
+ * @param {Object} params - 查询参数
+ * @param {number} params.limit - 数量
+ * @returns {Promise<Array>} 标签列表
+ */
+export async function getTagsData(params = {}) {
+  try {
+    const { limit = 20 } = params;
+    const data = await request(`/tags?limit=${limit}`);
+    return data.items || [];
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    return [];
+  }
+}
+
+/**
  * 服务端获取单个话题数据
  * 使用 React cache 确保同一渲染周期内的重复请求被去重
  * @param {number|string} id - 话题ID
