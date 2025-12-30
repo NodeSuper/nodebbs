@@ -55,9 +55,27 @@ export default async function authRoutes(fastify, options) {
                   username: { type: 'string' },
                   email: { type: 'string' },
                   name: { type: 'string' },
+                  bio: { type: 'string' },
+                  avatar: { type: 'string' },
                   role: { type: 'string' },
                   isEmailVerified: { type: 'boolean' },
+                  isBanned: { type: 'boolean' },
                   createdAt: { type: 'string' },
+                  lastSeenAt: { type: 'string' },
+                  messagePermission: { type: 'string' },
+                  contentVisibility: { type: 'string' },
+                  usernameChangeCount: { type: 'number' },
+                  usernameChangedAt: { type: ['string', 'null'] },
+                  avatarFrame: {
+                    type: ['object', 'null'],
+                    properties: {
+                      id: { type: 'number' },
+                      itemType: { type: 'string' },
+                      itemName: { type: 'string' },
+                      itemMetadata: { type: ['string', 'null'] },
+                      imageUrl: { type: ['string', 'null'] }
+                    }
+                  },
                 },
               },
               token: { type: 'string' },
@@ -261,6 +279,9 @@ export default async function authRoutes(fastify, options) {
         id: newUser.id,
       });
 
+      // 丰富用户信息（徽章、头像框等）
+      await userEnricher.enrich(newUser);
+
       // 移除敏感数据
       delete newUser.passwordHash;
 
@@ -294,8 +315,27 @@ export default async function authRoutes(fastify, options) {
                   username: { type: 'string' },
                   email: { type: 'string' },
                   name: { type: 'string' },
+                  bio: { type: 'string' },
+                  avatar: { type: 'string' },
                   role: { type: 'string' },
                   isEmailVerified: { type: 'boolean' },
+                  isBanned: { type: 'boolean' },
+                  createdAt: { type: 'string' },
+                  lastSeenAt: { type: 'string' },
+                  messagePermission: { type: 'string' },
+                  contentVisibility: { type: 'string' },
+                  usernameChangeCount: { type: 'number' },
+                  usernameChangedAt: { type: ['string', 'null'] },
+                  avatarFrame: {
+                    type: ['object', 'null'],
+                    properties: {
+                      id: { type: 'number' },
+                      itemType: { type: 'string' },
+                      itemName: { type: 'string' },
+                      itemMetadata: { type: ['string', 'null'] },
+                      imageUrl: { type: ['string', 'null'] }
+                    }
+                  },
                 },
               },
               token: { type: 'string' },
@@ -354,6 +394,9 @@ export default async function authRoutes(fastify, options) {
       const token = reply.generateAuthToken({
         id: user.id,
       });
+
+      // 丰富用户信息（徽章、头像框等）
+      await userEnricher.enrich(user);
 
       // 移除敏感数据
       delete user.passwordHash;
