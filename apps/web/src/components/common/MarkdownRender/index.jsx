@@ -45,8 +45,11 @@ function MarkdownRender({ content }) {
                   border="0"
                   width="100%"
                   height="86"
-                  src={`//music.163.com/outchain/player?type=2&id=${neteaseMatch[1]}&auto=0&height=66`}
+                  src={`https://music.163.com/outchain/player?type=2&id=${neteaseMatch[1]}&auto=0&height=66`}
                   title="Netease Cloud Music"
+                  sandbox="allow-scripts allow-same-origin allow-top-navigation-by-user-activation allow-popups"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
               </div>
             );
