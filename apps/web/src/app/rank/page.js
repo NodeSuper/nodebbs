@@ -57,7 +57,7 @@ function Podium({ top3, rankType }) {
             </div>
          </div>
          
-         <Link href={`/users/${user.username}`} className="text-center group p-2 rounded-lg hover:bg-muted/50 transition-colors w-full max-w-[140px]">
+         <Link href={`/users/${user.username}`} className="text-center group p-2 rounded-lg hover:bg-muted/50 transition-colors w-full max-w-[140px]" prefetch={false}>
             <div className="font-bold text-sm sm:text-base truncate w-full group-hover:text-primary transition-colors">
                 {user.name}
             </div>
@@ -103,6 +103,7 @@ function RankItem({ user, index, rankType, currentUserId }) {
     <Link
       href={`/users/${user.username}`}
       className="block group"
+      prefetch={false}
     >
       <div className={cn(
           "flex items-center gap-3 sm:gap-6 p-4 rounded-xl transition-all hover:bg-muted/50",

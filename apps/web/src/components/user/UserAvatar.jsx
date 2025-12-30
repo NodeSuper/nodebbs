@@ -1,7 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getApiHost } from '@/lib/api-url';
 
 /**
  * 用户头像组件（支持头像框）
@@ -29,9 +28,8 @@ export default function UserAvatar({
     }
 
     // 否则拼接 API 基础 URL
-    const apiHost = getApiHost();
     const pathname = url.replace('/uploads/', `/uploads/${modifiers}/`);
-    return `${apiHost}${pathname}`;
+    return `${pathname}`;
   };
 
   // 生成 fallback 文字（取名字的首字母）
