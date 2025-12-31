@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useSyncExternalStore, useCallback } from 'react';
 
 import {
   Drawer,
@@ -14,29 +14,44 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, X } from 'lucide-react';
 
-// 自定义 useMediaQuery hook，安全处理 SSR
+/**
+ * 自定义 useMediaQuery hook
+ * 使用 useSyncExternalStore 确保 SSR 和客户端状态一致
+ * @param {string} query - CSS 媒体查询字符串
+ * @returns {boolean} - 是否匹配媒体查询
+ */
 function useMediaQuery(query) {
-  const [matches, setMatches] = useState(null);
+  const subscribe = useCallback(
+    (callback) => {
+      const mediaQuery = window.matchMedia(query);
+      mediaQuery.addEventListener('change', callback);
+      return () => mediaQuery.removeEventListener('change', callback);
+    },
+    [query]
+  );
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
-    setMatches(mediaQuery.matches);
+  const getSnapshot = () => {
+    try {
+      return window.matchMedia(query).matches;
+    } catch {
+      // 如果 matchMedia 不支持，默认返回 true（桌面端行为）
+      return true;
+    }
+  };
 
-    const handler = (event) => setMatches(event.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, [query]);
+  // SSR 时返回 true，确保服务端渲染桌面版本
+  const getServerSnapshot = () => true;
 
-  return matches;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 export default function StickySidebar({ children, className, enabled = true }) {
   const [open, setOpen] = useState(false);
-  // 使用自定义 useMediaQuery 检测屏幕尺寸，SSR 时返回 null
+  // 使用改进的 useMediaQuery hook，SSR 时返回 true（桌面端）
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-  // SSR 或初次渲染时（isDesktop 为 null），默认渲染桌面版本避免 hydration 不匹配
-  if (isDesktop === null || isDesktop || !enabled) {
+  // 桌面端或禁用时，直接渲染 aside
+  if (isDesktop || !enabled) {
     return <aside className={className}>{children}</aside>;
   }
 
