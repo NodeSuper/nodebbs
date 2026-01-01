@@ -15,8 +15,9 @@ export default async function ledgerRoutes(fastify, options) {
       description: '获取账本统计数据（仅限管理员）。返回每种货币的列表。',
     }
   }, async (req, reply) => {
-    // 获取所有货币
-    const currencies = await db.select().from(sysCurrencies);
+    // 获取所有货币，按 isActive 降序（启用在前）、创建时间升序排列
+    const currencies = await db.select().from(sysCurrencies)
+      .orderBy(desc(sysCurrencies.isActive), sysCurrencies.createdAt);
 
     const results = [];
     for (const curr of currencies) {
