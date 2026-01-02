@@ -1159,6 +1159,9 @@ export default async function userRoutes(fastify, options) {
         .set({ avatar: avatarUrl, updatedAt: new Date() })
         .where(eq(users.id, request.user.id));
 
+      // 清除用户缓存，确保前端刷新时获取最新头像
+      await fastify.clearUserCache(request.user.id);
+
       // 如果旧头像存在且为本地文件，则将其删除
       if (oldAvatar && oldAvatar.startsWith('/uploads/avatars/')) {
         const oldFilename = path.basename(oldAvatar);
