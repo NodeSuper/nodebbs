@@ -332,6 +332,11 @@ export const categoryApi = {
   async delete(id) {
     return apiClient.delete(`/categories/${id}`);
   },
+
+  // 批量更新分类排序（管理员）
+  async batchReorder(items) {
+    return apiClient.patch('/categories/batch-reorder', { items });
+  },
 };
 
 // ============= 主题 API =============

@@ -4,6 +4,65 @@ import { eq, sql, desc, isNull, like, and, or } from 'drizzle-orm';
 import slugify from 'slug'
 
 export default async function categoryRoutes(fastify, options) {
+  // 批量更新分类排序（仅管理员）
+  // 注意：此路由需要放在 GET '/' 之前，避免被通配符路由覆盖
+  fastify.patch('/batch-reorder', {
+    preHandler: [fastify.requireAdmin],
+    schema: {
+      tags: ['categories'],
+      description: '批量更新分类排序（仅管理员）',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        required: ['items'],
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['id', 'position'],
+              properties: {
+                id: { type: 'number' },
+                position: { type: 'number' }
+              }
+            }
+          }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            updated: { type: 'number' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { items } = request.body;
+
+    if (!items || items.length === 0) {
+      return reply.code(400).send({ error: '排序项不能为空' });
+    }
+
+    // 批量更新每个分类的 position
+    let updatedCount = 0;
+    for (const item of items) {
+      const [updated] = await db
+        .update(categories)
+        .set({ position: item.position, updatedAt: new Date() })
+        .where(eq(categories.id, item.id))
+        .returning();
+      
+      if (updated) {
+        updatedCount++;
+      }
+    }
+
+    return { message: '排序更新成功', updated: updatedCount };
+  });
+
   // Get all categories
   fastify.get('/', {
     preHandler: [fastify.optionalAuth],
@@ -46,12 +105,21 @@ export default async function categoryRoutes(fastify, options) {
       query = query.where(and(...conditions));
     }
 
-    // 排序：精选优先，然后按 position，最后按名称
-    let allCategories = await query.orderBy(
-      desc(categories.isFeatured),
-      categories.position,
-      categories.name
-    );
+    // 排序：精选查询按 position 排序，非精选查询按创建日期排序
+    let allCategories;
+    if (isFeatured === true) {
+      // 精选模式：按 position 升序排列
+      allCategories = await query.orderBy(
+        categories.position,
+        categories.name
+      );
+    } else {
+      // 非精选模式：按创建日期降序排列
+      allCategories = await query.orderBy(
+        desc(categories.createdAt),
+        categories.name
+      );
+    }
 
     // 检查分类是否私有（包括继承的私有属性）
     const isPrivateCategory = (category, allCats) => {

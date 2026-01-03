@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/common/DataTable';
 import { ConfirmDialog } from '@/components/common/AlertDialog';
 import { FormDialog } from '@/components/common/FormDialog';
@@ -14,6 +16,7 @@ import { categoryApi } from '@/lib/api';
 import { toast } from 'sonner';
 import CategorySelector from '@/components/topic/CategorySelector';
 import { Loading } from '@/components/common/Loading';
+import FeaturedCategorySortable from './components/FeaturedCategorySortable';
 
 export default function CategoriesManagement() {
   const [categories, setCategories] = useState([]);
@@ -23,6 +26,8 @@ export default function CategoriesManagement() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'featured'
+  const [reordering, setReordering] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -203,6 +208,30 @@ export default function CategoriesManagement() {
 
   const flatCategories = flattenCategories(categories);
 
+  // 计算精选分类列表（按 position 排序）
+  const featuredCategories = useMemo(() => 
+    categories
+      .filter(c => c.isFeatured)
+      .sort((a, b) => (a.position || 0) - (b.position || 0)),
+    [categories]
+  );
+
+  // 处理精选分类拖拽排序
+  const handleReorder = async (newOrder) => {
+    setReordering(true);
+    try {
+      const items = newOrder.map((id, index) => ({ id, position: index }));
+      await categoryApi.batchReorder(items);
+      toast.success('排序已保存');
+      fetchCategories(); // 刷新列表
+    } catch (err) {
+      console.error('更新排序失败:', err);
+      toast.error('排序保存失败：' + err.message);
+    } finally {
+      setReordering(false);
+    }
+  };
+
   if (loading) {
     return <Loading text='加载中...' className='py-12' />;
   }
@@ -222,6 +251,22 @@ export default function CategoriesManagement() {
           创建分类
         </Button>
       </div>
+
+      {/* Tab 切换 */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value='all'>全部分类</TabsTrigger>
+          <TabsTrigger value='featured' className='gap-2'>
+            精选分类
+            {featuredCategories.length > 0 && (
+              <Badge variant='secondary'>
+                {featuredCategories.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value='all' className='mt-4'>
 
       {/* Categories table */}
       <DataTable
@@ -301,12 +346,6 @@ export default function CategoriesManagement() {
             ),
           },
           {
-            key: 'position',
-            label: '排序',
-            width: 'w-[80px]',
-            render: (value) => <span className='text-sm text-muted-foreground'>{value}</span>,
-          },
-          {
             key: 'topicCount',
             label: '话题数',
             width: 'w-[100px]',
@@ -344,8 +383,16 @@ export default function CategoriesManagement() {
         loading={loading}
         emptyMessage='暂无分类'
       />
+        </TabsContent>
 
-      {/* 创建/编辑分类对话框 */}
+        <TabsContent value='featured' className='mt-4'>
+          <FeaturedCategorySortable
+            categories={featuredCategories}
+            onReorder={handleReorder}
+            loading={reordering}
+          />
+        </TabsContent>
+      </Tabs>
       <FormDialog
          open={showDialog}
          onOpenChange={setShowDialog}
