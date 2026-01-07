@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Loader2, Check, X, Medal, Gift } from 'lucide-react';
 import { ItemTypeIcon } from '@/extensions/shop/components/shared/ItemTypeIcon';
 import { getItemTypeLabel, isItemExpired } from '@/extensions/shop/utils/itemTypes';
@@ -61,8 +62,43 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
       <CardFooter className="flex flex-col gap-2">
         <div className="w-full flex items-center justify-between text-sm text-muted-foreground">
           <span>获得时间</span>
-          <span>
+          <span className="flex items-center gap-2">
             <Time date={item.createdAt} fromNow />
+            {/* 礼物图标 - 点击弹出详情 */}
+            {(() => {
+              try {
+                if (item.metadata) {
+                  const meta = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+                  if (meta.fromUserId) {
+                    return (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant='ghost' size='icon' className="text-amber-500 hover:text-amber-600 transition-colors" title="查看礼物详情">
+                            <Gift />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-amber-600 flex items-center gap-1.5">
+                              <Gift className="h-4 w-4" />
+                              来自 {meta.fromUsername || '好友'} 的礼物
+                            </p>
+                            {meta.message && (
+                              <p className="text-sm text-muted-foreground italic bg-muted/50 p-2 rounded">
+                                "{meta.message}"
+                              </p>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  }
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+              return null;
+            })()}
           </span>
         </div>
 
@@ -74,35 +110,6 @@ export function ItemInventoryCard({ item, onEquip, onUnequip, actioning }) {
             </span>
           </div>
         )}
-
-        {/* 礼物信息 */}
-        {(() => {
-          try {
-            if (item.metadata) {
-              const meta = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
-              if (meta.fromUserId) {
-                return (
-                  <div className="w-full mt-1 pt-2 border-t border-border">
-                    <div className="flex items-center gap-1.5 text-sm text-amber-600 mb-1">
-                      <Gift className="h-3.5 w-3.5" />
-                      <span className="font-medium">
-                        来自 {meta.fromUsername || '好友'} 的礼物
-                      </span>
-                    </div>
-                    {meta.message && (
-                      <p className="text-xs text-muted-foreground italic bg-muted/50 p-2 rounded">
-                        "{meta.message}"
-                      </p>
-                    )}
-                  </div>
-                );
-              }
-            }
-          } catch (e) {
-            // 忽略解析错误
-          }
-          return null;
-        })()}
 
         {!expired && (
           item.itemType === 'badge' ? (
