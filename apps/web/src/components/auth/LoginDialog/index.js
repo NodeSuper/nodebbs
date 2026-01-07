@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { invitationsApi, oauthConfigApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { validateUsername } from '@/lib/validateUsername';
 
 // 导入子组件
 import { QRLoginTab } from './QRLoginTab';
@@ -123,6 +124,14 @@ export default function LoginDialog({ open, onOpenChange }) {
         setError('请填写所有必填字段');
         return;
       }
+
+      // 验证用户名格式
+      const usernameValidation = validateUsername(formData.username);
+      if (!usernameValidation.valid) {
+        setError(usernameValidation.error);
+        return;
+      }
+
       if (formData.password !== formData.confirmPassword) {
         setError('两次输入的密码不一致');
         return;

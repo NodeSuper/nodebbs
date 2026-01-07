@@ -25,7 +25,7 @@ export function RegisterForm({
             id="username"
             name="username"
             type="text"
-            placeholder="请输入用户名"
+            placeholder="3-20位，小写字母/数字/下划线"
             value={formData.username}
             onChange={onChange}
             disabled={isLoading}
