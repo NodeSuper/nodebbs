@@ -53,6 +53,20 @@ export function useCategories() {
         }
       });
 
+      // 按 name 字母排序（position 只用于精选分类）
+      const sortByName = (a, b) => a.name.localeCompare(b.name);
+
+      // 递归排序每一级分类
+      const sortCategories = (cats) => {
+        cats.sort(sortByName);
+        cats.forEach(cat => {
+          if (cat.subcategories && cat.subcategories.length > 0) {
+            sortCategories(cat.subcategories);
+          }
+        });
+      };
+      sortCategories(rootCategories);
+
       // 递归计算包含子分类的话题总数
       const calculateTotalStats = (category) => {
         let total = category.topicCount || 0;

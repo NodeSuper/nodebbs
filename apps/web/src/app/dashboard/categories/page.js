@@ -171,13 +171,8 @@ export default function CategoriesManagement() {
       return 1 + calculateLevel(cat.parentId, visited);
     };
 
-    // 按 position 和 name 排序的辅助函数
-    const sortByPositionAndName = (a, b) => {
-      if (a.position !== b.position) {
-        return (a.position || 0) - (b.position || 0);
-      }
-      return a.name.localeCompare(b.name);
-    };
+    // 按 name 字母排序（position 只用于精选分类）
+    const sortByName = (a, b) => a.name.localeCompare(b.name);
 
     // 递归添加分类及其子分类
     const addCategoryAndChildren = (parentId) => {
@@ -189,7 +184,7 @@ export default function CategoriesManagement() {
           }
           return cat.parentId === parentId;
         })
-        .sort(sortByPositionAndName);
+        .sort(sortByName);
 
       // 添加每个分类及其子分类
       children.forEach((cat) => {

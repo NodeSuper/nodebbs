@@ -105,20 +105,17 @@ export default async function categoryRoutes(fastify, options) {
       query = query.where(and(...conditions));
     }
 
-    // 排序：精选查询按 position 排序，非精选查询按创建日期排序
+    // 排序：精选分类按 position 排序，非精选分类按 name 排序
     let allCategories;
     if (isFeatured === true) {
-      // 精选模式：按 position 升序排列
+      // 精选分类：按 position 排序（支持拖拽排序）
       allCategories = await query.orderBy(
         categories.position,
         categories.name
       );
     } else {
-      // 非精选模式：按创建日期降序排列
-      allCategories = await query.orderBy(
-        desc(categories.createdAt),
-        categories.name
-      );
+      // 非精选分类：按 name 字母排序
+      allCategories = await query.orderBy(categories.name);
     }
 
     // 检查分类是否私有（包括继承的私有属性）
