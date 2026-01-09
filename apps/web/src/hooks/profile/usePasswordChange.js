@@ -31,7 +31,15 @@ export function usePasswordChange() {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    // 根据用户是否已有密码决定是否验证 currentPassword
+    const needCurrentPassword = user?.hasPassword !== false;
+    
+    if (needCurrentPassword && !passwordData.currentPassword) {
+      toast.error('请填写当前密码');
+      return;
+    }
+
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
       toast.error('请填写所有密码字段');
       return;
     }
@@ -49,7 +57,9 @@ export function usePasswordChange() {
     setChangingPassword(true);
 
     try {
-      const res = await userApi.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      // 对于首次设置密码的用户，传空字符串或 null 作为 currentPassword
+      const currentPwd = needCurrentPassword ? passwordData.currentPassword : '';
+      const res = await userApi.changePassword(currentPwd, passwordData.newPassword);
 
       if (res.error) {
         throw new Error(res.error);
@@ -63,7 +73,7 @@ export function usePasswordChange() {
     } finally {
       setChangingPassword(false);
     }
-  }, [passwordData]);
+  }, [user, passwordData]);
 
   return {
     // ===== 用户数据 =====
