@@ -42,6 +42,7 @@ export default function LoginDialog({ open, onOpenChange }) {
   const [success, setSuccess] = useState('');
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [invitationCodeStatus, setInvitationCodeStatus] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const isLogin = mode === 'login';
   const isForgotPassword = mode === 'forgot-password';
@@ -148,7 +149,7 @@ export default function LoginDialog({ open, onOpenChange }) {
       let result;
       if (isLogin) {
         // 登录（使用用户名或邮箱）
-        result = await login(formData.identifier, formData.password);
+        result = await login(formData.identifier, formData.password, captchaToken);
       } else {
         // 注册
         const registerData = {
@@ -163,7 +164,7 @@ export default function LoginDialog({ open, onOpenChange }) {
           registerData.invitationCode = formData.invitationCode;
         }
 
-        result = await register(registerData);
+        result = await register({ ...registerData, captchaToken });
       }
 
       if (result.success) {
@@ -180,6 +181,7 @@ export default function LoginDialog({ open, onOpenChange }) {
           invitationCode: ''
         });
         setInvitationCodeStatus(null);
+        setCaptchaToken(null);
       } else {
         setError(result.error || (isLogin ? '登录失败' : '注册失败'));
         toast.error(result.error || (isLogin ? '登录失败' : '注册失败'));
@@ -223,6 +225,7 @@ export default function LoginDialog({ open, onOpenChange }) {
       setError('');
       setSuccess('');
       setInvitationCodeStatus(null);
+      setCaptchaToken(null);
     }
     onOpenChange?.(isOpen);
   };
@@ -283,6 +286,7 @@ export default function LoginDialog({ open, onOpenChange }) {
                 onSubmit={handleSubmit}
                 onChange={handleChange}
                 onForgotPassword={handleForgotPasswordClick}
+                onCaptchaVerify={setCaptchaToken}
               />
 
               <OAuthSection
@@ -320,6 +324,7 @@ export default function LoginDialog({ open, onOpenChange }) {
                   onSubmit={handleSubmit}
                   onChange={handleChange}
                   onForgotPassword={handleForgotPasswordClick}
+                  onCaptchaVerify={setCaptchaToken}
                 />
 
                 <OAuthSection
@@ -344,6 +349,7 @@ export default function LoginDialog({ open, onOpenChange }) {
                   onSubmit={handleSubmit}
                   onChange={handleChange}
                   onInvitationCodeBlur={validateInvitationCode}
+                  onCaptchaVerify={setCaptchaToken}
                 />
 
                 <OAuthSection

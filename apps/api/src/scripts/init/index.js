@@ -28,6 +28,7 @@ import { initRewardConfigs, cleanRewards } from './rewards.js';
 import { initBadges, listBadges, cleanBadges } from './badges.js';
 import { initLedger, listCurrencies, cleanLedger } from './ledger.js';
 import { initShopItems, cleanShopItems } from './shop.js';
+import { initCaptchaProviders, listCaptchaProviders } from './captcha.js';
 
 const { Pool } = pg;
 
@@ -84,6 +85,7 @@ function listAllSettings() {
   listSystemSettings();
   listOAuthProviders();
   listEmailProviders();
+  listCaptchaProviders();
   listInvitationRules();
   listCurrencies();
   listBadges();
@@ -124,8 +126,11 @@ async function initAllSettings(reset = false) {
     // 7. 初始化勋章数据
     const badgesResult = await initBadges(db, reset);
 
-    // 7. 初始化商城数据
+    // 8. 初始化商城数据
     const shopResult = await initShopItems(db, reset);
+
+    // 9. 初始化 CAPTCHA 提供商配置
+    const captchaResult = await initCaptchaProviders(db, reset);
 
     // 显示统计信息
     console.log('\n' + '='.repeat(80));
@@ -210,6 +215,16 @@ async function initAllSettings(reset = false) {
       console.log(`  - 跳过: ${shopResult.skippedCount} 个商品（已存在）`);
     }
     console.log(`  - 总计: ${shopResult.total} 个商品\n`);
+
+    // CAPTCHA 提供商统计
+    console.log(`CAPTCHA 提供商统计:`);
+    if (reset) {
+      console.log(`  - 重置: ${captchaResult.updatedCount} 个提供商`);
+    } else {
+      console.log(`  - 新增: ${captchaResult.addedCount} 个提供商`);
+      console.log(`  - 跳过: ${captchaResult.skippedCount} 个提供商（已存在）`);
+    }
+    console.log(`  - 总计: ${captchaResult.total} 个提供商\n`);
 
     // 显示按分类的统计
     console.log('系统设置按分类统计:');

@@ -56,10 +56,10 @@ export function AuthProvider({ children, initialUser }) {
   }, []);
 
   // 登录（支持用户名或邮箱）
-  const login = useCallback(async (identifier, password) => {
+  const login = useCallback(async (identifier, password, captchaToken) => {
     try {
       setError(null);
-      const response = await authApi.login(identifier, password);
+      const response = await authApi.login(identifier, password, captchaToken);
       setUser(response.user);
       // 登录成功刷新设置 (因为设置可能依赖用户角色)
       refreshSettings();

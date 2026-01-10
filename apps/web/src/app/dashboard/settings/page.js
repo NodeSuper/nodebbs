@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { useSettings } from '@/contexts/SettingsContext';
 import { toast } from 'sonner';
-import { Settings, ToggleLeft, Gauge, Layers, Mail, Coins } from 'lucide-react';
+import { Settings, ToggleLeft, Gauge, Layers, Mail, Shield } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 
 // 导入组件
@@ -20,6 +20,7 @@ import { FeatureSettings } from './components/FeatureSettings';
 import { OAuthSettings } from './components/OAuthProviderCard';
 import { EmailSettings } from './components/EmailProviderCard';
 import { RateLimitSettings } from './components/RateLimitSettings';
+import { CaptchaSettings } from './components/CaptchaSettings';
 
 
 // Tab 配置
@@ -38,7 +39,7 @@ const tabItems = [
   },
   {
     value: 'oauth',
-    label: 'OAuth 登录',
+    label: '三方登录',
     shortLabel: 'OAuth',
     icon: Layers,
   },
@@ -54,7 +55,12 @@ const tabItems = [
     shortLabel: '限速',
     icon: Gauge,
   },
-
+  {
+    value: 'captcha',
+    label: '人机验证',
+    shortLabel: '验证',
+    icon: Shield,
+  },
 ];
 
 export default function SystemSettingsPage() {
@@ -200,6 +206,10 @@ export default function SystemSettingsPage() {
           />
         </TabsContent>
 
+        {/* 人机验证 Tab */}
+        <TabsContent value='captcha'>
+          <CaptchaSettings />
+        </TabsContent>
 
       </Tabs>
     </div>

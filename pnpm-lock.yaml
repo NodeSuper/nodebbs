@@ -105,6 +105,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@cap.js/widget':
+        specifier: ^0.1.33
+        version: 0.1.33
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -260,6 +263,9 @@ packages:
   '@babel/types@7.28.5':
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
+
+  '@cap.js/widget@0.1.33':
+    resolution: {integrity: sha512-opQqn8sWIe4tIFSkQ06pAiGzlljCIqQ7QWEqLt2sV6MlQLrmQT8EUNWAgfrB1hTFoYygutnVViWEaaJr3Vb44A==}
 
   '@dnd-kit/accessibility@3.1.1':
     resolution: {integrity: sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==}
@@ -3594,6 +3600,8 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
     optional: true
+
+  '@cap.js/widget@0.1.33': {}
 
   '@dnd-kit/accessibility@3.1.1(react@19.2.1)':
     dependencies:

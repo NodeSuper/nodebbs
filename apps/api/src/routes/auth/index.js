@@ -30,6 +30,7 @@ export default async function authRoutes(fastify, options) {
   fastify.post(
     '/register',
     {
+      preHandler: [fastify.verifyCaptcha('register')],
       schema: {
         tags: ['auth'],
         description: '注册新用户',
@@ -293,6 +294,7 @@ export default async function authRoutes(fastify, options) {
   fastify.post(
     '/login',
     {
+      preHandler: [fastify.verifyCaptcha('login')],
       schema: {
         tags: ['auth'],
         description: '用户登录（支持用户名或邮箱）',

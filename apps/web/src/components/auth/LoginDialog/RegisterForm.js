@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DialogFooter } from '@/components/ui/dialog';
 import { FormMessage } from './FormMessage';
+import { CaptchaWidget } from '@/components/captcha/CaptchaWidget';
 
 export function RegisterForm({
   formData,
@@ -12,7 +13,8 @@ export function RegisterForm({
   invitationCodeStatus,
   onSubmit,
   onChange,
-  onInvitationCodeBlur
+  onInvitationCodeBlur,
+  onCaptchaVerify,
 }) {
   return (
     <form onSubmit={onSubmit}>
@@ -118,6 +120,9 @@ export function RegisterForm({
             )}
           </div>
         )}
+
+        {/* 人机验证 */}
+        <CaptchaWidget scene="register" onVerify={onCaptchaVerify} />
       </div>
 
       <DialogFooter>
@@ -128,3 +133,4 @@ export function RegisterForm({
     </form>
   );
 }
+

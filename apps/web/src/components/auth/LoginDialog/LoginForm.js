@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DialogFooter } from '@/components/ui/dialog';
 import { FormMessage } from './FormMessage';
+import { CaptchaWidget } from '@/components/captcha/CaptchaWidget';
 
 export function LoginForm({
   formData,
@@ -10,7 +11,8 @@ export function LoginForm({
   isLoading,
   onSubmit,
   onChange,
-  onForgotPassword
+  onForgotPassword,
+  onCaptchaVerify,
 }) {
   return (
     <form onSubmit={onSubmit}>
@@ -55,6 +57,9 @@ export function LoginForm({
             required
           />
         </div>
+
+        {/* 人机验证 */}
+        <CaptchaWidget scene="login" onVerify={onCaptchaVerify} />
       </div>
 
       <DialogFooter>
@@ -65,3 +70,4 @@ export function LoginForm({
     </form>
   );
 }
+

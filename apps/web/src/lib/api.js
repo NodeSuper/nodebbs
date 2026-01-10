@@ -56,18 +56,32 @@ class ApiClient {
   }
 
   // POST 请求
-  async post(endpoint, data) {
+  async post(endpoint, data, options = {}) {
     return this.request(endpoint, {
       method: 'POST',
       body: JSON.stringify(data || {}),
+      ...options,
+      headers: { ...options.headers },
+    });
+  }
+
+  // PUT 请求
+  async put(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data || {}),
+      ...options,
+      headers: { ...options.headers },
     });
   }
 
   // PATCH 请求
-  async patch(endpoint, data) {
+  async patch(endpoint, data, options = {}) {
     return this.request(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data || {}),
+      ...options,
+      headers: { ...options.headers },
     });
   }
 
@@ -90,12 +104,17 @@ const apiClient = new ApiClient();
 export const authApi = {
   // 注册
   async register(data) {
-    return apiClient.post('/auth/register', data);
+    const { captchaToken, ...rest } = data;
+    return apiClient.post('/auth/register', rest, {
+      headers: captchaToken ? { 'x-captcha-token': captchaToken } : {},
+    });
   },
 
   // 登录（支持用户名或邮箱）
-  async login(identifier, password) {
-    return apiClient.post('/auth/login', { identifier, password });
+  async login(identifier, password, captchaToken) {
+    return apiClient.post('/auth/login', { identifier, password }, {
+      headers: captchaToken ? { 'x-captcha-token': captchaToken } : {},
+    });
   },
 
   // 登出
@@ -777,6 +796,27 @@ export const emailConfigApi = {
   // 管理员：测试邮件服务配置
   async testProvider(provider, testEmail) {
     return apiClient.post(`/email/providers/${provider}/test`, { testEmail });
+  },
+};
+
+// ============= CAPTCHA 配置 API =============
+export const captchaConfigApi = {
+  // 获取当前 CAPTCHA 配置（公开）
+  async getConfig() {
+    return apiClient.get('/captcha/config');
+  },
+
+  // 管理员：获取所有 CAPTCHA 提供商配置
+  async getProviders() {
+    return apiClient.get('/captcha/providers');
+  },
+
+  // 管理员：更新 CAPTCHA 提供商配置
+  async updateProvider(provider, data) {
+    return apiClient.request(`/captcha/providers/${provider}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 };
 

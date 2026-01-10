@@ -804,6 +804,30 @@ export const emailProviders = pgTable(
 
 export const emailProvidersRelations = relations(emailProviders, () => ({}));
 
+// ============ CAPTCHA Providers (人机验证提供商) ============
+export const captchaProviders = pgTable(
+  'captcha_providers',
+  {
+    ...$defaults,
+    // === 核心字段（可索引、可查询）===
+    provider: varchar('provider', { length: 50 }).notNull().unique(), // 'recaptcha', 'hcaptcha', 'turnstile'
+    isEnabled: boolean('is_enabled').notNull().default(false),
+    isDefault: boolean('is_default').notNull().default(false),
+    displayName: varchar('display_name', { length: 100 }),
+    displayOrder: integer('display_order').notNull().default(0),
+    // === 灵活配置（JSON 存储）===
+    config: text('config'), // { siteKey, secretKey, verifyEndpoint, scoreThreshold, mode, ... }
+    enabledScenes: text('enabled_scenes'), // { "register": true, "login": false, ... }
+  },
+  (table) => [
+    index('captcha_providers_provider_idx').on(table.provider),
+    index('captcha_providers_is_enabled_idx').on(table.isEnabled),
+    index('captcha_providers_is_default_idx').on(table.isDefault),
+  ]
+);
+
+export const captchaProvidersRelations = relations(captchaProviders, () => ({}));
+
 // ============ Verifications (验证码) ============
 export const verifications = pgTable(
   'verifications',
