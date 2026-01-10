@@ -227,9 +227,9 @@ export default function CategoriesManagement() {
     }
   };
 
-  if (loading) {
-    return <Loading text='加载中...' className='py-12' />;
-  }
+  // if (loading) {
+  //   return <Loading text='加载中...' className='py-12' />;
+  // }
 
   return (
     <div className='space-y-6'>

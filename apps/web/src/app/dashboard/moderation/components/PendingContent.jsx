@@ -125,6 +125,7 @@ export function PendingContent({ type = 'all', onModerationComplete }) {
                           <Link
                             href={`/topic/${item.id}`}
                             className='text-sm text-primary hover:underline'
+                            prefetch={false}
                           >
                             查看详情 →
                           </Link>
@@ -136,6 +137,7 @@ export function PendingContent({ type = 'all', onModerationComplete }) {
                             <Link
                               href={`/topic/${item.topicId}`}
                               className='text-primary hover:underline'
+                              prefetch={false}
                             >
                               {item.topicTitle}
                             </Link>

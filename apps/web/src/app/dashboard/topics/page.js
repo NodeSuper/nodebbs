@@ -209,6 +209,7 @@ export default function AdminTopicsPage() {
             href={`/topic/${row.id}`}
             className='hover:text-primary hover:underline font-medium line-clamp-2 whitespace-normal text-ellipsis'
             target='_blank'
+            prefetch={false}
           >
             {value}
           </Link>
