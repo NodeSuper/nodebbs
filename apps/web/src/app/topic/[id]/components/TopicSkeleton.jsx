@@ -2,17 +2,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function TopicSkeleton() {
   return (
-    <div className='container mx-auto p-2 lg:px-4 lg:py-6'>
+    <div className='container mx-auto p-0 sm:p-2 lg:px-4 lg:py-6'>
       <main className='flex gap-6'>
         {/* 主要内容区域 */}
         <div className='flex-1 min-w-0'>
           {/* 话题标题骨架 */}
-          <div className="mb-6">
+          <div className="mb-6 px-3 sm:px-0 mt-4 sm:mt-0">
              <div className="flex items-start gap-3">
-               <Skeleton className="h-6 w-6 mt-1.5 rounded-full" />
-               <div className="flex-1 space-y-3">
-                 <Skeleton className="h-9 w-3/4" />
-                 <div className="flex gap-2">
+               <Skeleton className="h-6 w-6 mt-1.5 rounded-full shrink-0" />
+               <div className="flex-1 space-y-3 min-w-0">
+                 <Skeleton className="h-8 sm:h-9 w-3/4" />
+                 <div className="flex gap-2 flex-wrap">
                    <Skeleton className="h-4 w-16" />
                    <Skeleton className="h-4 w-24" />
                    <Skeleton className="h-4 w-32" />
@@ -22,7 +22,7 @@ export function TopicSkeleton() {
           </div>
 
           {/* 话题内容骨架 */}
-          <div className='bg-card border border-border rounded-lg mb-6 p-6 space-y-4'>
+          <div className='bg-card border-b sm:border sm:border-border sm:rounded-lg mb-6 px-3 sm:px-6 py-4 sm:py-5 space-y-4'>
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-2/3" />
@@ -37,21 +37,23 @@ export function TopicSkeleton() {
             </div>
           </div>
 
+          {/* 回复列表头部 */}
+          <Skeleton className="h-5 w-24 mb-4 mx-3 sm:mx-0" />
+
           {/* 回复列表骨架 - 模拟3条回复 */}
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-             <div className="p-4 border-b border-border flex justify-between">
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-8 w-32" />
-             </div>
+          <div className="space-y-4">
              {[1, 2, 3].map((i) => (
-               <div key={i} className="p-4 border-b border-border last:border-0 flex gap-3">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-2">
-                     <div className="flex justify-between">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-4 w-10" />
+               <div key={i} className="bg-card border-b border-x-0 border-t-0 sm:border sm:rounded-lg p-3 sm:p-5 flex gap-3">
+                  <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                     <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-24 sm:w-32" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                        <Skeleton className="h-4 w-8 sm:w-10" />
                      </div>
-                     <Skeleton className="h-4 w-full" />
+                     <Skeleton className="h-4 w-full mt-2" />
                      <Skeleton className="h-4 w-2/3" />
                   </div>
                </div>
