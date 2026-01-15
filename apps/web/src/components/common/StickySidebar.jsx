@@ -10,7 +10,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
-import { Menu, X } from 'lucide-react';
+import { Sidebar, X } from 'lucide-react';
 import FloatingBall from './FloatingBall';
 
 /**
@@ -58,7 +58,7 @@ export default function StickySidebar({ children, className, enabled = true }) {
     <>
       {/* 悬浮球 - 始终挂载，保持位置状态 */}
       <FloatingBall onClick={() => setOpen(true)}>
-        <Menu className='h-5 w-5' />
+        <Sidebar className='h-5 w-5' />
       </FloatingBall>
 
       <Drawer direction='left' open={open} onOpenChange={setOpen}>
