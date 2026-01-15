@@ -7,9 +7,8 @@ export function TopicSkeleton() {
         {/* 主要内容区域 */}
         <div className='flex-1 min-w-0'>
           {/* 话题标题骨架 */}
-          <div className="mb-6 px-3 sm:px-0 mt-4 sm:mt-0">
-             <div className="flex items-start gap-3">
-               <Skeleton className="h-6 w-6 mt-1.5 rounded-full shrink-0" />
+          <div className="px-3 pt-4 sm:px-0 sm:pt-0 mb-6">
+             <div className="flex items-start">
                <div className="flex-1 space-y-3 min-w-0">
                  <Skeleton className="h-8 sm:h-9 w-3/4" />
                  <div className="flex gap-2 flex-wrap">
