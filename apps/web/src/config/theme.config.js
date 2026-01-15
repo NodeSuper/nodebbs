@@ -4,10 +4,10 @@
  */
 
 export const THEMES = [
-  { value: 'default', label: '默认', class: '' },
-  { value: 'sunrise', label: '晨曦', class: 'sunrise' },
-  { value: 'iceblue', label: '冰蓝', class: 'iceblue' },
-  { value: 'nord', label: 'Nord', class: 'nord' },
+  { value: 'default', label: '默认', class: '', color: 'oklch(0.208 0.042 265.755)' },
+  { value: 'sunrise', label: '晨曦', class: 'sunrise', color: 'oklch(0.62 0.24 12)' },
+  { value: 'iceblue', label: '冰蓝', class: 'iceblue', color: 'oklch(0.56 0.18 250)' },
+  { value: 'nord', label: 'Nord', class: 'nord', color: '#5E81AC' },
 ];
 
 export const FONT_SIZES = [
