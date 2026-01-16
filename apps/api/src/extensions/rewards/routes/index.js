@@ -126,9 +126,12 @@ export default async function rewardsRoutes(fastify, options) {
         balance: fromTx.balanceAfter, 
       };
     } catch (error) {
-        if (error.message.includes('Insufficient funds')) return reply.code(400).send({ error: '积分余额不足' });
+        if (error.message.includes('Insufficient funds')) {
+          const currencyName = await fastify.ledger.getCurrencyName('credits').catch(() => '');
+          return reply.code(400).send({ error: `${currencyName}余额不足` });
+        }
         if (error.message.includes('未启用')) return reply.code(403).send({ error: error.message });
-        
+
         fastify.log.error('[打赏] 失败:', error);
         return reply.code(500).send({ error: '打赏失败' });
     }

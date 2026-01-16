@@ -1,58 +1,28 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import { isCurrencyActive } from '@/extensions/ledger/utils/currency';
+import { createContext, useContext, useMemo } from 'react';
 
 const ExtensionContext = createContext(null);
 
-export function ExtensionProvider({ children, activeCurrencies }) {
-  const initializeState = () => {
-    if (activeCurrencies) {
-      const creditsActive = Array.isArray(activeCurrencies) && 
-        activeCurrencies.some(c => c.code === 'credits' && c.isActive);
-      
-      return {
-        isRewardsEnabled: creditsActive,
-        isWalletEnabled: creditsActive,
-        isShopEnabled: creditsActive,
-        loading: false,
-      };
-    }
+// 默认货币 code
+export const DEFAULT_CURRENCY_CODE = 'credits';
+
+export function ExtensionProvider({ children, activeCurrencies = [] }) {
+  // 直接使用 SSR 传递的数据，不进行客户端请求
+  const extensions = useMemo(() => {
+    const defaultCurrency = activeCurrencies.find(
+      c => c.code === DEFAULT_CURRENCY_CODE && c.isActive
+    );
 
     return {
-      isRewardsEnabled: false,
-      isWalletEnabled: false,
-      isShopEnabled: false,
-      loading: true,
+      isRewardsEnabled: !!defaultCurrency,
+      isWalletEnabled: !!defaultCurrency,
+      isShopEnabled: !!defaultCurrency,
+      currencies: activeCurrencies,
+      defaultCurrency: defaultCurrency || null,
+      loading: false,
     };
-  };
-
-  const [extensions, setExtensions] = useState(initializeState);
-
-  useEffect(() => {
-    // 如果没有服务器端数据，则客户端获取
-    if (!activeCurrencies) {
-      checkExtensions();
-    }
-  }, []);
-
-  const checkExtensions = async () => {
-    try {
-      // 检查积分/钱包功能是否启用
-      // 目前主要依赖 'credits' 货币是否存在
-      const creditsActive = await isCurrencyActive('credits');
-      
-      setExtensions({
-        isRewardsEnabled: creditsActive,
-        isWalletEnabled: creditsActive,
-        isShopEnabled: creditsActive,
-        loading: false,
-      });
-    } catch (error) {
-      console.error('Failed to check extensions status:', error);
-      setExtensions(prev => ({ ...prev, loading: false }));
-    }
-  };
+  }, [activeCurrencies]);
 
   return (
     <ExtensionContext.Provider value={extensions}>
@@ -67,4 +37,31 @@ export function useExtensions() {
     throw new Error('useExtensions must be used within ExtensionProvider');
   }
   return context;
+}
+
+/**
+ * 获取货币名称的 hook
+ * @param {string} code - 货币 code，默认为 'credits'
+ * @returns {string} 货币名称，如果找不到则返回 code
+ */
+export function useCurrencyName(code = DEFAULT_CURRENCY_CODE) {
+  const { currencies, defaultCurrency } = useExtensions();
+
+  return useMemo(() => {
+    // 如果是默认货币，直接使用缓存的 defaultCurrency
+    if (code === DEFAULT_CURRENCY_CODE && defaultCurrency) {
+      return defaultCurrency.name;
+    }
+    // 否则从列表中查找
+    const currency = currencies.find(c => c.code === code);
+    return currency?.name || code;
+  }, [code, currencies, defaultCurrency]);
+}
+
+/**
+ * 获取默认货币名称（简便方法）
+ * @returns {string} 默认货币名称
+ */
+export function useDefaultCurrencyName() {
+  return useCurrencyName(DEFAULT_CURRENCY_CODE);
 }

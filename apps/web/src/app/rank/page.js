@@ -5,13 +5,14 @@ import { Trophy, Coins, TrendingUp, Medal, Crown } from 'lucide-react';
 import Link from '@/components/common/Link';
 import UserAvatar from '@/components/user/UserAvatar';
 import { request, getCurrentUser } from '@/lib/server/api';
+import { getDefaultCurrencyName } from '@/lib/server/ledger';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Suspense } from 'react';
 
 export const metadata = {
   title: '排行榜',
-  description: '查看社区活跃用户、财富榜单和积分排行。',
+  description: '查看社区活跃用户和财富榜单。',
 };
 
 
@@ -192,7 +193,7 @@ function RankSkeleton() {
 }
 
 // 异步数据获取组件
-async function RankList({ type, limit = 50, currentUserId }) {
+async function RankList({ type, limit = 50, currentUserId, currencyName }) {
     let ranking = [];
     try {
         const data = await request(`/rewards/rank?limit=${limit}&type=${type}`);
@@ -214,7 +215,7 @@ async function RankList({ type, limit = 50, currentUserId }) {
                 暂无排行数据
               </h3>
               <p className="text-muted-foreground">
-                还没有用户获得积分
+                还没有用户获得{currencyName}
               </p>
             </div>
         );
@@ -255,6 +256,7 @@ export default async function RankPage({ searchParams }) {
   const { type } = await searchParams; // Next.js 15+ searchParams 是 promise
   const rankType = type || 'balance';
   const currentUser = await getCurrentUser();
+  const currencyName = await getDefaultCurrencyName();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -263,7 +265,7 @@ export default async function RankPage({ searchParams }) {
         <div>
             <h1 className="text-3xl font-bold text-card-foreground mb-2 flex items-center gap-2">
             <Trophy className="h-8 w-8 text-yellow-500" />
-            积分排行榜
+            {currencyName}排行榜
             </h1>
             <p className="text-muted-foreground">社区活跃度排名</p>
         </div>
@@ -289,7 +291,7 @@ export default async function RankPage({ searchParams }) {
         {/* 移动端: 卡片无内边距，提供全宽滑动感？或者保持标准。标准更安全。 */}
         <CardContent className="p-0 sm:p-6">
             <Suspense key={rankType} fallback={<RankSkeleton />}>
-                <RankList type={rankType} currentUserId={currentUser?.id} />
+                <RankList type={rankType} currentUserId={currentUser?.id} currencyName={currencyName} />
             </Suspense>
         </CardContent>
       </Card>

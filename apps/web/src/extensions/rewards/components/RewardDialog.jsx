@@ -13,12 +13,14 @@ import { Label } from '@/components/ui/label';
 import { rewardsApi, ledgerApi } from '@/lib/api';
 import { Coins, Loader2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 const QUICK_AMOUNTS = [1, 5, 10, 20, 50, 100];
 
 import { RewardSuccessDialog } from './RewardSuccessDialog';
 
 export function RewardDialog({ open, onOpenChange, postId, postAuthor, onSuccess, onViewHistory }) {
+  const currencyName = useDefaultCurrencyName();
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,7 +98,7 @@ export function RewardDialog({ open, onOpenChange, postId, postAuthor, onSuccess
     }
 
     if (balance !== null && rewardAmount > balance) {
-      toast.error('积分余额不足');
+      toast.error(`${currencyName}余额不足`);
       return;
     }
 

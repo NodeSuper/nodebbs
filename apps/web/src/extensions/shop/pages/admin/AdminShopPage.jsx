@@ -8,8 +8,10 @@ import { toast } from 'sonner';
 import { useShopItems } from '../../hooks/useShopItems';
 import { ShopItemTable } from '../../components/admin/ShopItemTable';
 import { ShopItemFormDialog } from '../../components/admin/ShopItemFormDialog';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 export default function AdminShopPage() {
+  const currencyName = useDefaultCurrencyName();
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
   const [selectedItem, setSelectedItem] = useState(null);
@@ -78,7 +80,7 @@ export default function AdminShopPage() {
             <ShoppingCart className="h-6 w-6" />
             商城管理
           </h1>
-          <p className="text-muted-foreground">管理积分商城的商品</p>
+          <p className="text-muted-foreground">管理{currencyName}商城的商品</p>
         </div>
         <Button onClick={openCreateDialog}>
           <Plus className="h-4 w-4" />

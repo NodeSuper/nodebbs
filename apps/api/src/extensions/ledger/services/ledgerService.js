@@ -268,7 +268,7 @@ export class LedgerService {
       const config = JSON.parse(currency.config);
       const item = config[key];
       if (item === undefined) return defaultValue;
-      
+
       // Handle both old format (direct value) and new format ({ value, description })
       if (item !== null && typeof item === 'object' && 'value' in item) {
           return item.value;
@@ -277,6 +277,30 @@ export class LedgerService {
     } catch (error) {
       console.error(`[Ledger] Error parsing config for ${currencyCode}:`, error);
       return defaultValue;
+    }
+  }
+
+  /**
+   * 获取货币名称（带缓存）
+   * @param {string} currencyCode - 货币代码，默认 'credits'
+   * @returns {Promise<string>} 货币名称
+   */
+  async getCurrencyName(currencyCode = 'credits') {
+    const cacheKey = `currency:name:${currencyCode}`;
+    const ttl = 3600; // 缓存 1 小时
+
+    try {
+      return await this.fastify.cache.remember(cacheKey, ttl, async () => {
+        const [currency] = await db
+          .select({ name: sysCurrencies.name })
+          .from(sysCurrencies)
+          .where(eq(sysCurrencies.code, currencyCode))
+          .limit(1);
+        return currency?.name || currencyCode;
+      });
+    } catch (error) {
+      console.error(`[Ledger] Error getting currency name for ${currencyCode}:`, error);
+      return currencyCode;
     }
   }
 }

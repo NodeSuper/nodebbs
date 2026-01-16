@@ -9,10 +9,12 @@ import { Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from '@/components/common/Link';
 import Time from '@/components/common/Time';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 const PAGE_LIMIT = 10;
 
 export function RewardListDialog({ open, onOpenChange, postId }) {
+  const currencyName = useDefaultCurrencyName();
   const [loading, setLoading] = useState(false);
   const [rewards, setRewards] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -67,7 +69,7 @@ export function RewardListDialog({ open, onOpenChange, postId }) {
             打赏记录
             {totalCount > 0 && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
-                (共 {totalCount} 次, {totalAmount} 积分)
+                (共 {totalCount} 次, {totalAmount} {currencyName})
               </span>
             )}
         </div>

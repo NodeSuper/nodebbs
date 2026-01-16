@@ -150,16 +150,18 @@ export async function checkIn(fastify, userId) {
       fastify.eventBus.emit('user.checkin', { userId, streak: result.newStreak });
     }
 
+    const currencyName = await fastify.ledger.getCurrencyName('credits');
     return {
       amount: totalAmount,
       balance: tx.balanceAfter,
       checkInStreak: result.newStreak,
-      message: `签到成功！获得 ${totalAmount} 积分${effectBonus > 0 ? ` (含徽章加成 ${effectBonus} 分)` : ''}`,
+      message: `签到成功！获得 ${totalAmount} ${currencyName}${effectBonus > 0 ? ` (含徽章加成 ${effectBonus})` : ''}`,
     };
 
   } catch (error) {
     console.error('CheckIn Grant Failed after Streak Update:', error);
-    throw new Error('签到成功但发放积分失败，请联系管理员');
+    const currencyName = await fastify.ledger.getCurrencyName('credits').catch(() => '积分');
+    throw new Error(`签到成功但发放${currencyName}失败，请联系管理员`);
   } finally {
     await fastify.cache.invalidate(`checkin:status:${userId}`);
   }

@@ -26,11 +26,11 @@ export default function AutoCheckIn() {
         if (result.amount) {
           // 签到成功，显示提示
           toast.success(result.message || '每日签到成功！', {
-            description: `获得 ${result.amount} 积分，当前连续签到 ${result.checkInStreak} 天`,
+            description: `当前连续签到 ${result.checkInStreak} 天`,
             duration: 5000,
           });
         }
-        
+
       } catch (error) {
         // 如果是"今天已经签到过了"，则静默失败，不打扰用户
         // 其他错误也不需要特别提示，避免影响用户体验

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 import { shopApi, rewardsApi, ledgerApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { useShopItems } from '@/extensions/shop/hooks/useShopItems';
@@ -17,6 +18,7 @@ import { ShopItemGrid } from '../../components/user/ShopItemGrid';
 export default function UserShopPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const currencyName = useDefaultCurrencyName();
   const [itemType, setItemType] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
@@ -122,12 +124,12 @@ export default function UserShopPage() {
         <div>
           <h1 className="text-2xl font-bold text-card-foreground mb-2 flex items-center gap-2">
             <ShoppingCart className="h-6 w-6" />
-            积分商城
+            {currencyName}商城
           </h1>
-          <p className="text-muted-foreground">使用积分购买专属装扮</p>
+          <p className="text-muted-foreground">使用{currencyName}购买专属装扮</p>
         </div>
 
-        {/* 余额显示 - 默认显示积分，或者显示所有？目前仅保留积分 */}
+        {/* 余额显示 */}
         {isAuthenticated && (
           <BalanceCard balance={currentPointsBalance} />
         )}

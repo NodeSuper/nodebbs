@@ -76,13 +76,14 @@ export default async function invitationsRoutes(fastify) {
           if (!fastify.ledger) {
              throw new Error('账本系统不可用');
           }
-          
+
           // 检查余额
           const account = await fastify.ledger.getAccount(request.user.id, 'credits');
           const currentBalance = account ? Number(account.balance) : 0;
-          
+
           if (currentBalance < totalCost) {
-              return reply.code(400).send({ error: `积分不足，需要 ${totalCost} 积分 (当前余额: ${currentBalance})` });
+              const currencyName = await fastify.ledger.getCurrencyName('credits').catch(() => '积分');
+              return reply.code(400).send({ error: `${currencyName}不足，需要 ${totalCost} ${currencyName} (当前余额: ${currentBalance})` });
           }
 
           // 扣除积分

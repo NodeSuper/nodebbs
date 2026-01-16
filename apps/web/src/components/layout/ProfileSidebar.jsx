@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useExtensions } from '@/contexts/ExtensionContext';
+import { useExtensions, useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 import { messageApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ export default function ProfileSidebar() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const { isWalletEnabled } = useExtensions();
+  const currencyName = useDefaultCurrencyName();
   const [unreadCount, setUnreadCount] = useState(0);
   const [openMenus, setOpenMenus] = useState({
     'content': true,
@@ -113,7 +114,7 @@ export default function ProfileSidebar() {
         {
           href: '/profile/shop',
           icon: ShoppingCart,
-          label: '积分商城',
+          label: `${currencyName}商城`,
         },
         {
           href: '/profile/items',

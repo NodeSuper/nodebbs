@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Lock, Zap, Award, Eye, EyeOff } from 'lucide-react';
 import {
@@ -6,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 
 /**
@@ -17,14 +20,16 @@ import {
  * @param {function} onToggleDisplay - 切换展示状态的回调
  * @param {boolean} isUpdating - 是否正在更新中
  */
-export default function BadgeCard({ 
-  badge, 
+export default function BadgeCard({
+  badge,
   isUnlocked = false,
   isDisplayed = true,
   userBadgeId,
   onToggleDisplay,
   isUpdating = false,
 }) {
+  const currencyName = useDefaultCurrencyName();
+
   // 解析解锁条件
   const condition = badge.unlockCondition ? JSON.parse(badge.unlockCondition) : {};
   // 解析元数据获取效果
@@ -58,7 +63,7 @@ export default function BadgeCard({
            <Zap className="w-3 h-3" /> 佩戴效果
         </div>
         <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside pl-1">
-          {effects.checkInBonus > 0 && <li>签到奖励 +{effects.checkInBonus} 积分</li>}
+          {effects.checkInBonus > 0 && <li>签到奖励 +{effects.checkInBonus} {currencyName}</li>}
           {effects.checkInBonusPercent > 0 && <li>签到奖励 +{effects.checkInBonusPercent}%</li>}
           {effects.replyCostReductionPercent > 0 && <li>回复消耗 -{effects.replyCostReductionPercent}%</li>}
         </ul>

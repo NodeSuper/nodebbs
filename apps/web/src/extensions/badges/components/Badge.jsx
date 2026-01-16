@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import { Award, Zap } from 'lucide-react';
@@ -9,6 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import Time from '@/components/common/Time';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 /**
  * 通用勋章组件
@@ -19,13 +22,15 @@ import Time from '@/components/common/Time';
  * @param {boolean} props.showTooltip - 是否显示详情提示框
  * @param {string} props.className - 额外样式
  */
-export default function Badge({ 
-  badge, 
+export default function Badge({
+  badge,
   userBadge, // 如果传入 userBadge，优先使用其中的 badge 属性，并读取 earnedAt
-  size = 'md', 
+  size = 'md',
   showTooltip = true,
   className = ''
 }) {
+  const currencyName = useDefaultCurrencyName();
+
   // 处理传入的数据结构差异
   // 情况 1: 传入的是 userBadge 对象 (包含 badge 属性)
   // 情况 2: 传入的是 badge 对象本身
@@ -151,10 +156,10 @@ export default function Badge({
                     <span>佩戴效果</span>
                   </div>
                   <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
-                    {effects.checkInBonus > 0 && 
+                    {effects.checkInBonus > 0 &&
                       <li className="flex items-center gap-1.5">
                         <span className="w-1 h-1 rounded-full bg-amber-500/50" />
-                        签到奖励 +{effects.checkInBonus} 积分
+                        签到奖励 +{effects.checkInBonus} {currencyName}
                       </li>
                     }
                     {effects.checkInBonusPercent > 0 && 

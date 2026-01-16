@@ -668,7 +668,9 @@ export default async function postRoutes(fastify, options) {
       } catch (err) {
         // 如果是余额不足，返回 400
         if (err.message.includes('余额不足') || err.message.includes('Insufficient funds')) {
-           return reply.code(400).send({ error: `积分余额不足，发表回复需要 ${Math.abs(await fastify.ledger.getCurrencyConfig('credits', 'post_reply_amount', 0))} 积分` });
+           const currencyName = await fastify.ledger.getCurrencyName('credits').catch(() => '积分');
+           const cost = Math.abs(await fastify.ledger.getCurrencyConfig('credits', 'post_reply_amount', 0));
+           return reply.code(400).send({ error: `${currencyName}余额不足，发表回复需要 ${cost} ${currencyName}` });
         }
         // 其他积分系统错误（如未启用），记录日志但允许发帖（或者也可以选择拦截）
         // 这里选择允许发帖，避免积分系统故障影响核心功能，除非是余额不足这种明确的业务限制

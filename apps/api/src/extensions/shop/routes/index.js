@@ -92,7 +92,7 @@ export default async function shopRoutes(fastify, options) {
       const result = await buyItem(request.user.id, itemId);
       return result;
     } catch (error) {
-      if (error.message.includes('积分不足') || error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足')) {
+      if (error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足')) {
         return reply.code(400).send({ error: error.message });
       }
       fastify.log.error('[商城] 购买失败:', error);
@@ -131,7 +131,7 @@ export default async function shopRoutes(fastify, options) {
       const result = await giftItem(request.user.id, receiverId, itemId, message);
       return result;
     } catch (error) {
-      if (error.message.includes('积分不足') || error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足')) {
+      if (error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足') || error.message.includes('不能赠送') || error.message.includes('用户不存在')) {
         return reply.code(400).send({ error: error.message });
       }
       fastify.log.error('[商城] 赠送失败:', error);

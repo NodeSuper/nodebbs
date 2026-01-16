@@ -256,15 +256,21 @@ export default async function ledgerRoutes(fastify, options) {
   }, async (req, reply) => {
       const { code, name, symbol, rate, isActive, config } = req.body;
       await db.insert(sysCurrencies).values({
-          code, 
-          name, 
-          symbol, 
+          code,
+          name,
+          symbol,
           isActive: isActive !== undefined ? isActive : true,
           config: config
       }).onConflictDoUpdate({
           target: sysCurrencies.code,
           set: { name, symbol, isActive, config }
       });
+
+      // 清除货币名称缓存
+      if (fastify.cache) {
+        await fastify.cache.invalidate(`currency:name:${code}`);
+      }
+
       return { success: true };
   });
 

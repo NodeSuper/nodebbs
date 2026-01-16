@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Dialog,
   DialogContent,
@@ -7,6 +9,7 @@ import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useEffect } from 'react';
 import { Heart } from 'lucide-react';
+import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
 
 /**
  * 打赏成功动画对话框
@@ -16,6 +19,8 @@ import { Heart } from 'lucide-react';
  * @param {number} props.amount - 打赏金额
  */
 export function RewardSuccessDialog({ open, onOpenChange, amount }) {
+  const currencyName = useDefaultCurrencyName();
+
   useEffect(() => {
     if (open) {
       const timer = setTimeout(() => {
@@ -140,7 +145,7 @@ export function RewardSuccessDialog({ open, onOpenChange, amount }) {
             </h2>
             <div className="h-1" />
             <h3 className="text-lg font-medium text-rose-200/90 flex items-center justify-center gap-2">
-              <span className="text-2xl font-bold text-white">{amount}</span> 积分已送达
+              <span className="text-2xl font-bold text-white">{amount}</span> {currencyName}已送达
             </h3>
             <p className="text-sm text-zinc-400 mt-2 max-w-[200px] mx-auto leading-relaxed">
               您的支持是创作者最大的动力
