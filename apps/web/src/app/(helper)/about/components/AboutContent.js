@@ -2,30 +2,38 @@
 
 import React from 'react';
 import CopyButton from '@/components/common/CopyButton';
-import { Github, Rocket, Bot, Code2, Plug, Settings, Shield, Mail, Zap, QrCode, UserCheck, Copy, Check } from 'lucide-react';
+import { Github, Rocket, Bot, Code2, Plug, Settings, Shield, Mail, Zap, QrCode, Copy, Check, Star, GitFork, ArrowRight, Terminal } from 'lucide-react';
 
 const CodeBlock = ({ code, language = 'bash' }) => {
-
-
   return (
-    <div className="relative group">
-      <div className="flex items-center justify-between bg-slate-800 dark:bg-slate-900 rounded-t-lg px-4 py-2 border-b border-slate-700">
-        <span className="text-xs text-slate-400 font-medium">{language}</span>
+    <div className="relative group overflow-hidden min-w-0 rounded-xl shadow-lg">
+      <div className="flex items-center justify-between bg-slate-800 dark:bg-slate-900 px-4 py-3 border-b border-slate-700/50">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-green-500/80" />
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Terminal className="h-3.5 w-3.5" />
+            <span className="font-medium">{language}</span>
+          </div>
+        </div>
         <CopyButton
           value={code}
-          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors h-auto w-auto"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs bg-slate-700/50 hover:bg-slate-600 text-slate-300 hover:text-slate-100 transition-all h-auto w-auto shrink-0 border border-slate-600/50"
           title="复制代码"
         >
           {({ copied }) => (
             <>
               {copied ? (
                 <>
-                  <Check className="h-3 w-3" />
+                  <Check className="h-3.5 w-3.5 text-green-400" />
                   <span>已复制</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-3 w-3" />
+                  <Copy className="h-3.5 w-3.5" />
                   <span>复制</span>
                 </>
               )}
@@ -33,174 +41,285 @@ const CodeBlock = ({ code, language = 'bash' }) => {
           )}
         </CopyButton>
       </div>
-      <div className="bg-slate-900 dark:bg-slate-950 rounded-b-lg p-4 font-mono text-sm overflow-x-auto border border-slate-700 border-t-0">
-        <pre className="text-slate-100 m-0">{code}</pre>
+      <div className="bg-slate-900 dark:bg-slate-950 p-4 font-mono text-sm overflow-x-auto">
+        <pre className="text-emerald-400 m-0 whitespace-pre-wrap break-all">
+          <span className="text-slate-500 select-none">$ </span>{code}
+        </pre>
       </div>
     </div>
   );
 };
 
+const FeatureCard = ({ icon: Icon, title, description, link, linkText }) => (
+  <div className="group relative p-8 rounded-2xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+    <div className="relative">
+      <div className="inline-flex p-3 rounded-xl bg-primary/10 text-primary mb-5">
+        <Icon className="h-7 w-7" />
+      </div>
+      <h3 className="text-xl font-semibold mb-3">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{description}</p>
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-primary hover:gap-2.5 transition-all"
+        >
+          {linkText}
+          <ArrowRight className="h-4 w-4" />
+        </a>
+      )}
+    </div>
+  </div>
+);
+
+const SmallFeatureCard = ({ icon: Icon, title, description }) => (
+  <div className="group flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-accent/50 transition-all duration-300">
+    <div className="shrink-0 p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+      <Icon className="h-5 w-5" />
+    </div>
+    <div>
+      <h4 className="font-semibold mb-1">{title}</h4>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  </div>
+);
+
+const SectionTitle = ({ children, subtitle }) => (
+  <div className="text-center mb-14">
+    <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{children}</h2>
+    {subtitle && (
+      <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">{subtitle}</p>
+    )}
+  </div>
+);
+
 const AboutContent = () => {
   return (
     <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <div className="text-center py-16 md:py-24 px-4 bg-card text-card-foreground shadow-sm">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="mt-4 text-4xl md:text-5xl font-extrabold tracking-tight">关于 NodeBBS</h1>
-          <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-            开源、现代化、支持一键部署的论坛系统
-          </p>
-          <p className="mt-4 text-md max-w-3xl mx-auto text-muted-foreground">
-            一个为开发者、创造者和技术爱好者打造的，充满活力、开放、互助的家园
-          </p>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+
+        <div className="relative text-center py-20 md:py-32 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
+              <Star className="h-4 w-4" />
+              <span>开源免费 · 一键部署</span>
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              关于 NodeBBS
+            </h1>
+
+            <p className="mt-6 text-xl md:text-2xl text-muted-foreground font-medium">
+              开源、现代化、支持一键部署的论坛系统
+            </p>
+
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              一个为开发者、创造者和技术爱好者打造的，充满活力、开放、互助的家园
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
+              <a
+                href="https://github.com/aiprojecthub/nodebbs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-full font-medium hover:opacity-90 transition-opacity"
+              >
+                <Github className="h-5 w-5" />
+                查看源码
+              </a>
+              <a
+                href="https://nodebbs.com/reference"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-full font-medium hover:bg-accent transition-colors"
+              >
+                <Code2 className="h-5 w-5" />
+                API 文档
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Open Source & Quick Deploy Section */}
-      <div className="py-16 md:py-20 px-4">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1">
-            <h2 className="text-3xl font-bold tracking-tight mb-4 flex items-center gap-2">
-              <Rocket className="h-8 w-8 text-primary" />
-              开源 & 一键部署
-            </h2>
-            <p className="text-lg text-muted-foreground mb-4">
-              NodeBBS 是一个完全开源的现代论坛系统，代码托管在 GitHub 上，任何人都可以自由使用、修改和贡献。
-            </p>
-            <p className="text-lg text-muted-foreground mb-6">
-              我们提供极简的一键部署方案，让你可以在几分钟内快速搭建自己的论坛社区：
-            </p>
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground mb-2 font-medium">步骤 1：克隆仓库</div>
-                <CodeBlock code="git clone https://github.com/aiprojecthub/nodebbs.git" />
+      <div className="py-20 md:py-28 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-6">
+                <Rocket className="h-4 w-4" />
+                快速开始
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground mb-2 font-medium">步骤 2：一键部署</div>
-                <CodeBlock code="cd nodebbs && npx nodebbs" />
+
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+                开源 & 一键部署
+              </h2>
+
+              <p className="text-lg text-muted-foreground mb-4 leading-relaxed">
+                NodeBBS 是一个完全开源的现代论坛系统，代码托管在 GitHub 上，任何人都可以自由使用、修改和贡献。
+              </p>
+
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                我们提供极简的一键部署方案，让你可以快速搭建自己的论坛社区：
+              </p>
+
+              <div className="space-y-5">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium mb-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs">1</span>
+                    克隆仓库
+                  </div>
+                  <CodeBlock code="git clone https://github.com/anthropics/nodebbs.git" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium mb-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs">2</span>
+                    一键部署
+                  </div>
+                  <CodeBlock code="cd nodebbs && npx nodebbs" />
+                </div>
+              </div>
+
+              <a
+                href="https://github.com/aiprojecthub/nodebbs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-8 text-primary font-medium hover:gap-3 transition-all"
+              >
+                <Github className="h-5 w-5" />
+                访问 GitHub 仓库
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+
+            <div className="order-1 lg:order-2 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-3xl blur-2xl" />
+                <div className="relative p-12 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-border/50">
+                  <Github className="h-32 w-32 md:h-40 md:w-40 text-foreground/80" />
+                  <div className="flex items-center justify-center gap-6 mt-6">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Star className="h-4 w-4 text-yellow-500" />
+                      <span>Star</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <GitFork className="h-4 w-4" />
+                      <span>Fork</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <a
-              href="https://github.com/aiprojecthub/nodebbs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-6 text-primary hover:underline"
-            >
-              <Github className="h-5 w-5" />
-              访问 GitHub 仓库
-            </a>
-          </div>
-          <div className="order-1 md:order-2 text-center">
-            <Github className="mx-auto h-48 w-48 text-muted" />
           </div>
         </div>
       </div>
 
       {/* Core Features Section */}
-      <div className="bg-card text-card-foreground py-16 md:py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">核心特性</h2>
-          <div className="grid md:grid-cols-3 gap-10">
-            <div className="p-6 text-center">
-              <Bot className="mx-auto h-12 w-12 text-primary" />
-              <h3 className="mt-4 text-xl font-semibold">AI 辅助开发</h3>
-              <p className="mt-2 text-muted-foreground">
-                使用 AI 友好的 JavaScript 技术栈构建的全栈项目，是学习 AI 辅助全栈开发的绝佳实践案例。
-              </p>
-            </div>
-            <div className="p-6 text-center">
-              <Code2 className="mx-auto h-12 w-12 text-primary" />
-              <h3 className="mt-4 text-xl font-semibold">完整 API 接口</h3>
-              <p className="mt-2 text-muted-foreground">
-                提供完整的 RESTful API 文档，方便开发者集成第三方应用或构建自定义客户端。
-              </p>
-              <a
-                href="https://nodebbs.com/reference"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 text-sm text-primary hover:underline"
-              >
-                查看 API 文档
-              </a>
-            </div>
-            <div className="p-6 text-center">
-              <Settings className="mx-auto h-12 w-12 text-primary" />
-              <h3 className="mt-4 text-xl font-semibold">丰富功能特性</h3>
-              <p className="mt-2 text-muted-foreground">
-                内置多种实用功能，包括注册模式、内容审核、二维码登录、OAuth 认证等，适合初学者学习。
-              </p>
-            </div>
+      <div className="py-20 md:py-28 px-4 bg-accent/30">
+        <div className="max-w-6xl mx-auto">
+          <SectionTitle subtitle="强大的技术栈和丰富的功能，助你快速构建现代化论坛">
+            核心特性
+          </SectionTitle>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={Bot}
+              title="AI 辅助开发"
+              description="使用 AI 友好的 JavaScript 技术栈构建的全栈项目，是学习 AI 辅助全栈开发的绝佳实践案例。"
+            />
+            <FeatureCard
+              icon={Code2}
+              title="完整 API 接口"
+              description="提供完整的 RESTful API 文档，方便开发者集成第三方应用或构建自定义客户端。"
+              link="https://nodebbs.com/reference"
+              linkText="查看 API 文档"
+            />
+            <FeatureCard
+              icon={Settings}
+              title="丰富功能特性"
+              description="内置多种实用功能，包括注册模式、内容审核、二维码登录、OAuth 认证等，适合初学者学习。"
+            />
           </div>
         </div>
       </div>
 
       {/* Built-in Features Section */}
-      <div className="py-16 md:py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">内置功能亮点</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <Shield className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">内容审核</h4>
-                <p className="text-sm text-muted-foreground">开启内容审核，保障社区质量</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <QrCode className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">二维码登录</h4>
-                <p className="text-sm text-muted-foreground">扫码即可登录，方便快捷</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <Shield className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">垃圾注册拦截</h4>
-                <p className="text-sm text-muted-foreground">有效防止垃圾注册和恶意账号</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <Plug className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">OAuth 认证</h4>
-                <p className="text-sm text-muted-foreground">支持第三方 OAuth 登录集成</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <Mail className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">邮件服务</h4>
-                <p className="text-sm text-muted-foreground">内置邮件通知和验证功能</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-card">
-              <Zap className="h-6 w-6 text-primary shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold">API 限速</h4>
-                <p className="text-sm text-muted-foreground">智能限流保护，防止滥用</p>
-              </div>
-            </div>
+      <div className="py-20 md:py-28 px-4">
+        <div className="max-w-6xl mx-auto">
+          <SectionTitle subtitle="开箱即用的企业级功能，无需额外配置">
+            内置功能亮点
+          </SectionTitle>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SmallFeatureCard
+              icon={Shield}
+              title="内容审核"
+              description="开启内容审核，保障社区质量"
+            />
+            <SmallFeatureCard
+              icon={QrCode}
+              title="二维码登录"
+              description="扫码即可登录，方便快捷"
+            />
+            <SmallFeatureCard
+              icon={Shield}
+              title="垃圾注册拦截"
+              description="有效防止垃圾注册和恶意账号"
+            />
+            <SmallFeatureCard
+              icon={Plug}
+              title="OAuth 认证"
+              description="支持第三方 OAuth 登录集成"
+            />
+            <SmallFeatureCard
+              icon={Mail}
+              title="邮件服务"
+              description="内置邮件通知和验证功能"
+            />
+            <SmallFeatureCard
+              icon={Zap}
+              title="API 限速"
+              description="智能限流保护，防止滥用"
+            />
           </div>
         </div>
       </div>
 
       {/* Join & Contribute Section */}
-      <div className="py-16 md:py-24 px-4 bg-card text-card-foreground">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold">加入我们</h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+      <div className="relative py-20 md:py-28 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+
+        <div className="relative max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+            <Star className="h-4 w-4" />
+            开源社区
+          </div>
+
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+            加入我们
+          </h2>
+
+          <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
             无论您是想学习 AI 全栈开发、集成第三方应用，还是为开源社区贡献代码，NodeBBS 都欢迎您的参与。
           </p>
-          <p className="mt-4 text-lg text-muted-foreground">
+
+          <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
             立即 Star 我们的项目，提出您的建议，或者直接贡献代码，让我们一起构建更好的论坛系统！
           </p>
-          <div className="flex gap-4 justify-center mt-8">
+
+          <div className="flex flex-wrap gap-4 justify-center mt-10">
             <a
               href="https://github.com/aiprojecthub/nodebbs"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-foreground text-background rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg"
             >
               <Github className="h-5 w-5" />
               GitHub
@@ -209,7 +328,7 @@ const AboutContent = () => {
               href="https://nodebbs.com/reference"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-card border border-border rounded-full font-medium hover:bg-accent transition-colors shadow-lg"
             >
               <Code2 className="h-5 w-5" />
               API 文档
