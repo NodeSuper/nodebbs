@@ -3,12 +3,12 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { FormDialog } from '@/components/common/FormDialog';
+import { SearchSelect } from '@/components/common/SearchSelect';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Check, Search, X, Gift } from 'lucide-react';
+import { Loader2, Check, X, Gift } from 'lucide-react';
 import { CreditsBadge } from '../../../ledger/components/common/CreditsBadge';
 import { getItemTypeLabel } from '@/extensions/shop/utils/itemTypes';
 import UserAvatar from '@/components/user/UserAvatar';
@@ -28,9 +28,6 @@ export function PurchaseDialog({ open, item, accounts = [], onConfirm, onCancel,
   const [mode, setMode] = useState('buy'); // 'buy' | 'gift'
   const [receiver, setReceiver] = useState(null);
   const [message, setMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
 
   // 对话框打开/关闭时重置状态
   useEffect(() => {
@@ -38,43 +35,51 @@ export function PurchaseDialog({ open, item, accounts = [], onConfirm, onCancel,
       setMode('buy');
       setReceiver(null);
       setMessage('');
-      setSearchQuery('');
-      setSearchResults([]);
     }
   }, [open]);
 
-  // 搜索用户
-  useEffect(() => {
-    const searchUsers = async () => {
-      if (!searchQuery.trim()) {
-        setSearchResults([]);
-        return;
-      }
-      
-      setSearching(true);
-      try {
-        // 使用 searchApi 查找用户。假设它返回 { users: [] } 或仅 []
-        // 基于 api.js: searchApi.search(query, type, page, limit)
-        // 后端期望 'users' (复数)，并返回 { users: { items: [] } }
-        const res = await searchApi.search(searchQuery, 'users', 1, 5);
-        if (res && res.users && Array.isArray(res.users.items)) {
-           setSearchResults(res.users.items);
-        } else if (res && Array.isArray(res.users)) {
-            // 如果 API 更改，则进行回退处理
-           setSearchResults(res.users);
-        } else {
-           setSearchResults([]);
-        }
-      } catch (err) {
-        console.error('Search failed', err);
-      } finally {
-        setSearching(false);
-      }
-    };
+  // 搜索用户函数（公开接口）
+  const searchUsers = async (query) => {
+    const res = await searchApi.search(query, 'users', 1, 5);
+    if (res && res.users && Array.isArray(res.users.items)) {
+      return res.users.items;
+    } else if (res && Array.isArray(res.users)) {
+      return res.users;
+    }
+    return [];
+  };
 
-    const timer = setTimeout(searchUsers, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // 数据转换
+  const transformUser = (user) => ({
+    id: user.id,
+    label: user.username || user.name,
+    avatar: user.avatar,
+  });
+
+  // 自定义渲染搜索结果项（带头像）
+  const renderUserItem = (user, transformed, onSelect, isHighlighted) => (
+    <div 
+      key={transformed.id}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${isHighlighted ? 'bg-accent' : 'hover:bg-muted'}`}
+      onClick={onSelect}
+    >
+      <UserAvatar url={transformed.avatar} name={transformed.label} size="sm" />
+      <div className="text-sm font-medium">{transformed.label}</div>
+    </div>
+  );
+
+  // 自定义渲染已选中状态（带头像和关闭按钮）
+  const renderSelectedUser = (user, transformed, onClear) => (
+    <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
+      <div className="flex items-center gap-3">
+        <UserAvatar url={transformed.avatar} name={transformed.label} size="sm" />
+        <span className="font-medium text-sm">{transformed.label}</span>
+      </div>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClear}>
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
   if (!item) return null;
 
@@ -160,78 +165,31 @@ export function PurchaseDialog({ open, item, accounts = [], onConfirm, onCancel,
             </TabsContent>
 
             <TabsContent value="gift" className="mt-0 space-y-4">
-              {!receiver ? (
+              <SearchSelect
+                value={receiver}
+                onChange={setReceiver}
+                searchFn={searchUsers}
+                transformData={transformUser}
+                renderItem={renderUserItem}
+                renderSelected={renderSelectedUser}
+                label="搜索用户"
+                placeholder="输入用户名搜索..."
+                autoSearch={true}
+                debounceMs={500}
+                emptyText="未找到相关用户"
+              />
+              
+              {receiver && (
                 <div className="space-y-2">
-                  <Label>搜索用户</Label>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="输入用户名搜索..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  
-                  {/* 搜索结果 */}
-                  {searchQuery && (
-                    <div className="border rounded-md mt-2 max-h-[200px] overflow-y-auto">
-                      {searching ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          搜索中...
-                        </div>
-                      ) : searchResults.length > 0 ? (
-                        <div className="divide-y">
-                          {searchResults.map(user => (
-                            <div 
-                              key={user.id}
-                              className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer transition-colors"
-                              onClick={() => {
-                                setReceiver(user);
-                                setSearchQuery('');
-                                setSearchResults([]);
-                              }}
-                            >
-                              <UserAvatar url={user.avatar} name={user.name || user.username} size="sm" />
-                              <div className="text-sm font-medium">{user.username || user.name}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                          未找到相关用户
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                     <Label>接收者</Label>
-                     <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
-                       <div className="flex items-center gap-3">
-                         <UserAvatar url={receiver.avatar} name={receiver.name || receiver.username} size="sm" />
-                         <span className="font-medium text-sm">{receiver.username || receiver.name}</span>
-                       </div>
-                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setReceiver(null)}>
-                         <X className="h-4 w-4" />
-                       </Button>
-                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>赠言 (可选)</Label>
-                    <Textarea 
-                      placeholder="写点什么..." 
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      maxLength={200}
-                      className="resize-none"
-                    />
-                    <div className="text-xs text-right text-muted-foreground">{message.length}/200</div>
-                  </div>
+                  <Label>赠言 (可选)</Label>
+                  <Textarea 
+                    placeholder="写点什么..." 
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    maxLength={200}
+                    className="resize-none"
+                  />
+                  <div className="text-xs text-right text-muted-foreground">{message.length}/200</div>
                 </div>
               )}
             </TabsContent>
@@ -260,3 +218,4 @@ export function PurchaseDialog({ open, item, accounts = [], onConfirm, onCancel,
     </FormDialog>
   );
 }
+
