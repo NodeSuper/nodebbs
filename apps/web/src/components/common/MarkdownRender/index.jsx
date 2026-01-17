@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from '@/components/common/Link';
 
-import Markdown from 'react-markdown';
+import Markdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import remarkMedia from './plugins/remark-media';
@@ -10,10 +10,23 @@ import CodeBlock from './CodeBlock';
 
 import { cn } from '@/lib/utils';
 
+// 允许的额外协议
+const ALLOWED_PROTOCOLS = ['magnet:', 'thunder:', 'ed2k:'];
+
+// 自定义 URL 转换函数，允许更多协议
+function customUrlTransform(url) {
+  // 检查是否是允许的额外协议
+  if (ALLOWED_PROTOCOLS.some(protocol => url.startsWith(protocol))) {
+    return url;
+  }
+  // 其他情况使用默认转换
+  return defaultUrlTransform(url);
+}
 
 function MarkdownRender({ content }) {
   return (
     <Markdown
+      urlTransform={customUrlTransform}
       remarkPlugins={[[remarkGfm, { singleTilde: false }], remarkDirective, remarkMedia, remarkRestoreDirectives]}
       components={{
         a: ({ node, ...props }) => (
