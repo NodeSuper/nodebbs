@@ -2,17 +2,8 @@ import { useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import { ActionMenu } from '@/components/common/ActionMenu';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Edit, Trash2, Loader2 } from 'lucide-react';
+
+import { Edit, Trash2 } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 import { ItemTypeIcon } from '../shared/ItemTypeIcon';
 import { getItemTypeLabel } from '../../utils/itemTypes';
@@ -27,27 +18,6 @@ import { getItemTypeLabel } from '../../utils/itemTypes';
  * @param {Function} props.onDelete - Callback when delete confirmed
  */
 export function ShopItemTable({ items, loading, pagination, onEdit, onDelete }) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-
-  const openDeleteDialog = (item) => {
-    setSelectedItem(item);
-    setShowDeleteDialog(true);
-  };
-
-  const handleDelete = async () => {
-    if (!selectedItem) return;
-    
-    setDeleting(true);
-    try {
-      await onDelete(selectedItem);
-      setShowDeleteDialog(false);
-      setSelectedItem(null);
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   const columns = [
     {
@@ -145,7 +115,7 @@ export function ShopItemTable({ items, loading, pagination, onEdit, onDelete }) 
             {
               label: '删除',
               icon: Trash2,
-              onClick: () => openDeleteDialog(row),
+              onClick: (e) => onDelete(e, row),
               variant: 'destructive',
             },
           ]}
@@ -167,38 +137,7 @@ export function ShopItemTable({ items, loading, pagination, onEdit, onDelete }) 
         pagination={pagination}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>
-              确定要删除商品 "{selectedItem?.name}" 吗？
-              <br />
-              <span className="text-destructive font-medium">
-                注意：如果已有用户购买该商品，将无法删除，建议下架而不是删除。
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  删除中...
-                </>
-              ) : (
-                '删除'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </>
   );
 }

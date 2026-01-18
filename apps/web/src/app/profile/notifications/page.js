@@ -11,6 +11,7 @@ import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
+import { ConfirmPopover } from '@/components/common/ConfirmPopover';
 
 // 导入 Hook
 import { useNotifications } from '@/hooks/profile/useNotifications';
@@ -98,20 +99,27 @@ export default function NotificationsPage() {
             </Button>
           )}
           {readCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={deleteAllRead}
-              disabled={isActionLoading('delete-all-read')}
-              className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+            <ConfirmPopover
+              title="清除已读通知"
+              description="确定要清空所有已读通知吗？此操作无法撤销。"
+              confirmText="清除"
+              variant="destructive"
+              onConfirm={deleteAllRead}
             >
-              {isActionLoading('delete-all-read') ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="h-3.5 w-3.5" />
-              )}
-              清除已读
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={isActionLoading('delete-all-read')}
+                className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                {isActionLoading('delete-all-read') ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                清除已读
+              </Button>
+            </ConfirmPopover>
           )}
         </div>
       </div>

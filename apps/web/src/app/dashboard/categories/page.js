@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/common/DataTable';
 import { ActionMenu } from '@/components/common/ActionMenu';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { FormDialog } from '@/components/common/FormDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Plus, Edit, Trash2, Loader2, Lock } from 'lucide-react';
@@ -25,7 +25,7 @@ export default function CategoriesManagement() {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'featured'
@@ -90,12 +90,30 @@ export default function CategoriesManagement() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async (e, category) => {
+    const confirmed = await confirm(e, {
+      title: '确认删除？',
+      description: (
+        <>
+          确定要删除分类 "{category.name}" 吗？此操作不可撤销。
+          {category.topicCount > 0 && (
+            <span className='block mt-2 text-destructive'>
+              注意：该分类下有 {category.topicCount} 个话题，无法删除。
+            </span>
+          )}
+        </>
+      ),
+      confirmText: '删除',
+      variant: 'destructive',
+      confirmDisabled: category.topicCount > 0,
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      await categoryApi.delete(selectedCategory.id);
+      await categoryApi.delete(category.id);
       toast.success('分类删除成功');
-      setShowDeleteDialog(false);
       setSelectedCategory(null);
       fetchCategories();
     } catch (err) {
@@ -129,10 +147,7 @@ export default function CategoriesManagement() {
     setShowDialog(true);
   };
 
-  const openDeleteDialog = (category) => {
-    setSelectedCategory(category);
-    setShowDeleteDialog(true);
-  };
+
 
   const resetForm = () => {
     setFormData({
@@ -363,7 +378,7 @@ export default function CategoriesManagement() {
                     label: '删除',
                     icon: Trash2,
                     variant: 'destructive',
-                    onClick: () => openDeleteDialog(category),
+                    onClick: (e) => handleDeleteClick(e, category),
                   },
                 ]}
               />
@@ -510,27 +525,7 @@ export default function CategoriesManagement() {
       </FormDialog>
 
       {/* 删除确认对话框 */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title="确认删除？"
-        description={
-            <>
-              确定要删除分类 "{selectedCategory?.name}" 吗？此操作不可撤销。
-              {selectedCategory?.topicCount > 0 && (
-                <span className='block mt-2 text-destructive'>
-                  注意：该分类下有 {selectedCategory.topicCount}{' '}
-                  个话题，无法删除。
-                </span>
-              )}
-            </>
-        }
-        confirmText="删除"
-        variant="destructive"
-        onConfirm={handleDelete}
-        loading={submitting}
-        confirmDisabled={selectedCategory?.topicCount > 0}
-      />
+
     </div>
   );
 }

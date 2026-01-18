@@ -10,16 +10,7 @@ import { BadgeTable } from '../../components/admin/BadgeTable';
 import { BadgeFormDialog } from '../../components/admin/BadgeFormDialog';
 import { BadgeAssignmentDialog } from '../../components/admin/BadgeAssignmentDialog';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 
 export default function AdminBadgesPage() {
   const [items, setItems] = useState([]);
@@ -31,9 +22,8 @@ export default function AdminBadgesPage() {
   // 派遣/撤销对话框状态
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
   
-  // 确认对话框状态
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [badgeIdToDelete, setBadgeIdToDelete] = useState(null);
+  
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -81,18 +71,27 @@ export default function AdminBadgesPage() {
     }
   };
 
-  // 触发确认对话框
-  const handleDelete = (id) => {
-    setBadgeIdToDelete(id);
-    setDeleteDialogOpen(true);
-  };
+  // 触发确认删除
+  const handleDeleteClick = async (e, badge) => {
+    const confirmed = await confirm(e, {
+      title: '确认删除该勋章吗？',
+      description: (
+        <>
+          此操作<span className="font-bold text-red-500">不可撤销</span>。
+          <br/>
+          1. 所有拥有该勋章的用户将<span className="font-bold">永久失去</span>及其佩戴效果。
+          <br/>
+          2. 任何关联此勋章的商店商品将被<span className="font-bold">自动下架</span>。
+        </>
+      ),
+      confirmText: '确认删除',
+      variant: 'destructive',
+    });
 
-  // 执行实际删除
-  const confirmDelete = async () => {
-    if (!badgeIdToDelete) return;
+    if (!confirmed) return;
     
     try {
-      await badgesApi.admin.delete(badgeIdToDelete);
+      await badgesApi.admin.delete(badge.id);
       toast.success('勋章删除成功，关联商品已下架');
       fetchData();
     } catch (err) {
@@ -103,9 +102,6 @@ export default function AdminBadgesPage() {
              console.error('删除勋章失败:', err);
              toast.error('删除失败：' + (err.message || '未知错误'));
         }
-    } finally {
-        setDeleteDialogOpen(false);
-        setBadgeIdToDelete(null);
     }
   };
 
@@ -131,7 +127,7 @@ export default function AdminBadgesPage() {
         items={items}
         loading={loading}
         onEdit={openEditDialog}
-        onDelete={handleDelete}  // 现在传递项目对象或 ID，由包装器处理
+        onDelete={handleDeleteClick}  // 现在传递项目对象或 ID，由包装器处理
       />
 
       <BadgeFormDialog
@@ -148,27 +144,7 @@ export default function AdminBadgesPage() {
         badgeList={items}
       />
       
-      {/* 删除确认警告 */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除该勋章吗？</AlertDialogTitle>
-            <AlertDialogDescription>
-              此操作<span className="font-bold text-red-500">不可撤销</span>。
-              <br/>
-              1. 所有拥有该勋章的用户将<span className="font-bold">永久失去</span>及其佩戴效果。
-              <br/>
-              2. 任何关联此勋章的商店商品将被<span className="font-bold">自动下架</span>。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              确认删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </div>
   );
 }

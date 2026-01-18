@@ -12,7 +12,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { ActionMenu } from '@/components/common/ActionMenu';
 import { PageHeader } from '@/components/common/PageHeader';
 import UserAvatar from '@/components/user/UserAvatar';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { FormDialog } from '@/components/common/FormDialog';
 import {
   Loader2,
@@ -40,9 +40,7 @@ export default function AdminInvitationsPage() {
   const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const [selectedCode, setSelectedCode] = useState(null);
-  const [showDisableDialog, setShowDisableDialog] = useState(false);
-  const [showEnableDialog, setShowEnableDialog] = useState(false);
+
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const limit = 20;
@@ -124,19 +122,33 @@ export default function AdminInvitationsPage() {
     }
   };
 
-  const handleDisable = async () => {
+  const handleDisableClick = async (e, code) => {
+    const confirmed = await confirm(e, {
+      title: '确认禁用邀请码？',
+      description: (
+        <>
+          确定要禁用邀请码 "{code.code}" 吗？
+          <br />
+          禁用后该邀请码将无法使用。
+        </>
+      ),
+      confirmText: '确认禁用',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      const updatedCode = await invitationsApi.admin.disable(selectedCode.id);
-      toast.success(`已禁用邀请码 ${selectedCode.code}`);
-      setShowDisableDialog(false);
+      const updatedCode = await invitationsApi.admin.disable(code.id);
+      toast.success(`已禁用邀请码 ${code.code}`);
 
       // 局部更新：更新列表中被禁用的邀请码状态
       setCodes((prevCodes) =>
-        prevCodes.map((code) =>
-          code.id === selectedCode.id
-            ? { ...code, status: 'disabled', ...updatedCode }
-            : code
+        prevCodes.map((c) =>
+          c.id === code.id
+            ? { ...c, status: 'disabled', ...updatedCode }
+            : c
         )
       );
 
@@ -153,29 +165,36 @@ export default function AdminInvitationsPage() {
     }
   };
 
-  const openDisableDialog = (code) => {
-    setSelectedCode(code);
-    setShowDisableDialog(true);
-  };
 
-  const openEnableDialog = (code) => {
-    setSelectedCode(code);
-    setShowEnableDialog(true);
-  };
 
-  const handleEnable = async () => {
+  const handleEnableClick = async (e, code) => {
+    const confirmed = await confirm(e, {
+      title: '确认恢复邀请码？',
+      description: (
+        <>
+          确定要恢复邀请码 "{code.code}" 吗？
+          <br />
+          恢复后该邀请码将可以继续使用。
+        </>
+      ),
+      confirmText: '确认恢复',
+      variant: 'default',
+      confirmClassName: 'bg-green-600 hover:bg-green-700',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      const updatedCode = await invitationsApi.admin.enable(selectedCode.id);
-      toast.success(`已恢复邀请码 ${selectedCode.code}`);
-      setShowEnableDialog(false);
+      const updatedCode = await invitationsApi.admin.enable(code.id);
+      toast.success(`已恢复邀请码 ${code.code}`);
 
       // 局部更新：更新列表中被恢复的邀请码状态
       setCodes((prevCodes) =>
-        prevCodes.map((code) =>
-          code.id === selectedCode.id
-            ? { ...code, status: 'active', ...updatedCode }
-            : code
+        prevCodes.map((c) =>
+          c.id === code.id
+            ? { ...c, status: 'active', ...updatedCode }
+            : c
         )
       );
 
@@ -393,14 +412,14 @@ export default function AdminInvitationsPage() {
                   {
                     label: '禁用',
                     icon: Ban,
-                    onClick: () => openDisableDialog(code),
+                    onClick: (e) => handleDisableClick(e, code),
                     variant: 'destructive',
                     hidden: code.status !== 'active',
                   },
                   {
                     label: '恢复',
                     icon: RotateCcw,
-                    onClick: () => openEnableDialog(code),
+                    onClick: (e) => handleEnableClick(e, code),
                     hidden:
                       code.status !== 'disabled' ||
                       code.usedCount >= code.maxUses ||
@@ -508,41 +527,7 @@ export default function AdminInvitationsPage() {
       </FormDialog>
 
       {/* 禁用确认对话框 */}
-      <ConfirmDialog
-        open={showDisableDialog}
-        onOpenChange={setShowDisableDialog}
-        title="确认禁用邀请码？"
-        description={
-            <>
-              确定要禁用邀请码 "{selectedCode?.code}" 吗？
-              <br />
-              禁用后该邀请码将无法使用。
-            </>
-        }
-        confirmText="确认禁用"
-        variant="destructive"
-        onConfirm={handleDisable}
-        loading={submitting}
-      />
 
-      {/* 恢复确认对话框 */}
-      <ConfirmDialog
-        open={showEnableDialog}
-        onOpenChange={setShowEnableDialog}
-        title="确认恢复邀请码？"
-        description={
-            <>
-              确定要恢复邀请码 "{selectedCode?.code}" 吗？
-              <br />
-              恢复后该邀请码将可以继续使用。
-            </>
-        }
-        confirmText="确认恢复"
-        onConfirm={handleEnable}
-        loading={submitting}
-        variant="default" 
-        confirmClassName="bg-green-600 hover:bg-green-700" 
-      />
     </div>
   );
 }

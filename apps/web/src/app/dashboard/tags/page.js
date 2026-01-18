@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/common/DataTable';
 import { ActionMenu } from '@/components/common/ActionMenu';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { FormDialog } from '@/components/common/FormDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Plus, Edit, Trash2, Loader2, Tag as TagIcon } from 'lucide-react';
@@ -25,7 +25,7 @@ export default function TagsManagement() {
   const debouncedSearch = useDebounce(search, 500);
   const [showDialog, setShowDialog] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const [selectedTag, setSelectedTag] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const limit = 50;
@@ -100,15 +100,32 @@ export default function TagsManagement() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async (e, tag) => {
+    const confirmed = await confirm(e, {
+      title: '确认删除？',
+      description: (
+        <>
+          确定要删除标签 "{tag.name}" 吗？此操作不可撤销。
+          {tag.topicCount > 0 && (
+            <span className="block mt-2 text-orange-600">
+              注意：该标签被 {tag.topicCount} 个话题使用。
+            </span>
+          )}
+        </>
+      ),
+      confirmText: '删除',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      await tagApi.delete(selectedTag.id);
+      await tagApi.delete(tag.id);
       // 局部更新：从列表中移除删除的标签
-      setTags(tags.filter(tag => tag.id !== selectedTag.id));
-      setTotal(total - 1);
+      setTags((prevTags) => prevTags.filter((t) => t.id !== tag.id));
+      setTotal((prev) => prev - 1);
       toast.success('标签删除成功');
-      setShowDeleteDialog(false);
       setSelectedTag(null);
     } catch (err) {
       console.error('删除标签失败:', err);
@@ -136,10 +153,7 @@ export default function TagsManagement() {
     setShowDialog(true);
   };
 
-  const openDeleteDialog = (tag) => {
-    setSelectedTag(tag);
-    setShowDeleteDialog(true);
-  };
+
 
   const resetForm = () => {
     setFormData({
@@ -223,7 +237,7 @@ export default function TagsManagement() {
                   {
                     label: '删除',
                     icon: Trash2,
-                    onClick: () => openDeleteDialog(tag),
+                    onClick: (e) => handleDeleteClick(e, tag),
                     variant: 'destructive',
                   },
                 ]}
@@ -314,25 +328,7 @@ export default function TagsManagement() {
       </FormDialog>
 
       {/* 删除确认对话框 */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title="确认删除？"
-        description={
-            <>
-              确定要删除标签 "{selectedTag?.name}" 吗？此操作不可撤销。
-              {selectedTag?.topicCount > 0 && (
-                <span className="block mt-2 text-orange-600">
-                  注意：该标签被 {selectedTag.topicCount} 个话题使用。
-                </span>
-              )}
-            </>
-        }
-        confirmText="删除"
-        variant="destructive"
-        onConfirm={handleDelete}
-        loading={submitting}
-      />
+
     </div>
   );
 }

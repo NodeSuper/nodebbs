@@ -63,7 +63,7 @@ export function BadgeTable({ items, loading, onEdit, onDelete }) {
             {
               label: '删除',
               icon: Trash2,
-              onClick: () => onDelete(item.id),
+              onClick: (e) => onDelete(e, item),
               variant: 'destructive',
             },
           ]}

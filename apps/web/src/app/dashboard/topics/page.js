@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/common/DataTable';
 import { ActionMenu } from '@/components/common/ActionMenu';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { PageHeader } from '@/components/common/PageHeader';
 import { topicApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -31,10 +31,7 @@ export default function AdminTopicsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteType, setDeleteType] = useState('soft'); // 'soft' or 'hard'
-  const [deleting, setDeleting] = useState(false);
+
   const limit = 20;
 
   // 防抖搜索词
@@ -141,48 +138,47 @@ export default function AdminTopicsPage() {
     }
   };
 
-  const handleDeleteClick = (topic, type) => {
-    setDeleteTarget(topic);
-    setDeleteType(type);
-    setDeleteDialogOpen(true);
-  };
+  const handleDeleteClick = async (e, topic, type) => {
+    const isHard = type === 'hard';
+    const confirmed = await confirm(e, {
+      title: isHard ? '确认彻底删除？' : '确认删除？',
+      description: isHard
+        ? `此操作将彻底删除话题 "${topic.title}"，包括所有回复和相关数据。此操作不可恢复！`
+        : `此操作将软删除话题 "${topic.title}"。软删除后话题将不再显示，但数据仍保留在数据库中。`,
+      confirmText: '确认删除',
+      variant: isHard ? 'destructive' : 'default',
+    });
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!confirmed) return;
 
-    setDeleting(true);
     try {
-      await topicApi.delete(deleteTarget.id, deleteType === 'hard');
-      toast.success(deleteType === 'hard' ? '话题已彻底删除' : '话题已删除');
-      setDeleteDialogOpen(false);
+      await topicApi.delete(topic.id, isHard);
+      toast.success(isHard ? '话题已彻底删除' : '话题已删除');
 
       // 局部更新：直接修改本地状态
       setTopics((prevTopics) => {
         // 硬删除：直接从列表中移除
-        if (deleteType === 'hard') {
+        if (isHard) {
           setTotal((prev) => Math.max(0, prev - 1));
-          return prevTopics.filter((topic) => topic.id !== deleteTarget.id);
+          return prevTopics.filter((t) => t.id !== topic.id);
         }
 
         // 软删除：根据筛选条件决定是更新还是移除
-        const updatedTopics = prevTopics.map((topic) =>
-          topic.id === deleteTarget.id ? { ...topic, isDeleted: true } : topic
+        const updatedTopics = prevTopics.map((t) =>
+          t.id === topic.id ? { ...t, isDeleted: true } : t
         );
 
         // 如果当前筛选不包含已删除的项，则移除
         if (statusFilter !== 'all' && statusFilter !== 'deleted') {
           setTotal((prev) => Math.max(0, prev - 1));
-          return updatedTopics.filter((topic) => topic.id !== deleteTarget.id);
+          return updatedTopics.filter((t) => t.id !== topic.id);
         }
 
         return updatedTopics;
       });
-
-      setDeleteTarget(null);
     } catch (error) {
+      console.error('删除失败:', error);
       toast.error('删除失败');
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -332,14 +328,14 @@ export default function AdminTopicsPage() {
               label: '软删除',
               icon: Trash2,
               variant: 'warning',
-              onClick: () => handleDeleteClick(row, 'soft'),
+              onClick: (e) => handleDeleteClick(e, row, 'soft'),
               hidden: row.isDeleted,
             },
             {
               label: '彻底删除',
               icon: Trash2,
               variant: 'destructive',
-              onClick: () => handleDeleteClick(row, 'hard'),
+              onClick: (e) => handleDeleteClick(e, row, 'hard'),
             },
           ]}
         />
@@ -386,34 +382,7 @@ export default function AdminTopicsPage() {
       />
 
       {/* 删除确认对话框 */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title={deleteType === 'hard' ? '确认彻底删除？' : '确认删除？'}
-        description={
-            deleteType === 'hard' ? (
-                <>
-                  此操作将
-                  <span className='font-semibold text-destructive'>
-                    彻底删除
-                  </span>
-                  话题 "{deleteTarget?.title}"，包括所有回复和相关数据。
-                  <br />
-                  <span className='font-semibold'>此操作不可恢复！</span>
-                </>
-              ) : (
-                <>
-                  此操作将软删除话题 "{deleteTarget?.title}"。
-                  <br />
-                  软删除后话题将不再显示，但数据仍保留在数据库中。
-                </>
-              )
-        }
-        confirmText="确认删除"
-        variant={deleteType === 'hard' ? 'destructive' : 'default'}
-        onConfirm={handleConfirmDelete}
-        loading={deleting}
-      />
+
     </div>
   );
 }

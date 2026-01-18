@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { FormDialog } from '@/components/common/FormDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,11 +35,8 @@ export default function UsersManagement() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showBanDialog, setShowBanDialog] = useState(false);
-  const [showUnbanDialog, setShowUnbanDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteType, setDeleteType] = useState('soft'); // 'soft' (软删除) or 'hard' (彻底删除)
+
   const [newRole, setNewRole] = useState('user');
   const [submitting, setSubmitting] = useState(false);
   const [showUserDialog, setShowUserDialog] = useState(false);
@@ -97,16 +94,38 @@ export default function UsersManagement() {
     fetchUsers();
   };
 
-  const handleBan = async () => {
+  const handleBanClick = async (e, user) => {
+    const confirmed = await confirm(e, {
+      title: '确认封禁用户？',
+      description: (
+        <>
+          确定要封禁用户 "{user.username}" 吗？
+          <br />
+          封禁后该用户将无法登录和发布内容。
+          {user.role === 'admin' && (
+            <>
+              <br />
+              <span className="text-destructive font-medium">
+                注意：该用户是管理员，只有第一个管理员（创始人）可以封禁其他管理员。
+              </span>
+            </>
+          )}
+        </>
+      ),
+      confirmText: '确认封禁',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      await moderationApi.banUser(selectedUser.id);
-      toast.success(`已封禁用户 ${selectedUser.username}`);
-      setShowBanDialog(false);
+      await moderationApi.banUser(user.id);
+      toast.success(`已封禁用户 ${user.username}`);
       
       // 更新本地状态而不是重新获取
-      setUsers(users.map(user => 
-        user.id === selectedUser.id ? { ...user, isBanned: true } : user
+      setUsers(users.map(u => 
+        u.id === user.id ? { ...u, isBanned: true } : u
       ));
     } catch (err) {
       console.error('封禁失败:', err);
@@ -116,16 +135,29 @@ export default function UsersManagement() {
     }
   };
 
-  const handleUnban = async () => {
+  const handleUnbanClick = async (e, user) => {
+    const confirmed = await confirm(e, {
+      title: '确认解封用户？',
+      description: (
+        <>
+          确定要解封用户 "{user.username}" 吗？
+          <br />
+          解封后该用户将恢复正常使用权限。
+        </>
+      ),
+      confirmText: '确认解封',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      await moderationApi.unbanUser(selectedUser.id);
-      toast.success(`已解封用户 ${selectedUser.username}`);
-      setShowUnbanDialog(false);
+      await moderationApi.unbanUser(user.id);
+      toast.success(`已解封用户 ${user.username}`);
       
       // 更新本地状态而不是重新获取
-      setUsers(users.map(user => 
-        user.id === selectedUser.id ? { ...user, isBanned: false } : user
+      setUsers(users.map(u => 
+        u.id === user.id ? { ...u, isBanned: false } : u
       ));
     } catch (err) {
       console.error('解封失败:', err);
@@ -154,26 +186,10 @@ export default function UsersManagement() {
     }
   };
 
-  const openBanDialog = (user) => {
-    setSelectedUser(user);
-    setShowBanDialog(true);
-  };
-
-  const openUnbanDialog = (user) => {
-    setSelectedUser(user);
-    setShowUnbanDialog(true);
-  };
-
   const openRoleDialog = (user) => {
     setSelectedUser(user);
     setNewRole(user.role);
     setShowRoleDialog(true);
-  };
-
-  const openDeleteDialog = (user, type) => {
-    setSelectedUser(user);
-    setDeleteType(type);
-    setShowDeleteDialog(true);
   };
 
   const openCreateDialog = () => {
@@ -203,23 +219,47 @@ export default function UsersManagement() {
     setShowUserDialog(true);
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async (e, user, type) => {
+    const isHard = type === 'hard';
+    const confirmed = await confirm(e, {
+      title: isHard ? '确认彻底删除用户？' : '确认软删除用户？',
+      description: isHard ? (
+        <>
+          此操作将
+          <span className="font-semibold text-destructive">
+            彻底删除
+          </span>
+          用户 "{user.username}"，包括所有相关数据（话题、回复、点赞等）。
+          <br />
+          <span className="font-semibold text-destructive">此操作不可恢复！</span>
+        </>
+      ) : (
+        <>
+          此操作将软删除用户 "{user.username}"。
+          <br />
+          软删除后用户将无法登录，但数据仍保留在数据库中。
+        </>
+      ),
+      confirmText: '确认删除',
+      variant: isHard ? 'destructive' : 'default',
+    });
+
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
-      const permanent = deleteType === 'hard';
-      await userApi.deleteUser(selectedUser.id, permanent);
-      toast.success(permanent ? `已彻底删除用户 ${selectedUser.username}` : `已软删除用户 ${selectedUser.username}`);
-      setShowDeleteDialog(false);
+      await userApi.deleteUser(user.id, isHard);
+      toast.success(isHard ? `已彻底删除用户 ${user.username}` : `已软删除用户 ${user.username}`);
       
       // 更新本地状态而不是重新获取
-      if (permanent) {
+      if (isHard) {
         // 彻底删除：从列表中移除用户
-        setUsers(users.filter(user => user.id !== selectedUser.id));
+        setUsers((prevUsers) => prevUsers.filter(u => u.id !== user.id));
         setTotal(prev => prev - 1);
       } else {
         // 软删除：更新状态
-        setUsers(users.map(user => 
-          user.id === selectedUser.id ? { ...user, isDeleted: true } : user
+        setUsers((prevUsers) => prevUsers.map(u => 
+          u.id === user.id ? { ...u, isDeleted: true } : u
         ));
       }
     } catch (err) {
@@ -451,14 +491,14 @@ export default function UsersManagement() {
                   {
                     label: '解封用户',
                     icon: ShieldCheck,
-                    onClick: () => openUnbanDialog(user),
+                    onClick: (e) => handleUnbanClick(e, user),
                     hidden: !user.isBanned,
                   },
                   {
                     label: '封禁用户',
                     icon: Ban,
                     variant: 'warning',
-                    onClick: () => openBanDialog(user),
+                    onClick: (e) => handleBanClick(e, user),
                     disabled: !canModifyUser(user),
                     hidden: user.isBanned,
                   },
@@ -467,14 +507,14 @@ export default function UsersManagement() {
                     label: '软删除',
                     icon: Trash2,
                     variant: 'warning',
-                    onClick: () => openDeleteDialog(user, 'soft'),
+                    onClick: (e) => handleDeleteClick(e, user, 'soft'),
                     disabled: !canModifyUser(user),
                   },
                   {
                     label: '彻底删除',
                     icon: Trash2,
                     variant: 'destructive',
-                    onClick: () => openDeleteDialog(user, 'hard'),
+                    onClick: (e) => handleDeleteClick(e, user, 'hard'),
                     disabled: !canModifyUser(user),
                   },
                 ]}
@@ -517,47 +557,7 @@ export default function UsersManagement() {
       />
 
       {/* 封禁确认对话框 */}
-      <ConfirmDialog
-        open={showBanDialog}
-        onOpenChange={setShowBanDialog}
-        title="确认封禁用户？"
-        description={
-            <>
-              确定要封禁用户 "{selectedUser?.username}" 吗？
-              <br />
-              封禁后该用户将无法登录和发布内容。
-              {selectedUser?.role === 'admin' && (
-                <>
-                  <br />
-                  <span className="text-destructive font-medium">
-                    注意：该用户是管理员，只有第一个管理员（创始人）可以封禁其他管理员。
-                  </span>
-                </>
-              )}
-            </>
-        }
-        confirmText="确认封禁"
-        variant="destructive"
-        onConfirm={handleBan}
-        loading={submitting}
-      />
 
-      {/* 解封确认对话框 */}
-      <ConfirmDialog
-        open={showUnbanDialog}
-        onOpenChange={setShowUnbanDialog}
-        title="确认解封用户？"
-        description={
-            <>
-              确定要解封用户 "{selectedUser?.username}" 吗？
-              <br />
-              解封后该用户将恢复正常使用权限。
-            </>
-        }
-        confirmText="确认解封"
-        onConfirm={handleUnban}
-        loading={submitting}
-      />
 
       {/* 修改角色对话框 - 使用 FormDialog 因为它包含输入控件 */}
       <FormDialog
@@ -598,34 +598,7 @@ export default function UsersManagement() {
       </FormDialog>
 
       {/* 删除确认对话框 */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title={deleteType === 'hard' ? '确认彻底删除用户？' : '确认软删除用户？'}
-        description={
-             deleteType === 'hard' ? (
-                <>
-                  此操作将
-                  <span className="font-semibold text-destructive">
-                    彻底删除
-                  </span>
-                  用户 "{selectedUser?.username}"，包括所有相关数据（话题、回复、点赞等）。
-                  <br />
-                  <span className="font-semibold text-destructive">此操作不可恢复！</span>
-                </>
-              ) : (
-                <>
-                  此操作将软删除用户 "{selectedUser?.username}"。
-                  <br />
-                  软删除后用户将无法登录，但数据仍保留在数据库中。
-                </>
-              )
-        }
-        confirmText="确认删除"
-        variant={deleteType === 'hard' ? 'destructive' : 'default'}
-        onConfirm={handleDelete}
-        loading={submitting}
-      />
+
 
       {/* 创建/编辑用户对话框 */}
       <FormDialog

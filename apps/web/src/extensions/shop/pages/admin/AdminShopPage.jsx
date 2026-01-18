@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ShoppingCart, Plus } from 'lucide-react';
@@ -61,7 +62,24 @@ export default function AdminShopPage() {
     }
   };
 
-  const handleDelete = async (item) => {
+  const handleDeleteClick = async (e, item) => {
+    const confirmed = await confirm(e, {
+      title: '确认删除',
+      description: (
+        <>
+          确定要删除商品 "{item.name}" 吗？
+          <br />
+          <span className="text-destructive font-medium">
+            注意：如果已有用户购买该商品，将无法删除，建议下架而不是删除。
+          </span>
+        </>
+      ),
+      confirmText: '删除',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
+
     try {
       await shopApi.admin.deleteItem(item.id);
       toast.success('商品删除成功');
@@ -96,7 +114,7 @@ export default function AdminShopPage() {
           onPageChange: setPage,
         }}
         onEdit={openEditDialog}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
 
       {/* Create/Edit Dialog */}

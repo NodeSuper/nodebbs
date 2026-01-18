@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { confirm } from '@/components/common/ConfirmPopover';
 import { FormDialog } from '@/components/common/FormDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { toast } from 'sonner';
@@ -37,10 +37,7 @@ export default function InvitationRulesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  // Delete Dialog State
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteRole, setDeleteRole] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+
 
   const [formData, setFormData] = useState({
     role: '',
@@ -161,31 +158,32 @@ export default function InvitationRulesPage() {
     }
   };
 
-  // 打开删除确认框
-  const handleDelete = (role) => {
-    setDeleteRole(role);
-    setDeleteDialogOpen(true);
-  };
-
   // 确认删除
-  const confirmDelete = async () => {
-    if (!deleteRole) return;
+  const handleDeleteClick = async (e, role) => {
+    const confirmed = await confirm(e, {
+      title: '确认删除规则？',
+      description: `确定要删除角色 "${ROLE_LABELS[role] || role}" 的规则吗？`,
+      confirmText: '确认删除',
+      variant: 'destructive',
+    });
     
-    setDeleting(true);
+    if (!confirmed) return;
+
+    // Use a local loading state or just rely on toast?
+    // Since there's no global "deleting" state anymore, and the action is quick.
+    // If we want to show loading on the specific button, it's harder with confirm popover pattern unless we track it.
+    // Given the previous pattern didn't seemingly show loading on the button (it was on the dialog), we can just wrap in try-catch.
+    
     try {
-      await invitationsApi.rules.delete(deleteRole);
+      await invitationsApi.rules.delete(role);
 
       // 局部更新：从列表中移除删除的规则
-      setRules((prevRules) => prevRules.filter((r) => r.role !== deleteRole));
+      setRules((prevRules) => prevRules.filter((r) => r.role !== role));
 
       toast.success('规则已删除');
-      setDeleteDialogOpen(false);
-      setDeleteRole(null);
     } catch (error) {
       console.error('Failed to delete rule:', error);
       toast.error(error.message || '删除规则失败');
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -280,7 +278,7 @@ export default function InvitationRulesPage() {
                     <Button
                       variant='ghost'
                       size='sm'
-                      onClick={() => handleDelete(rule.role)}
+                      onClick={(e) => handleDeleteClick(e, rule.role)}
                     >
                       <Trash2 className='h-4 w-4 text-red-600' />
                     </Button>
@@ -402,16 +400,7 @@ export default function InvitationRulesPage() {
       </FormDialog>
 
       {/* 删除确认对话框 */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="确认删除规则？"
-        description={`确定要删除角色 "${ROLE_LABELS[deleteRole] || deleteRole}" 的规则吗？`}
-        confirmText="确认删除"
-        variant="destructive"
-        onConfirm={confirmDelete}
-        loading={deleting}
-      />
+
     </div>
   );
 }
