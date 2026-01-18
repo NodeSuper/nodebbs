@@ -1,7 +1,7 @@
 import { customAlphabet } from 'nanoid';
 import db from '../db/index.js';
 import { invitationCodes, invitationRules, users } from '../db/schema.js';
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, and, gte, sql, count } from 'drizzle-orm';
 
 /**
  * 生成唯一的邀请码
@@ -79,7 +79,7 @@ export async function getTodayGeneratedCount(userId) {
   today.setHours(0, 0, 0, 0);
   
   const result = await db
-    .select({ count: sql`count(*)::int` })
+    .select({ count: count() })
     .from(invitationCodes)
     .where(
       and(

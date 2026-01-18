@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { invitationCodes, invitationRules, users } from '../../db/schema.js';
-import { eq, and, desc, sql, or, like, asc } from 'drizzle-orm';
+import { eq, and, desc, sql, or, like, asc, count } from 'drizzle-orm';
 import {
   generateInvitationCode,
   validateInvitationCode,
@@ -187,8 +187,8 @@ export default async function invitationsRoutes(fastify) {
           .offset(offset);
 
         // 获取总数
-        const [{ count }] = await db
-          .select({ count: sql`count(*)::int` })
+        const [{ count: total }] = await db
+          .select({ count: count() })
           .from(invitationCodes)
           .where(and(...conditions));
 
@@ -216,7 +216,7 @@ export default async function invitationsRoutes(fastify) {
           items: formattedCodes,
           page,
           limit,
-          total: count,
+          total,
         };
       } catch (error) {
         fastify.log.error('获取邀请码列表时出错:', error);
@@ -431,8 +431,8 @@ export default async function invitationsRoutes(fastify) {
           .offset(offset);
 
         // 获取总数
-        const [{ count }] = await db
-          .select({ count: sql`count(*)::int` })
+        const [{ count: total }] = await db
+          .select({ count: count() })
           .from(invitationCodes)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
 
@@ -465,7 +465,7 @@ export default async function invitationsRoutes(fastify) {
           items: formattedCodes,
           page,
           limit,
-          total: count,
+          total,
         };
       } catch (error) {
         fastify.log.error('获取邀请码列表时出错:', error);
@@ -715,15 +715,15 @@ export default async function invitationsRoutes(fastify) {
           .orderBy(asc(invitationRules.createdAt));
 
         // 获取总数
-        const [{ count }] = await db
-          .select({ count: sql`count(*)::int` })
+        const [{ count: total }] = await db
+          .select({ count: count() })
           .from(invitationRules);
 
         return {
           items: rules,
           page,
           limit,
-          total: count,
+          total,
         };
       } catch (error) {
         fastify.log.error('获取邀请规则时出错:', error);

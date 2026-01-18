@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { topics, posts, users, categories, blockedUsers } from '../../db/schema.js';
-import { eq, sql, desc, and, or, like, ilike } from 'drizzle-orm';
+import { eq, sql, desc, and, or, like, ilike, not, inArray, count } from 'drizzle-orm';
 import { isDev } from '../../utils/env.js';
 
 export default async function searchRoutes(fastify, options) {
@@ -89,13 +89,13 @@ export default async function searchRoutes(fastify, options) {
         // 过滤被拉黑用户的话题
         if (blockedUserIds.size > 0) {
           topicsConditions.push(
-            sql`${topics.userId} NOT IN (${Array.from(blockedUserIds).join(',')})`
+            not(inArray(topics.userId, [...blockedUserIds]))
           );
         }
 
         // 获取总数
         const [countResult] = await db
-          .select({ count: sql`count(*)::int` })
+          .select({ count: count() })
           .from(topics)
           .where(and(...topicsConditions));
 
@@ -152,13 +152,13 @@ export default async function searchRoutes(fastify, options) {
         // 过滤被拉黑用户的帖子
         if (blockedUserIds.size > 0) {
           postsConditions.push(
-            sql`${posts.userId} NOT IN (${Array.from(blockedUserIds).join(',')})`
+            not(inArray(posts.userId, [...blockedUserIds]))
           );
         }
 
         // 获取总数
         const [countResult] = await db
-          .select({ count: sql`count(*)::int` })
+          .select({ count: count() })
           .from(posts)
           .innerJoin(topics, eq(posts.topicId, topics.id))
           .where(and(...postsConditions));
@@ -206,13 +206,13 @@ export default async function searchRoutes(fastify, options) {
       // 过滤被拉黑用户
       if (blockedUserIds.size > 0) {
         usersConditions.push(
-          sql`${users.id} NOT IN (${Array.from(blockedUserIds).join(',')})`
+          not(inArray(users.id, [...blockedUserIds]))
         );
       }
 
       // 获取总数
       const [countResult] = await db
-        .select({ count: sql`count(*)::int` })
+        .select({ count: count() })
         .from(users)
         .where(and(...usersConditions));
 
