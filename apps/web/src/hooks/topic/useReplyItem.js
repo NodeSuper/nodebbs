@@ -42,6 +42,10 @@ export function useReplyItem({
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [rewardListOpen, setRewardListOpen] = useState(false);
+  // 编辑状态
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [origin, setOrigin] = useState('');
   const [reportTarget, setReportTarget] = useState({
     type: '',
@@ -68,7 +72,10 @@ export function useReplyItem({
   const isPending = localReply.approvalStatus === 'pending';
   const isRejected = localReply.approvalStatus === 'rejected';
   const isOwnReply = user?.id === localReply.userId;
+  const isModerator = user?.role === 'admin' || user?.role === 'moderator';
   const canInteract = !isPending && !isRejected;
+  // 编辑权限：作者本人 或 版主/管理员
+  const canEdit = isAuthenticated && (isOwnReply || isModerator);
 
   /**
    * 切换楼层点赞状态
@@ -241,6 +248,72 @@ export function useReplyItem({
     setReportDialogOpen(true);
   };
 
+  /**
+   * 开始编辑回复
+   * 将当前内容加载到编辑器中
+   */
+  const handleStartEdit = () => {
+    if (!canEdit) return;
+    setEditContent(localReply.rawContent || localReply.content);
+    setIsEditing(true);
+  };
+
+  /**
+   * 取消编辑
+   * 清空编辑状态并退出编辑模式
+   */
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditContent('');
+  };
+
+  /**
+   * 提交编辑
+   * 调用 API 更新回复内容
+   */
+  const handleSubmitEdit = async () => {
+    if (!editContent.trim()) {
+      toast.error('内容不能为空');
+      return;
+    }
+
+    if (!canEdit) {
+      toast.error('没有编辑权限');
+      return;
+    }
+
+    setIsSubmittingEdit(true);
+
+    try {
+      const response = await postApi.update(localReply.id, editContent);
+
+      // 更新本地状态
+      setLocalReply((prev) => ({
+        ...prev,
+        content: editContent,
+        rawContent: editContent,
+        editedAt: new Date().toISOString(),
+        editCount: (prev.editCount || 0) + 1,
+        approvalStatus: response.post?.approvalStatus || prev.approvalStatus,
+      }));
+
+      setIsEditing(false);
+      setEditContent('');
+
+      // 根据返回信息提示用户
+      if (response.requiresApproval) {
+        toast.success(response.message || '回复已更新，等待审核后公开显示');
+      } else {
+        toast.success(response.message || '回复更新成功');
+      }
+    } catch (err) {
+      console.error('编辑回复失败:', err);
+      toast.error(err.message || '编辑失败');
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
   return {
     user,
     isAuthenticated,
@@ -284,6 +357,15 @@ export function useReplyItem({
     isOwnReply,
     /** 是否可交互 (非待审核/拒绝) */
     canInteract,
+    /** 是否有编辑权限 */
+    canEdit,
+    /** 是否处于编辑模式 */
+    isEditing,
+    /** 编辑中的内容 */
+    editContent,
+    setEditContent,
+    /** 是否正在提交编辑 */
+    isSubmittingEdit,
     /** 切换点赞 */
     handleTogglePostLike,
     /** 删除回复 */
@@ -292,5 +374,11 @@ export function useReplyItem({
     handleSubmitReplyToPost,
     /** 打赏成功回调 */
     handleRewardSuccess,
+    /** 开始编辑 */
+    handleStartEdit,
+    /** 取消编辑 */
+    handleCancelEdit,
+    /** 提交编辑 */
+    handleSubmitEdit,
   };
 }

@@ -16,6 +16,7 @@ import {
   Clock,
   Coins,
   Check,
+  Pencil,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -60,10 +61,18 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
     isRejected,
     isOwnReply,
     canInteract,
+    canEdit,
+    isEditing,
+    editContent,
+    setEditContent,
+    isSubmittingEdit,
     handleTogglePostLike,
     handleDeletePost,
     handleSubmitReplyToPost,
     handleRewardSuccess,
+    handleStartEdit,
+    handleCancelEdit,
+    handleSubmitEdit,
   } = useReplyItem({
     reply,
     topicId,
@@ -125,6 +134,13 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                 {/* 第二行：时间与徽章 */}
                 <div className='flex items-center gap-2 text-xs text-muted-foreground/70 flex-wrap leading-none'>
                   <Time date={localReply.createdAt} fromNow />
+                  
+                  {/* 已编辑标记 */}
+                  {localReply.editedAt && (
+                    <span className="text-muted-foreground/50" title={`已编辑 ${localReply.editCount || 1} 次`}>
+                      (已编辑)
+                    </span>
+                  )}
                   
                   {/* 角色标识 */}
                   {localReply.topicUserId === localReply.userId && (
@@ -198,10 +214,62 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
               </div>
             )}
 
-            {/* Markdown 内容 */}
-            <div className='max-w-none prose prose-stone dark:prose-invert prose-sm sm:prose-base break-words'>
-              <MarkdownRender content={localReply.content} />
-            </div>
+            {/* Markdown 内容 / 编辑器 */}
+            {isEditing ? (
+              <div className='bg-muted/30 rounded-lg p-3 sm:p-4 border border-border/50'>
+                <div className='flex items-center justify-between text-xs text-muted-foreground mb-2'>
+                  <span className="flex items-center gap-1">
+                    <Pencil className="h-3 w-3" />
+                    编辑回复
+                  </span>
+                </div>
+                <MarkdownEditor
+                  editorClassName='min-h-[120px]'
+                  placeholder='编辑回复内容...'
+                  value={editContent}
+                  onChange={setEditContent}
+                  disabled={isSubmittingEdit}
+                  minimal={true}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSubmitEdit();
+                    }
+                  }}
+                />
+                <div className='flex items-center justify-end gap-2 mt-3'>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={handleCancelEdit}
+                    disabled={isSubmittingEdit}
+                    className="h-8"
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    size='sm'
+                    onClick={handleSubmitEdit}
+                    disabled={isSubmittingEdit || !editContent.trim()}
+                    className="h-8"
+                  >
+                    {isSubmittingEdit ? (
+                      <>
+                        <Loader2 className='h-3.5 w-3.5 mr-1.5 animate-spin' />
+                        保存中...
+                      </>
+                    ) : (
+                      '保存修改'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className='max-w-none prose prose-stone dark:prose-invert prose-sm sm:prose-base break-words'>
+                <MarkdownRender content={localReply.content} />
+              </div>
+            )}
 
             {/* 底部操作栏 */}
             <div className='flex items-center justify-end gap-2 mt-4 pt-3 border-t border-dashed border-border/60'>
@@ -327,6 +395,17 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                     (user?.id === localReply.userId ||
                       ['moderator', 'admin'].includes(user?.role)) && (
                       <>
+                        {/* 编辑选项 */}
+                        {canEdit && (
+                          <DropdownMenuItem
+                            onClick={handleStartEdit}
+                            disabled={isEditing}
+                            className="cursor-pointer"
+                          >
+                            <Pencil className='h-4 w-4 mr-2' />
+                            编辑回复
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() =>
                             handleDeletePost(
