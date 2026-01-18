@@ -5,7 +5,7 @@ import Link from '@/components/common/Link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/common/PageHeader';
-import { ShieldOff, UserX, Loader2, ShieldX, Users, Calendar } from 'lucide-react';
+import { ShieldOff, UserX, Loader2, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { blockedUsersApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
+import { ConfirmPopover } from '@/components/common/ConfirmPopover';
 
 export default function BlockedUsersPage() {
   const { user } = useAuth();
@@ -48,10 +49,6 @@ export default function BlockedUsersPage() {
   };
 
   const handleUnblock = async (userId, username) => {
-    if (!confirm(`确定要取消拉黑 ${username} 吗？`)) {
-      return;
-    }
-
     setUnblockingUserId(userId);
 
     try {
@@ -149,30 +146,36 @@ export default function BlockedUsersPage() {
                       </div>
 
                       {/* 取消拉黑按钮 */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
+                      <ConfirmPopover
+                        title={`取消拉黑 ${blockedUser.blockedName || blockedUser.blockedUsername}`}
+                        description="取消拉黑后可以恢复正常互动"
+                        confirmText="取消拉黑"
+                        onConfirm={() =>
                           handleUnblock(
                             blockedUser.blockedUserId,
                             blockedUser.blockedName || blockedUser.blockedUsername
                           )
                         }
-                        disabled={unblockingUserId === blockedUser.blockedUserId}
-                        className="shrink-0 gap-1.5 h-8 opacity-70 group-hover:opacity-100 transition-opacity"
                       >
-                        {unblockingUserId === blockedUser.blockedUserId ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            取消中...
-                          </>
-                        ) : (
-                          <>
-                            <ShieldOff className="h-3.5 w-3.5" />
-                            取消拉黑
-                          </>
-                        )}
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={unblockingUserId === blockedUser.blockedUserId}
+                          className="shrink-0 gap-1.5 h-8 opacity-70 group-hover:opacity-100 transition-opacity"
+                        >
+                          {unblockingUserId === blockedUser.blockedUserId ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              取消中...
+                            </>
+                          ) : (
+                            <>
+                              <ShieldOff className="h-3.5 w-3.5" />
+                              取消拉黑
+                            </>
+                          )}
+                        </Button>
+                      </ConfirmPopover>
                     </div>
                   </CardContent>
                 </Card>

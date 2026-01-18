@@ -25,6 +25,7 @@ import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
 import { Loading } from '@/components/common/Loading';
 import { Pager } from '@/components/common/Pagination';
+import { confirm } from '@/components/common/ConfirmPopover';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -63,10 +64,15 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDeleteConversation = async (userId, username) => {
-    if (!confirm(`确定要删除与 ${username} 的所有站内信吗？此操作不可恢复。`)) {
-      return;
-    }
+  const handleDeleteConversation = async (e, userId, username) => {
+    const confirmed = await confirm(e, {
+      title: `删除与 ${username} 的会话`,
+      description: '删除后所有站内信将无法恢复',
+      confirmText: '删除',
+      variant: 'destructive',
+    });
+    
+    if (!confirmed) return;
 
     setDeletingUserId(userId);
 
@@ -197,7 +203,7 @@ export default function MessagesPage() {
                     </Link>
 
                     {/* 操作菜单 - 仅悬浮显示或在移动端显示 */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -214,8 +220,8 @@ export default function MessagesPage() {
                               className='text-destructive focus:text-destructive cursor-pointer'
                               disabled={deletingUserId === otherUser.id}
                               onClick={(e) => {
-                                e.preventDefault();
                                 handleDeleteConversation(
+                                  e,
                                   otherUser.id,
                                   otherUser.name || otherUser.username
                                 );
