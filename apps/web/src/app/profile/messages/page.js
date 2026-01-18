@@ -87,48 +87,45 @@ export default function MessagesPage() {
     }
   };
 
-  // 加载状态
-  if (loading && conversations.length === 0) {
-    return (
-      <Loading text='加载中...' className='py-12' />
-    );
-  }
-
-  // 错误状态
-  if (error) {
-    return (
-      <div className='bg-card border border-border rounded-lg p-12 text-center'>
-        <Mail className='h-12 w-12 text-destructive mx-auto mb-4' />
-        <h3 className='text-lg font-medium text-card-foreground mb-2'>
-          加载失败
-        </h3>
-        <p className='text-muted-foreground mb-4'>{error}</p>
-        <Button onClick={fetchConversations}>重试</Button>
-      </div>
-    );
-  }
+  // 初始加载状态标记
+  const isInitialLoading = loading && conversations.length === 0;
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
-        title='站内信'
-        description='查看你的私信会话'
+        title="站内信"
+        description="查看你的私信会话"
         actions={
           totalUnread > 0 && (
             <Badge
-              variant='default'
-              className='flex items-center space-x-1.5 px-3 py-1'
+              variant="default"
+              className="flex items-center gap-1.5 px-3 py-1"
             >
-              <Mail className='h-3.5 w-3.5' />
+              <Mail className="h-3.5 w-3.5" />
               <span>{totalUnread} 条未读</span>
             </Badge>
           )
         }
       />
 
-      {/* 会话列表 */}
-      {conversations.length > 0 ? (
-        <div className='bg-card border border-border rounded-lg divide-y divide-border overflow-hidden'>
+      {/* 初始加载状态 */}
+      {isInitialLoading ? (
+        <Loading text="加载中..." className="min-h-[300px]" />
+      ) : error ? (
+        /* 错误状态 */
+        <div className="bg-card border border-destructive/20 rounded-lg p-12 text-center">
+          <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <Mail className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">加载失败</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={fetchConversations} variant="outline">
+            重试
+          </Button>
+        </div>
+      ) : conversations.length > 0 ? (
+        /* 会话列表 */
+        <div className="bg-card border border-border rounded-lg divide-y divide-border overflow-hidden">
           {conversations.map((conversation) => {
             const {
               user: otherUser,

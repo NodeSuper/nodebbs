@@ -3,8 +3,9 @@
 import Link from '@/components/common/Link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Bell, CheckCheck, Trash2, Loader2 } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Loader2, BellOff } from 'lucide-react';
 import { getNotificationIcon, getNotificationMessage } from '@/lib/notification';
 import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
@@ -42,210 +43,228 @@ export default function NotificationsPage() {
     isActionLoading,
   } = useNotifications();
 
-  // 加载状态
-  if (loading && notifications.length === 0) {
-    return <Loading text='加载中...' className='py-12' />;
-  }
-
-  // 错误状态
-  if (error) {
-    return (
-      <div className='bg-card border border-border rounded-lg p-12 text-center'>
-        <Bell className='h-12 w-12 text-destructive mx-auto mb-4' />
-        <h3 className='text-lg font-medium text-card-foreground mb-2'>
-          加载失败
-        </h3>
-        <p className='text-muted-foreground mb-4'>{error}</p>
-        <Button onClick={fetchNotifications}>重试</Button>
-      </div>
-    );
-  }
+  // 初始加载状态标记
+  const isInitialLoading = loading && notifications.length === 0;
 
   return (
-    <div>
+    <div className="space-y-6">
+      {/* 页面标题 */}
       <PageHeader
-        title='消息通知'
-        description='查看你的所有通知消息'
+        title="消息通知"
+        description="查看你的所有通知消息"
       />
 
-      {/* 筛选和操作按钮 */}
-      <div className='flex items-center justify-between mb-4'>
-        <div className='flex items-center space-x-2'>
-          <Badge
-            variant={filter === 'all' ? 'default' : 'outline'}
-            className='cursor-pointer'
-            onClick={() => handleFilterChange('all')}
-          >
-            全部 ({total})
-          </Badge>
-          <Badge
-            variant={filter === 'unread' ? 'default' : 'outline'}
-            className='cursor-pointer'
-            onClick={() => handleFilterChange('unread')}
-          >
-            未读 ({unreadCount})
-          </Badge>
-          <Badge
-            variant={filter === 'read' ? 'default' : 'outline'}
-            className='cursor-pointer'
-            onClick={() => handleFilterChange('read')}
-          >
-            已读 ({readCount})
-          </Badge>
-        </div>
-
-        <div className='flex items-center space-x-2'>
-          {unreadCount > 0 && (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={markAllAsRead}
-              disabled={isActionLoading('read-all')}
-            >
-              {isActionLoading('read-all') ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                <CheckCheck className='h-4 w-4' />
-              )}
-              全部标记为已读
-            </Button>
-          )}
-          {readCount > 0 && (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={deleteAllRead}
-              disabled={isActionLoading('delete-all-read')}
-              className='text-red-500 hover:text-red-600'
-            >
-              {isActionLoading('delete-all-read') ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                <Trash2 className='h-4 w-4' />
-              )}
-              删除所有已读
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* 通知列表 */}
-      {notifications.length > 0 ? (
-        <div className='space-y-2'>
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className='bg-card border border-border rounded-lg overflow-hidden hover:shadow-sm transition-all'
-            >
-              <div className='p-4'>
-                <div className='flex items-start space-x-3'>
-                  {/* 未读指示器 */}
-                  <div className='shrink-0 pt-1'>
-                    {!notification.isRead && (
-                      <div className='w-2 h-2 bg-green-500 rounded-full ring-2 ring-green-500/20' />
-                    )}
-                  </div>
-
-                  {/* 用户头像 */}
-                  <UserAvatar
-                    name={notification.triggeredByName || notification.triggeredByUsername}
-                    url={notification.triggeredByAvatar}
-                    size='md'
-                  />
-
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-start justify-between mb-2'>
-                      <div className='flex items-center space-x-2 flex-wrap'>
-                        {getNotificationIcon(notification.type)}
-                        {notification.triggeredByUsername && (
-                          <span className='text-sm font-medium text-card-foreground'>
-                            {notification.triggeredByName || notification.triggeredByUsername}
-                          </span>
-                        )}
-                        <span className='text-sm text-muted-foreground'>
-                          {getNotificationMessage(notification)}
-                        </span>
-                      </div>
-                      <span className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
-                        <Time date={notification.createdAt} fromNow />
-                      </span>
-                    </div>
-
-                    {notification.topicTitle && (
-                      <Link
-                        href={`/topic/${notification.topicId}${
-                          notification.postId ? `#post-${notification.postId}` : ''
-                        }`}
-                        className='text-sm text-primary hover:underline block mb-2'
-                      >
-                        {notification.topicTitle}
-                      </Link>
-                    )}
-
-                    <div className='flex items-center space-x-2'>
-                      {!notification.isRead && (
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => markAsRead(notification.id)}
-                          disabled={isActionLoading(`read-${notification.id}`)}
-                          className='h-7 text-xs'
-                        >
-                          {isActionLoading(`read-${notification.id}`) ? (
-                            <Loader2 className='h-3 w-3 mr-1 animate-spin' />
-                          ) : (
-                            <CheckCheck className='h-3 w-3 mr-1' />
-                          )}
-                          标记已读
-                        </Button>
-                      )}
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => deleteNotification(notification.id)}
-                        disabled={isActionLoading(`delete-${notification.id}`)}
-                        className='h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50'
-                      >
-                        {isActionLoading(`delete-${notification.id}`) ? (
-                          <Loader2 className='h-3 w-3 mr-1 animate-spin' />
-                        ) : (
-                          <Trash2 className='h-3 w-3 mr-1' />
-                        )}
-                        删除
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* 初始加载状态 */}
+      {isInitialLoading ? (
+        <Loading text="加载中..." className="min-h-[300px]" />
+      ) : error ? (
+        /* 错误状态 */
+        <Card className="border-destructive/20 shadow-none">
+          <CardContent className="py-12 text-center">
+            <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <Bell className="h-8 w-8 text-destructive" />
             </div>
-          ))}
-
-          {/* 分页 */}
-          {total > pageSize && (
-            <Pager
-              total={total}
-              page={page}
-              pageSize={pageSize}
-              onPageChange={(newPage) => setPage(newPage)}
-            />
-          )}
-        </div>
+            <h3 className="text-lg font-medium mb-2">加载失败</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={fetchNotifications} variant="outline">
+              重试
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className='bg-card border border-border rounded-lg p-12 text-center'>
-          <Bell className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
-          <h3 className='text-lg font-medium text-card-foreground mb-2'>
-            {filter === 'unread'
-              ? '没有未读通知'
-              : filter === 'read'
-              ? '没有已读通知'
-              : '暂无通知'}
-          </h3>
-          <p className='text-muted-foreground'>
-            {filter === 'all'
-              ? '你的通知消息会显示在这里'
-              : '切换筛选查看其他通知'}
-          </p>
-        </div>
+        <>
+          {/* 筛选和操作按钮 */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={filter === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer transition-colors"
+                onClick={() => handleFilterChange('all')}
+              >
+                全部 ({total})
+              </Badge>
+              <Badge
+                variant={filter === 'unread' ? 'default' : 'outline'}
+                className="cursor-pointer transition-colors"
+                onClick={() => handleFilterChange('unread')}
+              >
+                未读 ({unreadCount})
+              </Badge>
+              <Badge
+                variant={filter === 'read' ? 'default' : 'outline'}
+                className="cursor-pointer transition-colors"
+                onClick={() => handleFilterChange('read')}
+              >
+                已读 ({readCount})
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  disabled={isActionLoading('read-all')}
+                  className="h-8 gap-1.5"
+                >
+                  {isActionLoading('read-all') ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCheck className="h-3.5 w-3.5" />
+                  )}
+                  全部已读
+                </Button>
+              )}
+              {readCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={deleteAllRead}
+                  disabled={isActionLoading('delete-all-read')}
+                  className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  {isActionLoading('delete-all-read') ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                  清除已读
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* 通知列表 */}
+          {notifications.length > 0 ? (
+            <div className="space-y-3">
+              {notifications.map((notification) => (
+                <Card
+                  key={notification.id}
+                  className={`group shadow-none transition-all ${
+                    !notification.isRead
+                      ? 'border-primary/30 bg-primary/[0.02]'
+                      : 'hover:border-border/80'
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      {/* 未读指示器 + 头像 */}
+                      <div className="relative shrink-0">
+                        <UserAvatar
+                          name={notification.triggeredByName || notification.triggeredByUsername}
+                          url={notification.triggeredByAvatar}
+                          size="md"
+                        />
+                        {!notification.isRead && (
+                          <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-primary rounded-full ring-2 ring-background" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        {/* 通知内容 */}
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2 flex-wrap text-sm">
+                            <span className="inline-flex items-center gap-1">
+                              {getNotificationIcon(notification.type)}
+                            </span>
+                            {notification.triggeredByUsername && (
+                              <span className="font-medium text-foreground">
+                                {notification.triggeredByName || notification.triggeredByUsername}
+                              </span>
+                            )}
+                            <span className="text-muted-foreground">
+                              {getNotificationMessage(notification)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                            <Time date={notification.createdAt} fromNow />
+                          </span>
+                        </div>
+
+                        {/* 话题链接 */}
+                        {notification.topicTitle && (
+                          <Link
+                            href={`/topic/${notification.topicId}${
+                              notification.postId ? `#post-${notification.postId}` : ''
+                            }`}
+                            className="text-sm text-primary hover:underline block mb-2 truncate"
+                          >
+                            {notification.topicTitle}
+                          </Link>
+                        )}
+
+                        {/* 操作按钮 */}
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!notification.isRead && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => markAsRead(notification.id)}
+                              disabled={isActionLoading(`read-${notification.id}`)}
+                              className="h-7 px-2 text-xs gap-1"
+                            >
+                              {isActionLoading(`read-${notification.id}`) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCheck className="h-3 w-3" />
+                              )}
+                              标记已读
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteNotification(notification.id)}
+                            disabled={isActionLoading(`delete-${notification.id}`)}
+                            className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            {isActionLoading(`delete-${notification.id}`) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                            删除
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* 分页 */}
+              {total > pageSize && (
+                <Pager
+                  total={total}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={(newPage) => setPage(newPage)}
+                />
+              )}
+            </div>
+          ) : (
+            <Card className="shadow-none border-dashed">
+              <CardContent className="py-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <BellOff className="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">
+                  {filter === 'unread'
+                    ? '没有未读通知'
+                    : filter === 'read'
+                    ? '没有已读通知'
+                    : '暂无通知'}
+                </h3>
+                <p className="text-muted-foreground">
+                  {filter === 'all'
+                    ? '你的通知消息会显示在这里'
+                    : '切换筛选查看其他通知'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
