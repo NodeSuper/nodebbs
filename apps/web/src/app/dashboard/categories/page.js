@@ -106,6 +106,7 @@ export default function CategoriesManagement() {
       confirmText: '删除',
       variant: 'destructive',
       confirmDisabled: category.topicCount > 0,
+      className: 'w-96'
     });
 
     if (!confirmed) return;
