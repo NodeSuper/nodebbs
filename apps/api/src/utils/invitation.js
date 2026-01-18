@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { customAlphabet } from 'nanoid';
 import db from '../db/index.js';
 import { invitationCodes, invitationRules, users } from '../db/schema.js';
 import { eq, and, gte, sql } from 'drizzle-orm';
@@ -13,12 +13,9 @@ export async function generateUniqueCode(length = 12) {
   
   for (let i = 0; i < maxAttempts; i++) {
     // 生成随机字符串（大写字母和数字）
-    const code = crypto
-      .randomBytes(Math.ceil(length * 0.75))
-      .toString('base64')
-      .replace(/[^A-Z0-9]/gi, '')
-      .toUpperCase()
-      .substring(0, length);
+    const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const nanoid = customAlphabet(alphabet, length);
+    const code = nanoid();
     
     // 检查是否已存在
     const [existing] = await db
