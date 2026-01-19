@@ -48,7 +48,7 @@ function TopicLayoutContent({
       <main className='flex gap-6'>
         {/* 主要内容区域 */}
         <div className='flex-1 min-w-0'>
-          <AdSlot slotCode='topic_detail_top' className='mb-4' />
+          <AdSlot slotCode='topic_detail_top' className='mb-0 sm:mb-4 rounded-none lg:rounded-lg' />
           {/* 话题内容 */}
           <TopicContent />
 
