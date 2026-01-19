@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from '@/components/common/Link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,8 @@ import {
   Coins,
   Check,
   Pencil,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -81,6 +84,22 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
     rewardStats,
     onRewardSuccess
   });
+
+  // 长内容展开/折叠状态
+  const contentRef = useRef(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [needsCollapse, setNeedsCollapse] = useState(false);
+  const [hasCheckedHeight, setHasCheckedHeight] = useState(false);
+  const MAX_CONTENT_HEIGHT = 300; // 折叠阈值高度 (px)
+
+  // 检测内容高度 - 使用 useLayoutEffect 在绘制前完成检测，避免闪烁
+  useEffect(() => {
+    if (contentRef.current && !isEditing) {
+      const height = contentRef.current.scrollHeight;
+      setNeedsCollapse(height > MAX_CONTENT_HEIGHT);
+      setHasCheckedHeight(true);
+    }
+  }, [localReply.content, isEditing]);
 
   // 处理键盘快捷键提交
   const handleKeyDown = (e) => {
@@ -266,8 +285,47 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                 </div>
               </div>
             ) : (
-              <div className='max-w-none prose prose-stone dark:prose-invert prose-sm sm:prose-base break-words'>
-                <MarkdownRender content={localReply.content} />
+              <div className="relative">
+                <div 
+                  ref={contentRef}
+                  className={`max-w-none prose prose-stone dark:prose-invert prose-sm sm:prose-base break-words transition-all duration-300 ${
+                    // 检测完成前默认折叠，检测完成后根据实际情况决定
+                    (!hasCheckedHeight || (!isExpanded && needsCollapse)) ? 'max-h-[300px] overflow-hidden' : ''
+                  }`}
+                  style={{
+                    // 只有检测完成且确认需要折叠时才显示渐变遮罩
+                    maskImage: hasCheckedHeight && !isExpanded && needsCollapse 
+                      ? 'linear-gradient(to bottom, black 70%, transparent 100%)' 
+                      : 'none',
+                    WebkitMaskImage: hasCheckedHeight && !isExpanded && needsCollapse
+                      ? 'linear-gradient(to bottom, black 70%, transparent 100%)'
+                      : 'none',
+                  }}
+                >
+                  <MarkdownRender content={localReply.content} />
+                </div>
+                
+                {/* 展开/收起按钮 */}
+                {needsCollapse && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs text-muted-foreground hover:bg-transparent hover:text-primary gap-1.5"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-3.5 w-3.5" />
+                        收起
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3.5 w-3.5" />
+                        展开全部
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
 
