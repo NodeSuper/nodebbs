@@ -101,7 +101,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className='flex items-center space-x-1.5 px-3 py-1.5 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all'
+                  className='flex items-center space-x-1.5 px-3 py-1.5 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50'
                 >
                   <item.icon className='h-4 w-4' />
                   <span>{item.label}</span>
