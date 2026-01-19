@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { Shield, Edit, Plus, Trash2 } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 import { invitationsApi } from '@/lib/api';
-import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 
 const ROLE_LABELS = {
   user: '普通用户',

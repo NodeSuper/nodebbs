@@ -41,7 +41,7 @@ import NotificationPopover from '@/components/common/NotificationPopover';
 import ThemeSwitcher from '@/components/common/ThemeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
-import { useExtensions } from '@/contexts/ExtensionContext';
+import { useLedger } from '@/extensions/ledger/contexts/LedgerContext';
 import { Loading } from '../common/Loading';
 import { getImageUrl, IMAGE_PRESETS } from '@/lib/utils';
 
@@ -49,7 +49,7 @@ export default function Header() {
   const router = useRouter();
   const { user, isAuthenticated, loading, logout, openLoginDialog } = useAuth();
   const { settings } = useSettings();
-  const { isWalletEnabled } = useExtensions();
+  const { isWalletEnabled } = useLedger();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

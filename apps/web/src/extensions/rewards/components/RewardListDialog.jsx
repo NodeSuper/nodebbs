@@ -9,7 +9,7 @@ import { Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from '@/components/common/Link';
 import Time from '@/components/common/Time';
-import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 
 const PAGE_LIMIT = 10;
 

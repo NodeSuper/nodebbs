@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import Time from '@/components/common/Time';
-import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 
 /**
  * 通用勋章组件

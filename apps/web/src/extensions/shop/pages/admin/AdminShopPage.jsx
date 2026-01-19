@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useShopItems } from '../../hooks/useShopItems';
 import { ShopItemTable } from '../../components/admin/ShopItemTable';
 import { ShopItemFormDialog } from '../../components/admin/ShopItemFormDialog';
-import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 
 export default function AdminShopPage() {
   const currencyName = useDefaultCurrencyName();

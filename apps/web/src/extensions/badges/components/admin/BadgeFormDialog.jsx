@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import { FormDialog } from '@/components/common/FormDialog';
 import { ImageUpload } from '@/components/common/ImageUpload';
-import { useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 
 export function BadgeFormDialog({ open, onOpenChange, mode, initialData, onSubmit }) {
   const currencyName = useDefaultCurrencyName();

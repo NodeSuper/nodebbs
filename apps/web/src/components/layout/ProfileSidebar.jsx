@@ -23,14 +23,14 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useExtensions, useDefaultCurrencyName } from '@/contexts/ExtensionContext';
+import { useLedger, useDefaultCurrencyName } from '@/extensions/ledger/contexts/LedgerContext';
 import { messageApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export default function ProfileSidebar() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
-  const { isWalletEnabled } = useExtensions();
+  const { isWalletEnabled } = useLedger();
   const currencyName = useDefaultCurrencyName();
   const [unreadCount, setUnreadCount] = useState(0);
   const [openMenus, setOpenMenus] = useState({

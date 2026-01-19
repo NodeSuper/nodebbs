@@ -3,7 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { ExtensionProvider } from '@/contexts/ExtensionContext';
+import { LedgerProvider } from '@/extensions/ledger/contexts/LedgerContext';
 
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -69,7 +69,7 @@ export default async function RootLayout({ children }) {
         <ThemeProvider>
           <SettingsProvider initialSettings={settings}>
             <AuthProvider initialUser={user}>
-              <ExtensionProvider activeCurrencies={activeCurrencies}>
+              <LedgerProvider activeCurrencies={activeCurrencies}>
                 <AdsProvider>
                 <ProgressBar>
                   <AppLayout apiInfo={apiInfo}>{children}</AppLayout>
@@ -78,7 +78,7 @@ export default async function RootLayout({ children }) {
                   <ConfirmPopoverPortal />
                 </ProgressBar>
                 </AdsProvider>
-              </ExtensionProvider>
+              </LedgerProvider>
             </AuthProvider>
           </SettingsProvider>
         </ThemeProvider>

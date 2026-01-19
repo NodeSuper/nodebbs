@@ -3,12 +3,12 @@
 import { createContext, useContext, useMemo } from 'react';
 import { DEFAULT_CURRENCY_CODE } from '@/extensions/ledger/constants';
 
-const ExtensionContext = createContext(null);
+const LedgerContext = createContext(null);
 
 // 重新导出常量，保持向后兼容
 export { DEFAULT_CURRENCY_CODE };
 
-export function ExtensionProvider({ children, activeCurrencies = [] }) {
+export function LedgerProvider({ children, activeCurrencies = [] }) {
   // 直接使用 SSR 传递的数据，不进行客户端请求
   const extensions = useMemo(() => {
     const defaultCurrency = activeCurrencies.find(
@@ -26,16 +26,16 @@ export function ExtensionProvider({ children, activeCurrencies = [] }) {
   }, [activeCurrencies]);
 
   return (
-    <ExtensionContext.Provider value={extensions}>
+    <LedgerContext.Provider value={extensions}>
       {children}
-    </ExtensionContext.Provider>
+    </LedgerContext.Provider>
   );
 }
 
-export function useExtensions() {
-  const context = useContext(ExtensionContext);
+export function useLedger() {
+  const context = useContext(LedgerContext);
   if (!context) {
-    throw new Error('useExtensions must be used within ExtensionProvider');
+    throw new Error('useLedger must be used within LedgerProvider');
   }
   return context;
 }
@@ -46,7 +46,7 @@ export function useExtensions() {
  * @returns {string} 货币名称，如果找不到则返回 code
  */
 export function useCurrencyName(code = DEFAULT_CURRENCY_CODE) {
-  const { currencies, defaultCurrency } = useExtensions();
+  const { currencies, defaultCurrency } = useLedger();
 
   return useMemo(() => {
     // 如果是默认货币，直接使用缓存的 defaultCurrency

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { rewardsApi, ledgerApi } from '@/lib/api';
 import { Coins, Loader2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDefaultCurrencyName, DEFAULT_CURRENCY_CODE } from '@/contexts/ExtensionContext';
+import { useDefaultCurrencyName, DEFAULT_CURRENCY_CODE } from '@/extensions/ledger/contexts/LedgerContext';
 
 const QUICK_AMOUNTS = [1, 5, 10, 20, 50, 100];
 
