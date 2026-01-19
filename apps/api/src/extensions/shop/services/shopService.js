@@ -6,7 +6,7 @@ import {
 } from '../../../db/schema.js';
 import { sysAccounts, sysTransactions, sysCurrencies } from '../../ledger/schema.js';
 import { userBadges } from '../../badges/schema.js';
-import { eq, and, desc, sql, asc } from 'drizzle-orm';
+import { eq, and, desc, sql, asc, count } from 'drizzle-orm';
 import { grantBadge } from '../../badges/services/badgeService.js';
 import { notificationService } from '../../../services/notificationService.js';
 
@@ -45,20 +45,20 @@ export async function getShopItems(options = {}) {
 
     // 获取总数
     let countQuery = db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(shopItems);
 
     if (conditions.length > 0) {
       countQuery = countQuery.where(and(...conditions));
     }
 
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     return {
       items,
       page,
       limit,
-      total: Number(count),
+      total,
     };
   } catch (error) {
     console.error('[商城] 获取商品列表失败:', error);
@@ -314,18 +314,18 @@ export async function getUserItems(userId, options = {}) {
 
     // 总数
     let countQuery = db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(userItems)
       .innerJoin(shopItems, eq(userItems.itemId, shopItems.id))
       .where(and(...conditions));
 
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     return {
       items,
       page,
       limit,
-      total: Number(count),
+      total,
     };
   } catch (error) {
     console.error('[商城] 获取用户商品失败:', error);

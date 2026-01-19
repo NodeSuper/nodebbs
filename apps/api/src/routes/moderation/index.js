@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { reports, posts, topics, users, moderationLogs } from '../../db/schema.js';
-import { eq, sql, desc, and, ne, like, or, inArray } from 'drizzle-orm';
+import { eq, sql, desc, and, ne, like, or, inArray, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 // 生成举报通知消息
@@ -214,20 +214,20 @@ export default async function moderationRoutes(fastify, options) {
 
     // 获取总数
     let countQuery = db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(reports);
 
     if (conditions.length > 0) {
       countQuery = countQuery.where(and(...conditions));
     }
 
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     return {
       items: enrichedReports,
       page,
       limit,
-      total: Number(count)
+      total
     };
   });
 
@@ -471,13 +471,13 @@ export default async function moderationRoutes(fastify, options) {
   }, async (request, reply) => {
     // 获取待审核话题总数
     const [{ count: topicCount }] = await db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(topics)
       .where(eq(topics.approvalStatus, 'pending'));
 
     // 获取待审核回复总数（排除第一条回复）
     const [{ count: postCount }] = await db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(posts)
       .where(and(
         eq(posts.approvalStatus, 'pending'),
@@ -485,9 +485,9 @@ export default async function moderationRoutes(fastify, options) {
       ));
 
     return {
-      totalTopics: Number(topicCount),
-      totalPosts: Number(postCount),
-      total: Number(topicCount) + Number(postCount)
+      totalTopics: topicCount,
+      totalPosts: postCount,
+      total: topicCount + postCount
     };
   });
 
@@ -606,19 +606,19 @@ export default async function moderationRoutes(fastify, options) {
         );
 
         // 对于有搜索条件的情况，需要join posts表
-        const [{ count }] = await db
-          .select({ count: sql`count(*)` })
+        const [{ count: topicCount }] = await db
+          .select({ count: count() })
           .from(topics)
           .leftJoin(posts, and(eq(posts.topicId, topics.id), eq(posts.postNumber, 1)))
           .where(and(...topicCountConditions));
-        total += Number(count);
+        total += topicCount;
       } else {
         // 没有搜索条件时，直接统计
-        const [{ count }] = await db
-          .select({ count: sql`count(*)` })
+        const [{ count: topicCount }] = await db
+          .select({ count: count() })
           .from(topics)
           .where(and(...topicCountConditions));
-        total += Number(count);
+        total += topicCount;
       }
     }
 
@@ -633,11 +633,11 @@ export default async function moderationRoutes(fastify, options) {
         postCountConditions.push(like(posts.content, `%${search.trim()}%`));
       }
 
-      const [{ count }] = await db
-        .select({ count: sql`count(*)` })
+      const [{ count: postCount }] = await db
+        .select({ count: count() })
         .from(posts)
         .where(and(...postCountConditions));
-      total += Number(count);
+      total += postCount;
     }
 
     return {
@@ -977,7 +977,7 @@ export default async function moderationRoutes(fastify, options) {
 
     // 获取总数
     let countQuery = db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(moderationLogs)
       .innerJoin(users, eq(moderationLogs.moderatorId, users.id));
 
@@ -985,13 +985,13 @@ export default async function moderationRoutes(fastify, options) {
       countQuery = countQuery.where(and(...conditions));
     }
 
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     return {
       items: enrichedLogs,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 

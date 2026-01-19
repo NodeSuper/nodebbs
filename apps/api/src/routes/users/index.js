@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { users, accounts, topics, posts, follows, bookmarks, categories } from '../../db/schema.js';
-import { eq, sql, desc, and, ne, like, inArray } from 'drizzle-orm';
+import { eq, sql, desc, and, ne, like, inArray, count } from 'drizzle-orm';
 import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
@@ -168,11 +168,11 @@ export default async function userRoutes(fastify, options) {
 
 
     // Get total count
-    let countQuery = db.select({ count: sql`count(*)` }).from(users);
+    let countQuery = db.select({ count: count() }).from(users);
     if (conditions.length > 0) {
       countQuery = countQuery.where(and(...conditions));
     }
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     // 获取创始人（第一个管理员）ID
     const [firstAdmin] = await db
@@ -234,7 +234,7 @@ export default async function userRoutes(fastify, options) {
       items: enrichedItems,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 
@@ -322,10 +322,10 @@ export default async function userRoutes(fastify, options) {
     }
 
     // Get stats
-    const [topicCountResult] = await db.select({ count: sql`count(*)` }).from(topics).where(and(eq(topics.userId, user.id), ne(topics.isDeleted, true)));
-    const [postCountResult] = await db.select({ count: sql`count(*)` }).from(posts).where(and(eq(posts.userId, user.id), ne(posts.postNumber, 1)));
-    const [followerCountResult] = await db.select({ count: sql`count(*)` }).from(follows).where(eq(follows.followingId, user.id));
-    const [followingCountResult] = await db.select({ count: sql`count(*)` }).from(follows).where(eq(follows.followerId, user.id));
+    const [{count: topicCount}] = await db.select({ count: count() }).from(topics).where(and(eq(topics.userId, user.id), ne(topics.isDeleted, true)));
+    const [{count: postCount}] = await db.select({ count: count() }).from(posts).where(and(eq(posts.userId, user.id), ne(posts.postNumber, 1)));
+    const [{count: followerCount}] = await db.select({ count: count() }).from(follows).where(eq(follows.followingId, user.id));
+    const [{count: followingCount}] = await db.select({ count: count() }).from(follows).where(eq(follows.followerId, user.id));
 
     // Check if current user is following
     let isFollowing = false;
@@ -341,10 +341,10 @@ export default async function userRoutes(fastify, options) {
 
     const userView = {
       ...user,
-      topicCount: Number(topicCountResult.count),
-      postCount: Number(postCountResult.count),
-      followerCount: Number(followerCountResult.count),
-      followingCount: Number(followingCountResult.count),
+      topicCount,
+      postCount,
+      followerCount,
+      followingCount,
       isFollowing,
     };
 
@@ -887,8 +887,8 @@ export default async function userRoutes(fastify, options) {
     });
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(follows)
       .where(eq(follows.followingId, user.id));
 
@@ -896,7 +896,7 @@ export default async function userRoutes(fastify, options) {
       items: followers,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 
@@ -959,8 +959,8 @@ export default async function userRoutes(fastify, options) {
     });
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(follows)
       .where(eq(follows.followerId, user.id));
 
@@ -968,7 +968,7 @@ export default async function userRoutes(fastify, options) {
       items: following,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 
@@ -1078,8 +1078,8 @@ export default async function userRoutes(fastify, options) {
     });
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(bookmarks)
       .innerJoin(topics, eq(bookmarks.topicId, topics.id))
       .where(and(...conditions));
@@ -1088,7 +1088,7 @@ export default async function userRoutes(fastify, options) {
       items: bookmarkedTopics,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 

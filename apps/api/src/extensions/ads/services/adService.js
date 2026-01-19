@@ -1,6 +1,6 @@
 import db from '../../../db/index.js';
 import { adSlots, ads } from '../schema.js';
-import { eq, and, desc, asc, lte, gte, or, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, lte, gte, or, isNull, sql, count } from 'drizzle-orm';
 
 // ============ 广告位服务 ============
 
@@ -144,7 +144,7 @@ export async function getAds({
       .limit(limit)
       .offset(offset),
     db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(ads)
       .where(conditions.length > 0 ? and(...conditions) : undefined),
   ]);
@@ -156,10 +156,10 @@ export async function getAds({
 
   return {
     items,
-    total: Number(countResult[0].count),
+    total: countResult[0].count,
     page,
     limit,
-    totalPages: Math.ceil(Number(countResult[0].count) / limit),
+    totalPages: Math.ceil(countResult[0].count / limit),
   };
 }
 

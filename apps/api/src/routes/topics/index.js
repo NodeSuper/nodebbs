@@ -15,7 +15,7 @@ import {
   userItems,
   shopItems,
 } from '../../db/schema.js';
-import { eq, sql, desc, and, or, like, inArray, not } from 'drizzle-orm';
+import { eq, sql, desc, and, or, like, inArray, not, count } from 'drizzle-orm';
 import slugify from 'slug';
 import { getSetting } from '../../utils/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
@@ -340,7 +340,7 @@ export default async function topicRoutes(fastify, options) {
       // 重要：必须使用与主查询完全相同的条件，包括 join 和所有过滤器
       // 直接复用 conditions，因为它已经包含了所有必要的过滤条件
       let countQuery = db
-        .select({ count: sql`count(*)` })
+        .select({ count: count() })
         .from(topics)
         .innerJoin(categories, eq(topics.categoryId, categories.id))
         .innerJoin(users, eq(topics.userId, users.id))
@@ -360,13 +360,13 @@ export default async function topicRoutes(fastify, options) {
         }
       }
 
-      const [{ count }] = await countQuery;
+      const [{ count: total }] = await countQuery;
 
       return {
         items: finalResults,
         page,
         limit,
-        total: Number(count),
+        total,
       };
     }
   );

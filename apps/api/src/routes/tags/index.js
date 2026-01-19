@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { tags, topicTags, topics } from '../../db/schema.js';
-import { eq, sql, desc, like } from 'drizzle-orm';
+import { eq, sql, desc, like, count } from 'drizzle-orm';
 import slugify from 'slug';
 
 export default async function tagRoutes(fastify, options) {
@@ -23,7 +23,7 @@ export default async function tagRoutes(fastify, options) {
     const offset = (page - 1) * limit;
 
     let query = db.select().from(tags);
-    let countQuery = db.select({ count: sql`count(*)` }).from(tags);
+    let countQuery = db.select({ count: count() }).from(tags);
 
     if (search) {
       const searchCondition = like(tags.name, `%${search}%`);
@@ -36,13 +36,13 @@ export default async function tagRoutes(fastify, options) {
       .limit(limit)
       .offset(offset);
 
-    const [{ count }] = await countQuery;
+    const [{ count: total }] = await countQuery;
 
     return {
       items: tagsList,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 
@@ -120,8 +120,8 @@ export default async function tagRoutes(fastify, options) {
       .offset(offset);
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(topicTags)
       .where(eq(topicTags.tagId, tag.id));
 
@@ -129,7 +129,7 @@ export default async function tagRoutes(fastify, options) {
       items: topicsList,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 

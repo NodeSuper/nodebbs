@@ -304,7 +304,7 @@ export async function enableInvitationCode(invitationId) {
 export async function getInvitationStats() {
   const stats = await db
     .select({
-      totalCodes: sql`count(*)::int`,
+      totalCodes: count(),
       activeCodes: sql`count(case when status = 'active' then 1 end)::int`,
       usedCodes: sql`count(case when status = 'used' then 1 end)::int`,
       expiredCodes: sql`count(case when status = 'expired' then 1 end)::int`,

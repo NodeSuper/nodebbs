@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { notifications, users, topics, posts } from '../../db/schema.js';
-import { eq, sql, desc, and, like } from 'drizzle-orm';
+import { eq, sql, desc, and, like, count } from 'drizzle-orm';
 
 export default async function notificationRoutes(fastify, options) {
   // Get user notifications
@@ -75,13 +75,13 @@ export default async function notificationRoutes(fastify, options) {
     }
 
     const [{ count: totalCount }] = await db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(notifications)
       .where(and(...totalCountConditions));
 
     // Get unread count
     const [{ count: unreadCount }] = await db
-      .select({ count: sql`count(*)` })
+      .select({ count: count() })
       .from(notifications)
       .where(and(
         eq(notifications.userId, request.user.id),
@@ -92,8 +92,8 @@ export default async function notificationRoutes(fastify, options) {
       items: notificationsList,
       page,
       limit,
-      total: Number(totalCount),
-      unreadCount: Number(unreadCount)
+      total: totalCount,
+      unreadCount: unreadCount
     };
   });
 

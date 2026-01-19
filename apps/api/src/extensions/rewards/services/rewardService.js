@@ -10,7 +10,7 @@ import {
 } from '../../ledger/schema.js';
 import { DEFAULT_CURRENCY_CODE } from '../../ledger/constants.js';
 import { users, userItems, shopItems } from '../../../db/schema.js';
-import { eq, sql, desc, ilike, and, inArray, ne } from 'drizzle-orm';
+import { eq, sql, desc, ilike, and, inArray, ne, count } from 'drizzle-orm';
 import { getPassiveEffects } from '../../badges/services/badgeService.js';
 
 
@@ -224,7 +224,7 @@ export async function getPostRewards(postId, options = {}) {
     const [stats] = await db
       .select({
         totalAmount: sql`sum(${postRewards.amount})`,
-        totalCount: sql`count(*)`,
+        totalCount: count(),
       })
       .from(postRewards)
       .where(eq(postRewards.postId, postId));
@@ -234,7 +234,7 @@ export async function getPostRewards(postId, options = {}) {
       totalAmount: Number(stats?.totalAmount || 0),
       page,
       limit,
-      total: Number(stats?.totalCount || 0),
+      total: stats?.totalCount || 0,
     };
   } catch (error) {
     console.error('[打赏列表] 查询失败:', error);

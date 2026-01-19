@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { categories, topics } from '../../db/schema.js';
-import { eq, sql, desc, isNull, like, and, or } from 'drizzle-orm';
+import { eq, sql, desc, isNull, like, and, or, count } from 'drizzle-orm';
 import slugify from 'slug'
 
 export default async function categoryRoutes(fastify, options) {
@@ -143,7 +143,7 @@ export default async function categoryRoutes(fastify, options) {
       allCategories.map(async (category) => {
         // 获取话题数量
         const [topicCount] = await db
-          .select({ count: sql`count(*)` })
+          .select({ count: count() })
           .from(topics)
           .where(and(
             eq(topics.categoryId, category.id),
@@ -181,7 +181,7 @@ export default async function categoryRoutes(fastify, options) {
 
         return {
           ...category,
-          topicCount: Number(topicCount.count),
+          topicCount: topicCount.count,
           postCount: Number(stats.postCount),
           viewCount: Number(stats.viewCount),
           latestTopic: latestTopic || null
@@ -244,8 +244,8 @@ export default async function categoryRoutes(fastify, options) {
     }
 
     // Get topic count
-    const [topicCount] = await db
-      .select({ count: sql`count(*)` })
+    const [{count: topicCount}] = await db
+      .select({ count: count() })
       .from(topics)
       .where(eq(topics.categoryId, category.id));
 
@@ -262,7 +262,7 @@ export default async function categoryRoutes(fastify, options) {
 
     return {
       ...category,
-      topicCount: Number(topicCount.count),
+      topicCount,
       subcategories
     };
   });
@@ -414,9 +414,9 @@ export default async function categoryRoutes(fastify, options) {
     }
 
     // Check if category has topics
-    const [topicCount] = await db.select({ count: sql`count(*)` }).from(topics).where(eq(topics.categoryId, id));
+    const [topicCount] = await db.select({ count: count() }).from(topics).where(eq(topics.categoryId, id));
 
-    if (Number(topicCount.count) > 0) {
+    if (topicCount.count > 0) {
       return reply.code(400).send({ error: '无法删除包含话题的分类' });
     }
 

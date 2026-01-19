@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { posts, topics, users, likes, subscriptions, moderationLogs, blockedUsers, userItems, shopItems } from '../../db/schema.js';
-import { eq, sql, desc, and, inArray, ne, like, or, not } from 'drizzle-orm';
+import { eq, sql, desc, and, inArray, ne, like, or, not, count } from 'drizzle-orm';
 import { getSetting } from '../../utils/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
 import { sysCurrencies, sysAccounts } from '../../extensions/ledger/schema.js';
@@ -377,8 +377,8 @@ export default async function postRoutes(fastify, options) {
         });
     }
     // 使用相同条件构建计数查询
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
       .where(and(...whereConditions));
@@ -387,7 +387,7 @@ export default async function postRoutes(fastify, options) {
       items: postsList,
       page,
       limit,
-      total: Number(count)
+      total,
     };
   });
 
@@ -489,8 +489,8 @@ export default async function postRoutes(fastify, options) {
     }
 
     // 5. 统计该帖子之前有多少条可见回复 (按 postNumber 排序)
-    const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(posts)
       .where(
         and(
@@ -499,7 +499,7 @@ export default async function postRoutes(fastify, options) {
         )
       );
 
-    const position = Number(count) + 1; // 位置从1开始
+    const position = total + 1; // 位置从1开始
     const page = Math.ceil(position / limit);
 
     return {

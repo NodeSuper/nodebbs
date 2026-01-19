@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { messages, users, blockedUsers } from '../../db/schema.js';
-import { eq, sql, desc, and, or, like } from 'drizzle-orm';
+import { eq, sql, desc, and, or, like, count } from 'drizzle-orm';
 
 export default async function messageRoutes(fastify) {
   // Get conversations list (grouped by user)
@@ -218,8 +218,8 @@ export default async function messageRoutes(fastify) {
         .offset(offset);
 
       // Get total count with same conditions
-      const [{ count }] = await db
-        .select({ count: sql`count(*)` })
+      const [{ count: total }] = await db
+        .select({ count: count() })
         .from(messages)
         .where(and(...conditions));
 
@@ -227,7 +227,7 @@ export default async function messageRoutes(fastify) {
       let unreadCount = 0;
       if (box === 'inbox') {
         const [{ count: unread }] = await db
-          .select({ count: sql`count(*)` })
+          .select({ count: count() })
           .from(messages)
           .where(
             and(
@@ -236,14 +236,14 @@ export default async function messageRoutes(fastify) {
               eq(messages.isDeletedByRecipient, false)
             )
           );
-        unreadCount = Number(unread);
+        unreadCount = unread;
       }
 
       return {
         items: messagesList,
         page,
         limit,
-        total: Number(count),
+        total,
         unreadCount,
       };
     }
@@ -714,7 +714,7 @@ export default async function messageRoutes(fastify) {
 
       // Get total count
       const [{ count }] = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: count() })
         .from(messages)
         .where(
           or(
@@ -748,7 +748,7 @@ export default async function messageRoutes(fastify) {
         items: conversation,
         page,
         limit,
-        total: Number(count),
+        total: count,
       };
     }
   );

@@ -3,7 +3,7 @@ import { join } from 'path';
 import { dirname } from '../utils/index.js';
 import db from '../db/index.js';
 import { topics, posts, users } from '../db/schema.js';
-import { sql, gte, eq, and, ne } from 'drizzle-orm';
+import { sql, gte, eq, and, ne, count } from 'drizzle-orm';
 
 const __dirname = dirname(import.meta.url);
 const pkg = JSON.parse(
@@ -64,19 +64,19 @@ export default async function rootRoutes(fastify, options) {
     async (request, reply) => {
       // Get total topics count (excluding deleted)
       const [{ count: totalTopics }] = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: count() })
         .from(topics)
         .where(eq(topics.isDeleted, false));
 
       // Get total posts count (excluding deleted)
       const [{ count: totalPosts }] = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: count() })
         .from(posts)
         .where(and(eq(posts.isDeleted, false), ne(posts.postNumber, 1)));
 
       // Get total users count (excluding deleted)
       const [{ count: totalUsers }] = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: count() })
         .from(users)
         .where(eq(users.isDeleted, false));
 
@@ -84,9 +84,9 @@ export default async function rootRoutes(fastify, options) {
       const onlineStats = await fastify.getOnlineStats();
 
       return {
-        totalTopics: Number(totalTopics),
-        totalPosts: Number(totalPosts),
-        totalUsers: Number(totalUsers),
+        totalTopics,
+        totalPosts,
+        totalUsers,
         online: onlineStats,
       };
     }

@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { blockedUsers, users } from '../../db/schema.js';
-import { eq, and, or, sql } from 'drizzle-orm';
+import { eq, and, or, sql, count } from 'drizzle-orm';
 
 export default async function blockedUsersRoutes(fastify) {
   // Get blocked users list
@@ -27,8 +27,8 @@ export default async function blockedUsersRoutes(fastify) {
       const offset = (page - 1) * limit;
 
       // Get total count
-      const [{ count }] = await db
-        .select({ count: sql`count(*)` })
+      const [{ count: total }] = await db
+        .select({ count: count() })
         .from(blockedUsers)
         .where(eq(blockedUsers.userId, request.user.id));
 
@@ -54,7 +54,7 @@ export default async function blockedUsersRoutes(fastify) {
         items: blockedList,
         page,
         limit,
-        total: Number(count),
+        total,
       };
     }
   );

@@ -1,6 +1,6 @@
 import db from '../../db/index.js';
 import { users, categories, topics, posts } from '../../db/schema.js';
-import { sql, eq, and, ne } from 'drizzle-orm';
+import { sql, eq, and, ne, count } from 'drizzle-orm';
 
 export default async function dashboardRoutes(fastify, options) {
   // 获取统计数据（仅管理员可访问）
@@ -32,24 +32,24 @@ export default async function dashboardRoutes(fastify, options) {
         postsCount
       ] = await Promise.all([
         // 总用户数（排除已删除用户）
-        db.select({ count: sql`count(*)` })
+        db.select({ count: count() })
           .from(users)
           .where(eq(users.isDeleted, false))
           .then(result => result[0]),
 
         // 分类数量
-        db.select({ count: sql`count(*)` })
+        db.select({ count: count() })
           .from(categories)
           .then(result => result[0]),
 
         // 话题数量（排除已删除话题）
-        db.select({ count: sql`count(*)` })
+        db.select({ count: count() })
           .from(topics)
           .where(eq(topics.isDeleted, false))
           .then(result => result[0]),
 
         // 回复数量（排除第一条回复，因为第一条回复是话题内容本身）
-        db.select({ count: sql`count(*)` })
+        db.select({ count: count() })
           .from(posts)
           .where(and(
             eq(posts.isDeleted, false),
@@ -59,10 +59,10 @@ export default async function dashboardRoutes(fastify, options) {
       ]);
 
       return {
-        totalUsers: Number(usersCount.count),
-        totalCategories: Number(categoriesCount.count),
-        totalTopics: Number(topicsCount.count),
-        totalPosts: Number(postsCount.count)
+        totalUsers: usersCount.count,
+        totalCategories: categoriesCount.count,
+        totalTopics: topicsCount.count,
+        totalPosts: postsCount.count
       };
     } catch (error) {
       fastify.log.error('获取统计数据失败:', error);

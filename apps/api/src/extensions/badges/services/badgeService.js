@@ -2,7 +2,7 @@ import db from '../../../db/index.js';
 import { badges, userBadges } from '../schema.js';
 import { userCheckIns } from '../../rewards/schema.js';
 import { users, topics, posts, shopItems } from '../../../db/schema.js';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray, count } from 'drizzle-orm';
 
 /**
  * 授予用户徽章
@@ -74,7 +74,7 @@ export async function getBadges(options = {}) {
   }
   
   let query = db.select().from(badges);
-  let countQuery = db.select({ count: sql`count(*)` }).from(badges);
+  let countQuery = db.select({ count: count() }).from(badges);
 
   if (conditions.length > 0) {
     const condition = and(...conditions);
@@ -87,13 +87,13 @@ export async function getBadges(options = {}) {
     .limit(limit)
     .offset(offset);
 
-  const [{ count }] = await countQuery;
+  const [{ count: total }] = await countQuery;
   
   return {
     items,
     page,
     limit,
-    total: Number(count)
+    total,
   };
 }
 
@@ -196,13 +196,13 @@ export async function checkBadgeConditions(userId) {
 
   // 统计帖子数
   const [{ count: postCount }] = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: count() })
     .from(posts)
     .where(and(eq(posts.userId, userId), eq(posts.isDeleted, false)));
 
   // 统计话题数
   const [{ count: topicCount }] = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: count() })
     .from(topics)
     .where(and(eq(topics.userId, userId), eq(topics.isDeleted, false)));
 

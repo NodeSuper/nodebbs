@@ -143,13 +143,13 @@ export default async function ledgerRoutes(fastify, options) {
          .limit(limit)
          .offset(offset);
          
-       const [total] = await db.select({ count: sql`count(*)` })
+       const [{count: total}] = await db.select({ count: count() })
          .from(sysTransactions)
          .where(whereClause);
          
        return {
            items,
-           total: Number(total.count),
+           total,
            page,
            limit
        };
