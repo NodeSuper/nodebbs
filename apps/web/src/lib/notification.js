@@ -1,12 +1,12 @@
 import {
   Bell,
   MessageCircle,
-  Heart,
   UserPlus,
   Medal,
   Gift,
   Coins,
   CheckCheck,
+  ThumbsUp,
 } from 'lucide-react';
 
 export const getNotificationIcon = (type) => {
@@ -17,7 +17,7 @@ export const getNotificationIcon = (type) => {
     case 'mention':
       return <MessageCircle className='h-4 w-4 text-purple-500' />;
     case 'like':
-      return <Heart className='h-4 w-4 text-red-500' />;
+      return <ThumbsUp className='h-4 w-4 text-red-500' />;
     case 'follow':
       return <UserPlus className='h-4 w-4 text-green-500' />;
     case 'message':

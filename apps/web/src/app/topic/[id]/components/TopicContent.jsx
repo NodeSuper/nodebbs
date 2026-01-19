@@ -4,12 +4,12 @@ import Link from '@/components/common/Link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Heart,
   Pin,
   Archive,
   Loader2,
   AlertCircle,
   Coins,
+  ThumbsUp,
 } from 'lucide-react';
 import MarkdownRender from '@/components/common/MarkdownRender';
 import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
@@ -186,7 +186,7 @@ export default function TopicContent() {
                   <Loader2 className='h-4 w-4 animate-spin' />
                 ) : (
                   <>
-                    <Heart
+                    <ThumbsUp
                       className={`h-4 w-4 ${
                         likeState.isFirstPostLiked ? 'fill-current' : ''
                       }`}

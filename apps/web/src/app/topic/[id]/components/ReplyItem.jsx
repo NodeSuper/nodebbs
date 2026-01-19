@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import MarkdownEditor from '@/components/common/MarkdownEditor';
 import CopyButton from '@/components/common/CopyButton';
 import {
-  Heart,
   MoreHorizontal,
   Loader2,
   Flag,
@@ -20,6 +19,7 @@ import {
   Pencil,
   ChevronDown,
   ChevronUp,
+  ThumbsUp,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -381,7 +381,7 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
                   <Loader2 className='h-4 w-4 animate-spin' />
                 ) : (
                   <>
-                    <Heart
+                    <ThumbsUp
                       className={`h-4 w-4 ${
                         localReply.isLiked ? 'fill-current' : ''
                       }`}

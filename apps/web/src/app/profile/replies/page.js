@@ -5,7 +5,7 @@ import Link from '@/components/common/Link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/common/PageHeader';
-import { MessageCircle, ExternalLink, Heart, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageCircle, ExternalLink, ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { postApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -63,7 +63,7 @@ function ReplyCard({ reply }) {
               </span>
               {reply.likeCount > 0 && (
                 <Badge variant='secondary' className='text-xs h-5 px-1.5 gap-0.5'>
-                  <Heart className='h-3 w-3' />
+                  <ThumbsUp className='h-3 w-3' />
                   {reply.likeCount}
                 </Badge>
               )}
