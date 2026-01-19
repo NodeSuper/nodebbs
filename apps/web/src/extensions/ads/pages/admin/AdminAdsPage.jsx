@@ -202,6 +202,32 @@ export default function AdminAdsPage() {
     }
   };
 
+  const handleToggleSlotStatus = async (slot) => {
+    const newStatus = !slot.isActive;
+    
+    // Optimistic update
+    setSlots(prev => prev.map(item => 
+      item.id === slot.id ? { ...item, isActive: newStatus, _updating: true } : item
+    ));
+
+    try {
+      await adsApi.admin.slots.update(slot.id, { isActive: newStatus });
+      toast.success(newStatus ? '广告位已启用' : '广告位已禁用');
+      
+      // Confirm update (clear loading state)
+      setSlots(prev => prev.map(item => 
+        item.id === slot.id ? { ...item, isActive: newStatus, _updating: false } : item
+      ));
+    } catch (err) {
+      console.error('更新广告位状态失败:', err);
+      toast.error('更新状态失败：' + err.message);
+      // Revert on failure
+      setSlots(prev => prev.map(item => 
+        item.id === slot.id ? { ...item, isActive: !newStatus, _updating: false } : item
+      ));
+    }
+  };
+
   // ============ 广告操作 ============
   const openCreateAdDialog = () => {
     setAdDialogMode('create');
@@ -298,6 +324,32 @@ export default function AdminAdsPage() {
     }
   };
 
+  const handleToggleAdStatus = async (ad) => {
+    const newStatus = !ad.isActive;
+    
+    // Optimistic update
+    setAds(prev => prev.map(item => 
+      item.id === ad.id ? { ...item, isActive: newStatus, _updating: true } : item
+    ));
+
+    try {
+      await adsApi.admin.updateAd(ad.id, { isActive: newStatus });
+      toast.success(newStatus ? '广告已启用' : '广告已禁用');
+      
+      // Confirm update
+      setAds(prev => prev.map(item => 
+        item.id === ad.id ? { ...item, isActive: newStatus, _updating: false } : item
+      ));
+    } catch (err) {
+      console.error('更新广告状态失败:', err);
+      toast.error('更新状态失败：' + err.message);
+      // Revert on failure
+      setAds(prev => prev.map(item => 
+        item.id === ad.id ? { ...item, isActive: !newStatus, _updating: false } : item
+      ));
+    }
+  };
+
   // 格式化日期
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -379,8 +431,15 @@ export default function AdminAdsPage() {
                 key: 'isActive',
                 label: '状态',
                 width: 'w-[80px]',
-                render: (isActive) => (
-                  <Badge variant={isActive ? 'default' : 'secondary'}>
+                render: (isActive, ad) => (
+                  <Badge 
+                    variant={isActive ? 'default' : 'secondary'}
+                    className={`cursor-pointer hover:opacity-80 transition-opacity ${ad._updating ? 'opacity-50 pointer-events-none' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleAdStatus(ad);
+                    }}
+                  >
                     {isActive ? '启用' : '禁用'}
                   </Badge>
                 ),
@@ -501,8 +560,15 @@ export default function AdminAdsPage() {
                 key: 'isActive',
                 label: '状态',
                 width: 'w-[80px]',
-                render: (isActive) => (
-                  <Badge variant={isActive ? 'default' : 'secondary'}>
+                render: (isActive, slot) => (
+                  <Badge 
+                    variant={isActive ? 'default' : 'secondary'}
+                    className={`cursor-pointer hover:opacity-80 transition-opacity ${slot._updating ? 'opacity-50 pointer-events-none' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleSlotStatus(slot);
+                    }}
+                  >
                     {isActive ? '启用' : '禁用'}
                   </Badge>
                 ),
