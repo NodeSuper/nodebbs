@@ -10,9 +10,13 @@ import { cn } from '@/lib/utils';
  * @param {string} props.slotCode - 广告位代码
  * @param {string} [props.className] - 自定义样式类
  * @param {boolean} [props.showEmpty=false] - 无广告时是否显示占位
+ * @param {'cover' | 'contain' | 'fill' | 'none' | 'scale-down'} [props.imageFit='cover'] - 图片填充模式
  */
-export default function AdSlot({ slotCode, className, showEmpty = false }) {
+export default function AdSlot({ slotCode, className, showEmpty = false, imageFit = 'cover' }) {
   const { slot, ads, loading, error, recordClick } = useAds(slotCode);
+
+  // 判断是否为横幅广告（宽高比 > 2）
+  const isBanner = slot?.width && slot?.height && slot.width / slot.height > 2;
 
   // 渲染单个广告
   const renderAd = (ad) => {
@@ -32,11 +36,21 @@ export default function AdSlot({ slotCode, className, showEmpty = false }) {
             <img
               src={ad.content}
               alt={ad.title}
-              className="max-w-full h-auto"
-              style={{
-                maxWidth: slot?.width ? `${slot.width}px` : undefined,
-                maxHeight: slot?.height ? `${slot.height}px` : undefined,
-              }}
+              className={cn(
+                'block mx-auto rounded-lg',
+                isBanner
+                  ? 'max-w-full' // Banner: 最大宽度 100%
+                  : 'w-full h-auto object-contain' // Rectangle: 宽度受限，高度自适应
+              )}
+              style={
+                isBanner
+                  ? { 
+                      width: '100%', 
+                      height: `${slot.height}px`, // 固定高度
+                      objectFit: imageFit
+                    } 
+                  : { maxWidth: `${slot.width}px` } // Rectangle: 限制最大宽度
+              }
             />
           </a>
         );
@@ -69,12 +83,14 @@ export default function AdSlot({ slotCode, className, showEmpty = false }) {
       return (
         <div
           className={cn(
-            'flex items-center justify-center bg-muted/30 text-muted-foreground text-sm rounded',
+            'flex items-center justify-center bg-muted/30 text-muted-foreground text-sm rounded-lg',
             className
           )}
           style={{
-            width: slot.width ? `${slot.width}px` : '100%',
-            height: slot.height ? `${slot.height}px` : '90px',
+            maxWidth: isBanner ? 'none' : (slot.width ? `${slot.width}px` : '100%'),
+            width: '100%',
+            height: isBanner ? 'auto' : (slot.height ? `${slot.height}px` : '90px'),
+            minHeight: isBanner ? `${slot.height}px` : undefined,
           }}
         >
           广告位
@@ -85,7 +101,7 @@ export default function AdSlot({ slotCode, className, showEmpty = false }) {
   }
 
   return (
-    <div className={cn('ad-slot', className)} data-slot={slotCode}>
+    <div className={cn('promo-slot', className)} data-slot={slotCode}>
       {ads.map(renderAd)}
     </div>
   );

@@ -228,6 +228,7 @@ export function TopicListUI({
   limit,
   showPagination,
   onPageChange,
+  itemInserts,
 }) {
   // 空状态
   if (topics.length === 0) {
@@ -239,8 +240,15 @@ export function TopicListUI({
       <div className='bg-card sm:border sm:border-border sm:rounded-xl overflow-hidden w-full'>
         {/* 话题列表 */}
         <div className='divide-y divide-border/60'>
-          {topics.map((topic) => (
-            <TopicItem key={topic.id} topic={topic} />
+          {topics.map((topic, index) => (
+            <div key={topic.id} className="contents">
+              <TopicItem topic={topic} />
+              {itemInserts && itemInserts[index] && (
+                 <div className="border-t border-border/60">
+                    {itemInserts[index]}
+                 </div>
+              )}
+            </div>
           ))}
         </div>
       </div>

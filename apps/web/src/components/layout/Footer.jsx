@@ -3,7 +3,6 @@
 
 import Link from '@/components/common/Link';
 import { useSettings } from '@/contexts/SettingsContext';
-import { AdSlot } from '@/extensions/ads/components';
 import { Github } from 'lucide-react';
 
 export default function Footer({ version }) {
@@ -18,7 +17,6 @@ export default function Footer({ version }) {
   return (
     <footer className="border-t border-border bg-background mt-auto">
       <div className="container mx-auto px-4 py-6">
-        <AdSlot slotCode='footer_banner'/>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           {/* 左侧：自定义内容 或 默认版权信息 */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">

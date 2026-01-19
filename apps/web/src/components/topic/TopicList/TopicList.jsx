@@ -43,6 +43,7 @@ export default function TopicList({
   
   // 皮肤配置
   uiComponent: UIComponent = TopicListUI, // 允许注入自定义 UI 组件，默认为标准列表
+  itemInserts, // 插入内容映射 { index: ReactNode }
   ...restProps // 透传给 UI 组件的其他属性
 }) {
   const router = useRouter();
@@ -186,6 +187,7 @@ export default function TopicList({
       limit={limit}
       showPagination={showPagination}
       onPageChange={handlePageChange}
+      itemInserts={itemInserts}
       {...restProps}
     />
   );

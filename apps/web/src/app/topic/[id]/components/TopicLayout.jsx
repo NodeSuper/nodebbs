@@ -2,6 +2,7 @@
 
 import StickySidebar from '@/components/common/StickySidebar';
 import { TopicProvider } from '@/contexts/TopicContext';
+import { AdSlot } from '@/extensions/ads/components';
 import TopicContent from './TopicContent';
 import ReplySection from './ReplySection';
 import TopicSidebar from './TopicSidebar';
@@ -47,6 +48,7 @@ function TopicLayoutContent({
       <main className='flex gap-6'>
         {/* 主要内容区域 */}
         <div className='flex-1 min-w-0'>
+          <AdSlot slotCode='topic_detail_top' className='mb-4' />
           {/* 话题内容 */}
           <TopicContent />
 
@@ -58,12 +60,15 @@ function TopicLayoutContent({
             currentPage={currentPage}
             limit={limit}
           />
+          <AdSlot slotCode='topic_detail_bottom' className='mt-4' />
         </div>
 
         {/* 右侧边栏 */}
         <div className='fixed z-10 -left-full lg:static lg:w-64 shrink-0'>
-          <StickySidebar className='sticky top-[107px]'>
+          <StickySidebar className='sticky top-[107px] space-y-4'>
+            <AdSlot slotCode='topic_sidebar_top' />
             <TopicSidebar />
+            <AdSlot slotCode='topic_sidebar_bottom' />
           </StickySidebar>
         </div>
       </main>

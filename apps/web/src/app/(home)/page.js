@@ -1,6 +1,7 @@
 import { getTopicsData } from '@/lib/server/topics';
 import { TopicList } from '@/components/topic/TopicList';
 import { TopicSortTabs } from '@/components/topic/TopicSortTabs';
+import { AdSlot } from '@/extensions/ads/components';
 
 // 页面标题映射
 const PAGE_OPTS = {
@@ -68,8 +69,6 @@ export default async function HomePage({ searchParams }) {
 
         <TopicSortTabs defaultValue={sort} className='w-auto' />
       </div>
-
-      {/* 话题列表（客户端组件） */}
       <TopicList
         initialData={data.items}
         total={data.total}
@@ -77,8 +76,10 @@ export default async function HomePage({ searchParams }) {
         totalPages={totalPages}
         limit={LIMIT}
         showPagination={true}
-
         useUrlPagination={true}
+        itemInserts={{
+          4: <AdSlot slotCode='topic_list_inline' className='p-3' />
+        }}
       />
     </>
   );
