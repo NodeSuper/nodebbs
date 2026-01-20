@@ -75,18 +75,22 @@ function EmailProviderCard({
   testingProvider, 
   setTestingProvider 
 }) {
+  // 从 provider.config 对象中提取配置（新 API 返回已解析的 JSON）
+  const config = provider.config || {};
+  
   const [formData, setFormData] = useState({
     isEnabled: provider.isEnabled,
     isDefault: provider.isDefault,
-    smtpHost: provider.smtpHost || '',
-    smtpPort: provider.smtpPort || 587,
-    smtpSecure: provider.smtpSecure !== null ? provider.smtpSecure : true,
-    smtpUser: provider.smtpUser || '',
-    smtpPassword: provider.smtpPassword || '',
-    fromEmail: provider.fromEmail || '',
-    fromName: provider.fromName || '',
-    apiKey: provider.apiKey || '',
-    apiEndpoint: provider.apiEndpoint || '',
+    // 配置字段（存储在 config JSON 中）
+    smtpHost: config.smtpHost || '',
+    smtpPort: config.smtpPort || 587,
+    smtpSecure: config.smtpSecure !== undefined ? config.smtpSecure : true,
+    smtpUser: config.smtpUser || '',
+    smtpPassword: config.smtpPassword || '',
+    fromEmail: config.fromEmail || '',
+    fromName: config.fromName || '',
+    apiKey: config.apiKey || '',
+    apiEndpoint: config.apiEndpoint || '',
   });
   const [saving, setSaving] = useState(false);
   const [testEmail, setTestEmail] = useState('');
@@ -98,11 +102,36 @@ function EmailProviderCard({
   const handleSave = async () => {
     try {
       setSaving(true);
-      await emailConfigApi.updateProvider(provider.provider, formData);
+      // 将配置字段打包到 config 对象中
+      const updatePayload = {
+        isEnabled: formData.isEnabled,
+        isDefault: formData.isDefault,
+        config: {
+          fromEmail: formData.fromEmail,
+          fromName: formData.fromName,
+          ...(isSmtpBased && {
+            smtpHost: formData.smtpHost,
+            smtpPort: formData.smtpPort,
+            smtpSecure: formData.smtpSecure,
+            smtpUser: formData.smtpUser,
+            smtpPassword: formData.smtpPassword,
+          }),
+          ...(isApiBased && {
+            apiKey: formData.apiKey,
+            apiEndpoint: formData.apiEndpoint,
+          }),
+        },
+      };
+      
+      await emailConfigApi.updateProvider(provider.provider, updatePayload);
       toast.success(`${provider.displayName} 配置已保存`);
       setEditingProvider(null);
-      // 局部更新状态，无需重新请求接口
-      onUpdate(provider.provider, formData);
+      // 局部更新状态
+      onUpdate(provider.provider, {
+        isEnabled: formData.isEnabled,
+        isDefault: formData.isDefault,
+        config: updatePayload.config,
+      });
     } catch (error) {
       console.error('Failed to update Email provider:', error);
       toast.error('保存配置失败');
@@ -136,7 +165,6 @@ function EmailProviderCard({
     try {
       await emailConfigApi.updateProvider(provider.provider, { isEnabled: checked });
       toast.success(checked ? `${provider.displayName} 已启用` : `${provider.displayName} 已禁用`);
-      // 局部更新状态，无需重新请求接口
       onUpdate(provider.provider, { isEnabled: checked });
     } catch (error) {
       console.error('Failed to toggle Email provider:', error);
@@ -173,18 +201,19 @@ function EmailProviderCard({
                 size='sm'
                 onClick={() => {
                   setEditingProvider(provider.provider);
+                  const cfg = provider.config || {};
                   setFormData({
                     isEnabled: provider.isEnabled,
                     isDefault: provider.isDefault,
-                    smtpHost: provider.smtpHost || '',
-                    smtpPort: provider.smtpPort || 587,
-                    smtpSecure: provider.smtpSecure !== null ? provider.smtpSecure : true,
-                    smtpUser: provider.smtpUser || '',
-                    smtpPassword: provider.smtpPassword || '',
-                    fromEmail: provider.fromEmail || '',
-                    fromName: provider.fromName || '',
-                    apiKey: provider.apiKey || '',
-                    apiEndpoint: provider.apiEndpoint || '',
+                    smtpHost: cfg.smtpHost || '',
+                    smtpPort: cfg.smtpPort || 587,
+                    smtpSecure: cfg.smtpSecure !== undefined ? cfg.smtpSecure : true,
+                    smtpUser: cfg.smtpUser || '',
+                    smtpPassword: cfg.smtpPassword || '',
+                    fromEmail: cfg.fromEmail || '',
+                    fromName: cfg.fromName || '',
+                    apiKey: cfg.apiKey || '',
+                    apiEndpoint: cfg.apiEndpoint || '',
                   });
                 }}
               >
@@ -357,7 +386,7 @@ function EmailProviderCard({
               <Button
                 variant='outline'
                 onClick={handleTest}
-                disabled={testingProvider === provider.provider || !provider.fromEmail || !testEmail}
+                disabled={testingProvider === provider.provider || !config.fromEmail || !testEmail}
               >
                 {testingProvider === provider.provider ? (
                   <>
@@ -373,14 +402,14 @@ function EmailProviderCard({
         )}
 
         {/* 当前配置概览（非编辑状态） */}
-        {!isEditing && provider.fromEmail && (
+        {!isEditing && config.fromEmail && (
           <div className='text-sm text-muted-foreground space-y-1 pt-4 border-t border-border'>
-            <div>发件人: {provider.fromName} &lt;{provider.fromEmail}&gt;</div>
-            {isSmtpBased && provider.smtpHost && (
-              <div className='text-xs'>SMTP: {provider.smtpHost}:{provider.smtpPort}</div>
+            <div>发件人: {config.fromName} &lt;{config.fromEmail}&gt;</div>
+            {isSmtpBased && config.smtpHost && (
+              <div className='text-xs'>SMTP: {config.smtpHost}:{config.smtpPort}</div>
             )}
-            {isApiBased && provider.apiKey && (
-              <div className='text-xs'>API Key: {provider.apiKey.substring(0, 20)}...</div>
+            {isApiBased && config.apiKey && (
+              <div className='text-xs'>API Key: {config.apiKey.substring(0, 20)}...</div>
             )}
           </div>
         )}

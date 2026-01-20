@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { useSettings } from '@/contexts/SettingsContext';
 import { toast } from 'sonner';
-import { Settings, ToggleLeft, Gauge, Layers, Mail, Shield } from 'lucide-react';
+import { Settings, ToggleLeft, Gauge, Layers, MessageSquare, Shield } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 import { PageHeader } from '@/components/common/PageHeader';
 
@@ -19,7 +19,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { GeneralSettings } from './components/GeneralSettings';
 import { FeatureSettings } from './components/FeatureSettings';
 import { OAuthSettings } from './components/OAuthProviderCard';
-import { EmailSettings } from './components/EmailProviderCard';
+import { MessageSettings } from './components/MessageSettings';
 import { RateLimitSettings } from './components/RateLimitSettings';
 import { CaptchaSettings } from './components/CaptchaSettings';
 
@@ -45,10 +45,10 @@ const tabItems = [
     icon: Layers,
   },
   {
-    value: 'email',
-    label: '邮件服务',
-    shortLabel: '邮件',
-    icon: Mail,
+    value: 'message',
+    label: '消息服务',
+    shortLabel: '消息',
+    icon: MessageSquare,
   },
   {
     value: 'rate-limit',
@@ -189,9 +189,9 @@ export default function SystemSettingsPage() {
           <OAuthSettings />
         </TabsContent>
 
-        {/* 邮件服务配置 Tab */}
-        <TabsContent value='email'>
-          <EmailSettings />
+        {/* 消息服务配置 Tab */}
+        <TabsContent value='message'>
+          <MessageSettings />
         </TabsContent>
 
         {/* 访问限速 Tab */}

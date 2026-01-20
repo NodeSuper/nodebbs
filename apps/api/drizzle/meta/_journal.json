@@ -8,6 +8,13 @@
       "when": 1765547640840,
       "tag": "0003_handy_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768889750647,
+      "tag": "0001_rich_mephistopheles",
+      "breakpoints": true
     }
   ]
 }

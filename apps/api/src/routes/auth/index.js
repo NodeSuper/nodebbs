@@ -7,13 +7,14 @@ import {
   createVerificationCode,
   verifyCode,
   deleteVerificationCode,
-} from '../../utils/verificationCode.js';
+  validateVerificationRequest,
+} from '../../plugins/message/utils/verificationCode.js';
 import {
   VerificationCodeType,
   VerificationChannel,
   UserValidation,
   getVerificationCodeConfig,
-} from '../../config/verificationCode.js';
+} from '../../plugins/message/config/verificationCode.js';
 import {
   validateUsername,
 } from '../../utils/validateUsername.js';
@@ -767,110 +768,35 @@ export default async function authRoutes(fastify, options) {
       identifier = normalizeIdentifier(identifier);
 
       try {
-        // 获取验证码配置
-        const config = getVerificationCodeConfig(type);
-        if (!config) {
-          return reply.code(400).send({ error: '无效的验证码类型' });
-        }
+        // 使用工具函数统一处理参数校验、权限校验和用户状态校验
+        const validation = await validateVerificationRequest(
+          identifier, 
+          type, 
+          request.user
+        );
 
-        // 检查是否需要认证
-        if (config.requireAuth && !request.user) {
-          return reply.code(401).send({ error: '需要登录后才能执行此操作' });
-        }
+        if (!validation.isValid) {
+          // 如果需要伪造成功响应（防账号枚举）
+          if (validation.shouldFakeSuccess) {
+            // 引入随机延迟（500ms - 1500ms）以防御时序攻击
+            // 模拟真实发送邮件/短信的网络耗时
+            const delay = Math.floor(Math.random() * 1000) + 500;
+            await new Promise(resolve => setTimeout(resolve, delay));
 
-        // 根据渠道验证标识符格式
-        const isEmailChannel = config.channel === VerificationChannel.EMAIL;
-        const isSmsChannel = config.channel === VerificationChannel.SMS;
-
-        if (isEmailChannel) {
-          // 邮件渠道：验证邮箱格式
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(identifier)) {
-            return reply.code(400).send({ error: '请输入有效的邮箱地址' });
-          }
-        } else if (isSmsChannel) {
-          // 短信渠道：验证手机号格式（中国大陆）
-          const phoneRegex = /^1[3-9]\d{9}$/;
-          if (!phoneRegex.test(identifier)) {
-            return reply
-              .code(400)
-              .send({ error: '请输入有效的手机号（仅支持中国大陆手机号）' });
-          }
-        }
-
-        // 根据配置的用户验证规则进行验证
-        let user = null;
-
-        if (config.userValidation === UserValidation.MUST_EXIST) {
-          // 用户必须存在（登录、密码重置、更换账号）
-          const [existingUser] = await db
-            .select()
-            .from(users)
-            .where(
-              isEmailChannel
-                ? eq(users.email, identifier)
-                : eq(users.phone, identifier)
-            )
-            .limit(1);
-
-          // 为了防止账号枚举，即使用户不存在也返回成功
-          if (!existingUser) {
             fastify.log.warn(
               `[发送验证码] 标识符不存在但返回成功消息以防止枚举: ${identifier}`
             );
             return {
               message: '验证码已发送',
-              expiresIn: config.expiryMinutes,
-              channel: config.channel,
+              expiresIn: validation.config.expiryMinutes,
+              channel: validation.config.channel,
             };
           }
-
-          user = existingUser;
-
-          // 如果需要认证且用户存在，额外检查所有权（更换账号场景）
-          if (config.requireAuth && user.id !== request.user.id) {
-            return reply.code(403).send({
-              error: `该${isEmailChannel ? '邮箱' : '手机号'}不属于您`,
-            });
-          }
-        } else if (config.userValidation === UserValidation.MUST_NOT_EXIST) {
-          // 用户必须不存在（注册）
-          const [existingUser] = await db
-            .select()
-            .from(users)
-            .where(
-              isEmailChannel
-                ? eq(users.email, identifier)
-                : eq(users.phone, identifier)
-            )
-            .limit(1);
-
-          if (existingUser) {
-            return reply.code(400).send({
-              error: `该${isEmailChannel ? '邮箱' : '手机号'}已被注册`,
-            });
-          }
-        } else {
-          // 未设置 userValidation（绑定账号、敏感操作）
-          // 对于绑定账号场景，检查标识符是否被其他用户占用
-          if (config.requireAuth) {
-            const [existingUser] = await db
-              .select()
-              .from(users)
-              .where(
-                isEmailChannel
-                  ? eq(users.email, identifier)
-                  : eq(users.phone, identifier)
-              )
-              .limit(1);
-
-            if (existingUser && existingUser.id !== request.user.id) {
-              return reply.code(400).send({
-                error: `该${isEmailChannel ? '邮箱' : '手机号'}已被其他用户使用`,
-              });
-            }
-          }
+          
+          return reply.code(validation.statusCode || 400).send({ error: validation.error });
         }
+
+        const { config, user } = validation;
 
         // 创建验证码（会自动检查频率限制）
         const { code, expiresAt } = await createVerificationCode(
@@ -881,63 +807,14 @@ export default async function authRoutes(fastify, options) {
 
         // 根据配置的渠道发送验证码
         try {
-          if (config.channel === VerificationChannel.EMAIL) {
-            // ========== 邮件渠道 ==========
-            // 检查邮件服务是否配置
-            const emailProvider = await fastify.getDefaultEmailProvider();
-            if (!emailProvider || !emailProvider.isEnabled) {
-              fastify.log.error(`[发送验证码] 邮件服务未配置或未启用`);
-              return reply
-                .code(503)
-                .send({ error: '邮件服务暂不可用，请稍后重试' });
-            }
+          await fastify.message.send(type, {
+            to: identifier,
+            data: { code },
+          });
 
-            // 发送邮件验证码
-            await fastify.sendEmail({
-              to: identifier,
-              template: config.template,
-              data: {
-                code,
-                type: config.description,
-                expiryMinutes: config.expiryMinutes,
-                identifier,
-              },
-            });
-
-            fastify.log.info(
-              `[发送验证码] 邮件已发送至 ${identifier}, 类型: ${config.description}`
-            );
-          } else if (config.channel === VerificationChannel.SMS) {
-            // ========== 短信渠道 ==========
-            // TODO: 集成短信服务
-            // 推荐服务商：
-            // - 阿里云短信：https://help.aliyun.com/product/44282.html
-            // - 腾讯云短信：https://cloud.tencent.com/product/sms
-            //
-            // 示例代码：
-            // await sendSMS({
-            //   phone: identifier,
-            //   code: code,
-            //   template: config.template
-            // });
-
-            fastify.log.warn(
-              `[发送验证码] 短信服务暂未实现，验证码: ${code}, 手机号: ${identifier}, 模板: ${config.template}`
-            );
-
-            // 开发环境下返回验证码（生产环境删除此段）
-            if (isDev) {
-              return {
-                message: `验证码已生成（开发模式）: ${code}`,
-                expiresIn: config.expiryMinutes,
-                channel: config.channel,
-                _devCode: code, // 仅开发环境
-                _template: config.template,
-              };
-            }
-
-            return reply.code(501).send({ error: '短信服务暂未开通' });
-          }
+          fastify.log.info(
+            `[发送验证码] 已发送至 ${identifier}, 类型: ${config.description}, 渠道: ${config.channel}`
+          );
         } catch (error) {
           fastify.log.error(`[发送验证码] 发送失败: ${error.message}`);
           // 开发环境下，在日志中显示验证码
@@ -1012,36 +889,30 @@ export default async function authRoutes(fastify, options) {
       identifier = normalizeIdentifier(identifier);
 
       try {
-        // 获取验证码配置
-        const config = getVerificationCodeConfig(type);
-        if (!config) {
-          return reply.code(400).send({ error: '无效的验证码类型' });
+        // 使用工具函数统一处理配置校验和参数格式校验
+        const validation = await validateVerificationRequest(
+          identifier, 
+          type, 
+          request.user
+        );
+
+        if (!validation.isValid) {
+           // 如果 validateVerificationRequest 返回 shouldFakeSuccess，说明用户不存在但规则要求必须存在
+           // 在验证码校验场景下，直接返回错误即可，因为如果用户不存在，验证码肯定也不存在
+           if (validation.shouldFakeSuccess) {
+              return reply.code(400).send({ 
+                valid: false, 
+                message: '验证码错误或已过期'
+              });
+           }
+
+           return reply.code(validation.statusCode || 400).send({ 
+             valid: false,
+             message: validation.error 
+           });
         }
 
-        // 检查是否需要认证
-        if (config.requireAuth && !request.user) {
-          return reply.code(401).send({ error: '需要登录后才能执行此操作' });
-        }
-
-        // 根据渠道验证标识符格式
-        const isEmailChannel = config.channel === VerificationChannel.EMAIL;
-        const isSmsChannel = config.channel === VerificationChannel.SMS;
-
-        if (isEmailChannel) {
-          // 邮件渠道：验证邮箱格式
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(identifier)) {
-            return reply.code(400).send({ error: '请输入有效的邮箱地址' });
-          }
-        } else if (isSmsChannel) {
-          // 短信渠道：验证手机号格式（中国大陆）
-          const phoneRegex = /^1[3-9]\d{9}$/;
-          if (!phoneRegex.test(identifier)) {
-            return reply
-              .code(400)
-              .send({ error: '请输入有效的手机号（仅支持中国大陆手机号）' });
-          }
-        }
+        const { config } = validation;
 
         // 验证验证码
         const result = await verifyCode(identifier, code, type);

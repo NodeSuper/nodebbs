@@ -23,7 +23,7 @@ import {
 } from './settings.js';
 import { initOAuthProviders, listOAuthProviders } from './oauth.js';
 import { initInvitationRules, listInvitationRules } from './invitation.js';
-import { initEmailProviders, listEmailProviders } from './email.js';
+import { initMessageProviders, listMessageProviders } from './message.js';
 import { initRewardConfigs, cleanRewards } from './rewards.js';
 import { initBadges, listBadges, cleanBadges } from './badges.js';
 import { initLedger, listCurrencies, cleanLedger } from './ledger.js';
@@ -63,6 +63,7 @@ function showHelp() {
   - 初始化系统设置（站点名称、注册模式、访问限速等）
   - 初始化 OAuth 提供商配置（GitHub、Google、Apple）
   - 初始化邮件服务提供商配置（SMTP、SendGrid、Resend、阿里云）
+  - 初始化消息提供商配置（Email 和 SMS 统一表）
   - 初始化邀请规则配置（user、vip、moderator、admin）
   - 初始化奖励系统配置（系统开关、获取规则、消费规则）
   - 初始化 Ledger 系统（默认货币）
@@ -86,7 +87,7 @@ function showHelp() {
 function listAllSettings() {
   listSystemSettings();
   listOAuthProviders();
-  listEmailProviders();
+  listMessageProviders();
   listCaptchaProviders();
   listInvitationRules();
   listCurrencies();
@@ -113,8 +114,8 @@ async function initAllSettings(reset = false) {
     // 2. 初始化 OAuth 提供商配置
     const oauthResult = await initOAuthProviders(db, reset);
 
-    // 3. 初始化邮件服务提供商配置
-    const emailResult = await initEmailProviders(db, reset);
+    // 3.5 初始化消息提供商配置（Email + SMS 统一表）
+    const messageResult = await initMessageProviders(db, reset);
 
     // 4. 初始化邀请规则配置
     const invitationResult = await initInvitationRules(db, reset);
@@ -162,15 +163,15 @@ async function initAllSettings(reset = false) {
     }
     console.log(`  - 总计: ${oauthResult.total} 个提供商\n`);
 
-    // 邮件服务提供商统计
-    console.log(`邮件服务提供商统计:`);
+    // 消息提供商统计
+    console.log(`消息提供商统计:`);
     if (reset) {
-      console.log(`  - 重置: ${emailResult.updatedCount} 个提供商`);
+      console.log(`  - 重置: ${messageResult.updatedCount} 个提供商`);
     } else {
-      console.log(`  - 新增: ${emailResult.addedCount} 个提供商`);
-      console.log(`  - 跳过: ${emailResult.skippedCount} 个提供商（已存在）`);
+      console.log(`  - 新增: ${messageResult.addedCount} 个提供商`);
+      console.log(`  - 跳过: ${messageResult.skippedCount} 个提供商（已存在）`);
     }
-    console.log(`  - 总计: ${emailResult.total} 个提供商\n`);
+    console.log(`  - 总计: ${messageResult.total} 个提供商\n`);
 
     // 邀请规则统计
     console.log(`邀请规则统计:`);

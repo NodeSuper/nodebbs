@@ -780,22 +780,45 @@ export const emailConfigApi = {
   // 公开：只返回已启用的提供商
   // 管理员：返回所有提供商（含完整配置）
   async getProviders() {
-    return apiClient.get('/email/providers');
+    return apiClient.get('/message-providers/email');
   },
 
   // 管理员：获取所有邮件服务配置（已合并到 getProviders）
   async getAllProviders() {
-    return apiClient.get('/email/providers');
+    return apiClient.get('/message-providers/email');
   },
 
   // 管理员：更新邮件服务配置
   async updateProvider(provider, data) {
-    return apiClient.patch(`/email/providers/${provider}`, data);
+    return apiClient.patch(`/message-providers/email/${provider}`, data);
   },
 
   // 管理员：测试邮件服务配置
   async testProvider(provider, testEmail) {
-    return apiClient.post(`/email/providers/${provider}/test`, { testEmail });
+    return apiClient.post(`/message-providers/email/${provider}/test`, { testEmail });
+  },
+};
+
+// ============= 短信服务配置 API =============
+export const smsConfigApi = {
+  // 获取短信服务提供商配置
+  async getProviders() {
+    return apiClient.get('/message-providers/sms');
+  },
+
+  // 管理员：获取所有短信服务配置
+  async getAllProviders() {
+    return apiClient.get('/message-providers/sms');
+  },
+
+  // 管理员：更新短信服务配置
+  async updateProvider(provider, data) {
+    return apiClient.patch(`/message-providers/sms/${provider}`, data);
+  },
+
+  // 管理员：测试短信服务配置
+  async testProvider(provider, testPhone) {
+    return apiClient.post(`/message-providers/sms/${provider}/test`, { testPhone });
   },
 };
 

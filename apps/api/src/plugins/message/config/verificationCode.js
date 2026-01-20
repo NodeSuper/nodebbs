@@ -1,6 +1,8 @@
 /**
  * 验证码类型和配置
  * 统一管理不同场景的验证码参数
+ * 
+ * 从 src/config/verificationCode.js 迁移而来
  */
 
 // 发送渠道枚举

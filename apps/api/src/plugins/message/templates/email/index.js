@@ -1,6 +1,6 @@
 /**
  * 邮件模板索引
- * 统一管理所有邮件模板
+ * 从原 src/templates/email/ 迁移
  */
 import welcomeTemplate from './welcome.js';
 import verificationCodeTemplate from './verification-code.js';

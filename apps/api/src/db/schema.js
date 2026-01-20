@@ -837,6 +837,7 @@ export const verifications = pgTable(
     value: varchar('value', { length: 255 }).notNull(), // 验证码或 token
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     type: varchar('type', { length: 50 }).notNull(), // 'email_verification' (邮箱验证), 'password_reset' (密码重置), '2fa' (双因素认证) 等
+    attempts: integer('attempts').notNull().default(0), // 验证失败尝试次数
     userId: integer('user_id').references(() => users.id, {
       onDelete: 'cascade',
     }), // 可选，关联用户
@@ -901,3 +902,6 @@ export * from '../extensions/ledger/schema.js';
 
 // ============ Ads System (广告系统) ============
 export * from '../extensions/ads/schema.js';
+
+// ============ Message System (消息系统) ============
+export * from '../plugins/message/schema.js';
