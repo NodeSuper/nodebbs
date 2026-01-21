@@ -713,7 +713,7 @@ export default async function messageRoutes(fastify) {
         .offset(offset);
 
       // Get total count
-      const [{ count }] = await db
+      const [{ count: total }] = await db
         .select({ count: count() })
         .from(messages)
         .where(
@@ -748,7 +748,7 @@ export default async function messageRoutes(fastify) {
         items: conversation,
         page,
         limit,
-        total: count,
+        total,
       };
     }
   );
