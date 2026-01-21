@@ -8,7 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { oauthConfigApi } from '@/lib/api';
 import { toast } from 'sonner';
-import { Loader2, Check, X } from 'lucide-react';
+import { Loader2, Check, X, Globe } from 'lucide-react';
+import { ConfigProviderCard } from './ConfigProviderCard';
 import { Loading } from '@/components/common/Loading';
 
 export function OAuthSettings() {
@@ -67,6 +68,8 @@ export function OAuthSettings() {
     </div>
   );
 }
+
+
 
 function OAuthProviderCard({ 
   provider, 
@@ -154,207 +157,177 @@ function OAuthProviderCard({
 
   const handleToggleEnabled = async (checked) => {
     try {
-      await oauthConfigApi.updateProvider(provider.provider, { isEnabled: checked });
+      const payload = { isEnabled: checked, ...(checked ? {} : { isDefault: false }) };
+      await oauthConfigApi.updateProvider(provider.provider, payload);
       toast.success(checked ? `${provider.displayName} 已启用` : `${provider.displayName} 已禁用`);
       // 局部更新状态，无需重新请求接口
-      onUpdate(provider.provider, { isEnabled: checked });
+      onUpdate(provider.provider, payload);
     } catch (error) {
       console.error('Failed to toggle OAuth provider:', error);
       toast.error('操作失败');
     }
   };
 
+  // 准备 summary 内容
+  const summaryContent = provider.clientId ? (
+    <div className='flex flex-col gap-1'>
+      <div>Client ID: {provider.clientId.substring(0, 20)}...</div>
+      {provider.callbackUrl && (
+        <div className='opacity-80'>回调 URL: {provider.callbackUrl}</div>
+      )}
+    </div>
+  ) : null;
+
   return (
-    <div className='border border-border rounded-lg bg-card'>
-      <div className='p-4'>
-        {/* 头部：提供商名称和开关 */}
-        <div className='flex items-center justify-between mb-4'>
-          <div className='flex items-center gap-3'>
-            <div className='text-lg font-semibold'>{provider.displayName}</div>
-            {provider.isEnabled && (
-              <span className='text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded'>
-                已启用
-              </span>
-            )}
-          </div>
-          <div className='flex items-center gap-2'>
-            <Switch
-              checked={provider.isEnabled}
-              onCheckedChange={handleToggleEnabled}
-            />
-            {!isEditing ? (
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => {
-                  setEditingProvider(provider.provider);
-                  const additional = parseAdditionalConfig(provider.additionalConfig);
-                  setFormData({
-                    isEnabled: provider.isEnabled,
-                    clientId: provider.clientId || '',
-                    clientSecret: provider.clientSecret || '',
-                    callbackUrl: provider.callbackUrl || '',
-                    scope: provider.scope || '',
-                    // Apple 配置
-                    teamId: additional.teamId || '',
-                    keyId: additional.keyId || '',
-                  });
-                }}
-              >
-                配置
-              </Button>
-            ) : (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setEditingProvider(null)}
-              >
-                <X className='h-4 w-4' />
-              </Button>
-            )}
-          </div>
+    <ConfigProviderCard
+      title={provider.displayName}
+      icon={Globe}
+      isEnabled={provider.isEnabled}
+      isEditing={isEditing}
+      onToggleEnabled={handleToggleEnabled}
+      onEditClick={() => {
+        setEditingProvider(provider.provider);
+        const additional = parseAdditionalConfig(provider.additionalConfig);
+        setFormData({
+          isEnabled: provider.isEnabled,
+          clientId: provider.clientId || '',
+          clientSecret: provider.clientSecret || '',
+          callbackUrl: provider.callbackUrl || '',
+          scope: provider.scope || '',
+          // Apple 配置
+          teamId: additional.teamId || '',
+          keyId: additional.keyId || '',
+        });
+      }}
+      onCancelClick={() => { setEditingProvider(null); setFormData(prev => ({ ...prev, isDefault: provider.isDefault })); }}
+      summary={summaryContent}
+    >
+      <div className='space-y-4 pt-2'>
+        <div className='space-y-2'>
+          <Label htmlFor={`${provider.provider}-clientId`}>
+            {provider.provider === 'apple' ? 'Service ID (Client ID) *' : 'Client ID *'}
+          </Label>
+          <Input
+            id={`${provider.provider}-clientId`}
+            value={formData.clientId}
+            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+            placeholder='输入 Client ID'
+          />
         </div>
 
-        {/* 配置表单 */}
-        {isEditing && (
-          <div className='space-y-4 pt-4 border-t border-border'>
-            <div className='space-y-2'>
-              <Label htmlFor={`${provider.provider}-clientId`}>
-                {provider.provider === 'apple' ? 'Service ID (Client ID) *' : 'Client ID *'}
-              </Label>
+        <div className='space-y-2'>
+          <Label htmlFor={`${provider.provider}-clientSecret`}>
+              {provider.provider === 'apple' ? 'Private Key (.p8 Content) *' : 'Client Secret *'}
+          </Label>
+          {provider.provider === 'apple' ? (
+              <Textarea
+              id={`${provider.provider}-clientSecret`}
+              value={formData.clientSecret}
+              onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
+              placeholder='-----BEGIN PRIVATE KEY----- ...'
+              rows={4}
+              className="font-mono text-xs"
+            />
+          ) : (
+            <Input
+              id={`${provider.provider}-clientSecret`}
+              type='password'
+              value={formData.clientSecret}
+              onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
+              placeholder='输入 Client Secret'
+            />
+          )}
+        </div>
+
+        {provider.provider === 'apple' && (
+          <div className="grid grid-cols-2 gap-4">
+              <div className='space-y-2'>
+              <Label htmlFor={`${provider.provider}-teamId`}>Team ID *</Label>
               <Input
-                id={`${provider.provider}-clientId`}
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                placeholder='输入 Client ID'
+                id={`${provider.provider}-teamId`}
+                value={formData.teamId}
+                onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
+                placeholder='App ID Prefix (e.g. A1B2C3D4E5)'
               />
             </div>
+              <div className='space-y-2'>
+              <Label htmlFor={`${provider.provider}-keyId`}>Key ID *</Label>
+              <Input
+                id={`${provider.provider}-keyId`}
+                value={formData.keyId}
+                onChange={(e) => setFormData({ ...formData, keyId: e.target.value })}
+                placeholder='Key ID (e.g. ABC1234567)'
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 微信小程序不需要回调 URL 和权限范围 */}
+        {provider.provider !== 'wechat_miniprogram' && (
+          <>
+            <div className='space-y-2'>
+              <Label htmlFor={`${provider.provider}-callbackUrl`}>回调 URL</Label>
+              <Input
+                id={`${provider.provider}-callbackUrl`}
+                value={formData.callbackUrl}
+                onChange={(e) => setFormData({ ...formData, callbackUrl: e.target.value })}
+                placeholder={
+                  provider.provider === 'apple' 
+                    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/oauth/apple/callback`
+                    : `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/auth/${provider.provider}/callback`
+                }
+              />
+              <p className='text-xs text-muted-foreground'>
+                在 OAuth 提供商后台配置此回调地址
+              </p>
+            </div>
 
             <div className='space-y-2'>
-              <Label htmlFor={`${provider.provider}-clientSecret`}>
-                 {provider.provider === 'apple' ? 'Private Key (.p8 Content) *' : 'Client Secret *'}
-              </Label>
-              {provider.provider === 'apple' ? (
-                 <Textarea
-                  id={`${provider.provider}-clientSecret`}
-                  value={formData.clientSecret}
-                  onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
-                  placeholder='-----BEGIN PRIVATE KEY----- ...'
-                  rows={4}
-                  className="font-mono text-xs"
-                />
-              ) : (
-                <Input
-                  id={`${provider.provider}-clientSecret`}
-                  type='password'
-                  value={formData.clientSecret}
-                  onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
-                  placeholder='输入 Client Secret'
-                />
-              )}
+              <Label htmlFor={`${provider.provider}-scope`}>权限范围 (Scope)</Label>
+              <Textarea
+                id={`${provider.provider}-scope`}
+                value={formData.scope}
+                onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
+                placeholder='JSON 数组格式，例如: ["user:email", "read:user"]'
+                rows={2}
+              />
             </div>
+          </>
+        )}
 
-            {provider.provider === 'apple' && (
-              <div className="grid grid-cols-2 gap-4">
-                 <div className='space-y-2'>
-                  <Label htmlFor={`${provider.provider}-teamId`}>Team ID *</Label>
-                  <Input
-                    id={`${provider.provider}-teamId`}
-                    value={formData.teamId}
-                    onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                    placeholder='App ID Prefix (e.g. A1B2C3D4E5)'
-                  />
-                </div>
-                 <div className='space-y-2'>
-                  <Label htmlFor={`${provider.provider}-keyId`}>Key ID *</Label>
-                  <Input
-                    id={`${provider.provider}-keyId`}
-                    value={formData.keyId}
-                    onChange={(e) => setFormData({ ...formData, keyId: e.target.value })}
-                    placeholder='Key ID (e.g. ABC1234567)'
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* 微信小程序不需要回调 URL 和权限范围 */}
-            {provider.provider !== 'wechat_miniprogram' && (
+        <div className='flex items-center gap-2 pt-2'>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !formData.clientId || !formData.clientSecret}
+          >
+            {saving ? (
               <>
-                <div className='space-y-2'>
-                  <Label htmlFor={`${provider.provider}-callbackUrl`}>回调 URL</Label>
-                  <Input
-                    id={`${provider.provider}-callbackUrl`}
-                    value={formData.callbackUrl}
-                    onChange={(e) => setFormData({ ...formData, callbackUrl: e.target.value })}
-                    placeholder={
-                      provider.provider === 'apple' 
-                        ? `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/oauth/apple/callback`
-                        : `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/auth/${provider.provider}/callback`
-                    }
-                  />
-                  <p className='text-xs text-muted-foreground'>
-                    在 OAuth 提供商后台配置此回调地址
-                  </p>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor={`${provider.provider}-scope`}>权限范围 (Scope)</Label>
-                  <Textarea
-                    id={`${provider.provider}-scope`}
-                    value={formData.scope}
-                    onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
-                    placeholder='JSON 数组格式，例如: ["user:email", "read:user"]'
-                    rows={2}
-                  />
-                </div>
+                <Loader2 className='h-4 w-4 animate-spin' />
+                保存中...
+              </>
+            ) : (
+              <>
+                <Check className='h-4 w-4' />
+                保存配置
               </>
             )}
-
-            <div className='flex items-center gap-2 pt-2'>
-              <Button
-                onClick={handleSave}
-                disabled={saving || !formData.clientId || !formData.clientSecret}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                    保存中...
-                  </>
-                ) : (
-                  <>
-                    <Check className='h-4 w-4' />
-                    保存配置
-                  </>
-                )}
-              </Button>
-              <Button
-                variant='outline'
-                onClick={handleTest}
-                disabled={testingProvider === provider.provider || !provider.clientId}
-              >
-                {testingProvider === provider.provider ? (
-                  <>
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                    测试中...
-                  </>
-                ) : (
-                  '测试配置'
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* 当前配置概览（非编辑状态） */}
-        {!isEditing && provider.clientId && (
-          <div className='text-sm text-muted-foreground space-y-1 pt-4 border-t border-border'>
-            <div>Client ID: {provider.clientId.substring(0, 20)}...</div>
-            {provider.callbackUrl && (
-              <div className='text-xs'>回调 URL: {provider.callbackUrl}</div>
+          </Button>
+          <Button
+            variant='outline'
+            onClick={handleTest}
+            disabled={testingProvider === provider.provider || !provider.clientId}
+          >
+            {testingProvider === provider.provider ? (
+              <>
+                <Loader2 className='h-4 w-4 animate-spin' />
+                测试中...
+              </>
+            ) : (
+              '测试配置'
             )}
-          </div>
-        )}
+          </Button>
+        </div>
       </div>
-    </div>
+    </ConfigProviderCard>
   );
 }
