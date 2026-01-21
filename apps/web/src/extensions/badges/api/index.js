@@ -26,9 +26,9 @@ export const badgesApi = {
 
   // 管理员 API
   admin: {
-    // 获取所有勋章 (支持 include_inactive 参数)
+    // 获取所有勋章 (支持 includeInactive 参数)
     getAll(params = {}) {
-      return apiClient.get('/badges', { ...params, include_inactive: true });
+      return apiClient.get('/badges', { ...params, includeInactive: true });
     },
     // 创建勋章 (Admin Only)
     create(data) {

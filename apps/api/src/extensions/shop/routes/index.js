@@ -31,17 +31,17 @@ export default async function shopRoutes(fastify, options) {
           page: { type: 'integer', default: 1 },
           limit: { type: 'integer', default: 20 },
           type: { type: 'string' },
-          include_inactive: { type: 'boolean' }
+          includeInactive: { type: 'boolean' }
         },
       },
     },
   }, async (request, reply) => {
     try {
-      const { page, limit, type, include_inactive } = request.query;
+      const { page, limit, type, includeInactive: includeInactiveParam } = request.query;
       
       const isAdmin = request.user?.role === 'admin';
-      // Non-admin users: ignore include_inactive, force false
-      const includeInactive = isAdmin && (include_inactive === true || include_inactive === 'true');
+      // Non-admin users: ignore includeInactive, force false
+      const includeInactive = isAdmin && (includeInactiveParam === true || includeInactiveParam === 'true');
       
       const result = await getShopItems({ page, limit, type, includeInactive });
       return result;

@@ -39,9 +39,9 @@ export const shopApi = {
 
   // 管理员 API
   admin: {
-    // 获取所有商品 (支持 include_inactive 参数)
+    // 获取所有商品 (支持 includeInactive 参数)
     async getItems(params = {}) {
-      return apiClient.get('/shop/items', { ...params, include_inactive: true });
+      return apiClient.get('/shop/items', { ...params, includeInactive: true });
     },
 
     // 创建商品 (Admin Only)

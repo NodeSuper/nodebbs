@@ -21,9 +21,9 @@ export const adsApi = {
   admin: {
     // ============ 广告位管理 ============
     slots: {
-      // 获取所有广告位 (支持 include_inactive 参数)
+      // 获取所有广告位 (支持 includeInactive 参数)
       async getAll(params = {}) {
-        return apiClient.get('/ads/slots', { ...params, include_inactive: true });
+        return apiClient.get('/ads/slots', { ...params, includeInactive: true });
       },
 
       // 获取单个广告位
@@ -48,9 +48,9 @@ export const adsApi = {
     },
 
     // ============ 广告管理 ============
-    // 获取广告列表 (支持 include_inactive 参数)
+    // 获取广告列表 (支持 includeInactive 参数)
     async getAds(params = {}) {
-      return apiClient.get('/ads', { ...params, include_inactive: true });
+      return apiClient.get('/ads', { ...params, includeInactive: true });
     },
 
     // 获取单个广告

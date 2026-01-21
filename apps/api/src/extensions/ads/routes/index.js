@@ -101,16 +101,16 @@ export default async function adsRoutes(fastify, options) {
       querystring: {
         type: 'object',
         properties: {
-          include_inactive: { type: 'boolean' }
+          includeInactive: { type: 'boolean' }
         }
       }
     },
   }, async (request, reply) => {
     try {
-      const { include_inactive } = request.query;
+      const { includeInactive: includeInactiveParam } = request.query;
       
       const isAdmin = request.user?.role === 'admin';
-      const includeInactive = isAdmin && (include_inactive === true || include_inactive === 'true');
+      const includeInactive = isAdmin && (includeInactiveParam === true || includeInactiveParam === 'true');
       
       const slots = await getAdSlots({ includeInactive });
       return slots;
@@ -286,15 +286,15 @@ export default async function adsRoutes(fastify, options) {
           slotId: { type: 'integer' },
           type: { type: 'string' },
           isActive: { type: 'boolean' },
-          include_inactive: { type: 'boolean' }
+          includeInactive: { type: 'boolean' }
         },
       },
     },
   }, async (request, reply) => {
     try {
-      const { page, limit, slotId, type, isActive, include_inactive } = request.query;
+      const { page, limit, slotId, type, isActive, includeInactive: includeInactiveParam } = request.query;
       const isAdmin = request.user?.role === 'admin';
-      const includeInactive = isAdmin && (include_inactive === true || include_inactive === 'true');
+      const includeInactive = isAdmin && (includeInactiveParam === true || includeInactiveParam === 'true');
 
       const queryParams = {
         slotId,

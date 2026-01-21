@@ -16,16 +16,16 @@ export default async function badgeRoutes(fastify, options) {
           page: { type: 'integer', default: 1 },
           limit: { type: 'integer', default: 20 },
           category: { type: 'string' },
-          include_inactive: { type: 'boolean' }
+          includeInactive: { type: 'boolean' }
         }
       }
     }
   }, async (request, reply) => {
-    const { page, limit, category, include_inactive } = request.query;
+    const { page, limit, category, includeInactive: includeInactiveParam } = request.query;
     
     const isAdmin = request.user?.role === 'admin';
-    // Non-admin users: ignore include_inactive, force false
-    const includeInactive = isAdmin && (include_inactive === true || include_inactive === 'true');
+    // Non-admin users: ignore includeInactive, force false
+    const includeInactive = isAdmin && (includeInactiveParam === true || includeInactiveParam === 'true');
 
     // Public endpoint logic with admin support
     const result = await getBadges({ page, limit, category, includeInactive });
