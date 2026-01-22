@@ -1,4 +1,5 @@
 import Link from '@/components/common/Link';
+import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -241,14 +242,10 @@ export function TopicListUI({
         {/* 话题列表 */}
         <div className='divide-y divide-border/60'>
           {topics.map((topic, index) => (
-            <div key={topic.id} className="contents">
+            <Fragment key={topic.id}>
               <TopicItem topic={topic} />
-              {itemInserts && itemInserts[index] && (
-                 <div className="border-t border-border/60">
-                    {itemInserts[index]}
-                 </div>
-              )}
-            </div>
+              {itemInserts?.[index]}
+            </Fragment>
           ))}
         </div>
       </div>

@@ -78,7 +78,7 @@ export default async function HomePage({ searchParams }) {
         showPagination={true}
         useUrlPagination={true}
         itemInserts={{
-          4: <AdSlot slotCode='topic_list_inline' className='p-3' />
+          4: <AdSlot key='ad-topic-inline' slotCode='topic_list_inline' className='p-3 rounded-none' />
         }}
       />
     </>
