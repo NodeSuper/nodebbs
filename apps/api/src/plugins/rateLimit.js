@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
 import rateLimit from '@fastify/rate-limit';
-import { getSetting } from '../utils/settings.js';
+import { getSetting } from '../services/settings.js';
 
 async function rateLimitPlugin(fastify, opts) {
   // 先尝试可选认证，以便限速器可以识别用户

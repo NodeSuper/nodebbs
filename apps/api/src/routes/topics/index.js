@@ -17,7 +17,7 @@ import {
 } from '../../db/schema.js';
 import { eq, sql, desc, and, or, like, inArray, not, count } from 'drizzle-orm';
 import slugify from 'slug';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
 import { shouldHideUserInfo } from '../../utils/visibility.js';
 

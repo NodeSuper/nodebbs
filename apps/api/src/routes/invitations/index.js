@@ -6,7 +6,10 @@ import {
   validateInvitationCode,
   getTodayGeneratedCount,
   getUserInvitationRule,
-} from '../../utils/invitation.js';
+  disableInvitationCode,
+  enableInvitationCode,
+  getInvitationStats,
+} from '../../services/invitation.js';
 import { DEFAULT_CURRENCY_CODE } from '../../extensions/ledger/constants.js';
 
 export default async function invitationsRoutes(fastify) {
@@ -546,7 +549,6 @@ export default async function invitationsRoutes(fastify) {
       try {
         const { id } = request.params;
 
-        const { disableInvitationCode } = await import('../../utils/invitation.js');
         const updated = await disableInvitationCode(id);
 
         return {
@@ -598,7 +600,6 @@ export default async function invitationsRoutes(fastify) {
       try {
         const { id } = request.params;
 
-        const { enableInvitationCode } = await import('../../utils/invitation.js');
         const updated = await enableInvitationCode(id);
 
         return updated;
@@ -622,7 +623,6 @@ export default async function invitationsRoutes(fastify) {
     },
     async (request, reply) => {
       try {
-        const { getInvitationStats } = await import('../../utils/invitation.js');
         const stats = await getInvitationStats();
 
         // 获取邀请排行榜（前10名）

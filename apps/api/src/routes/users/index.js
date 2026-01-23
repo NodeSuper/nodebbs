@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import { userEnricher } from '../../services/userEnricher.js';
 import { validateUsername } from '../../utils/validateUsername.js';
 import { normalizeEmail, normalizeUsername } from '../../utils/normalization.js';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
 import { VerificationCodeType } from '../../plugins/message/config/verificationCode.js';
 import { verifyCode, deleteVerificationCode } from '../../plugins/message/utils/verificationCode.js';
 import { moderationLogs } from '../../db/schema.js';

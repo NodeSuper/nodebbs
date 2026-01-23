@@ -2,7 +2,8 @@ import { userEnricher } from '../../services/userEnricher.js';
 import db from '../../db/index.js';
 import { users, accounts } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
+import { validateInvitationCode, markInvitationCodeAsUsed } from '../../services/invitation.js';
 import {
   createVerificationCode,
   verifyCode,
@@ -119,10 +120,7 @@ export default async function authRoutes(fastify, options) {
             .send({ error: '邀请码注册模式下必须提供邀请码' });
         }
 
-        // 动态导入邀请码验证函数
-        const { validateInvitationCode } = await import(
-          '../../utils/invitation.js'
-        );
+        // 验证邀请码
         const validation = await validateInvitationCode(invitationCode.trim());
 
         if (!validation.valid) {
@@ -239,9 +237,6 @@ export default async function authRoutes(fastify, options) {
 
       // 如果使用了邀请码，标记为已使用并处理奖励
       if (registrationMode === 'invitation' && invitationCode) {
-        const { markInvitationCodeAsUsed } = await import(
-          '../../utils/invitation.js'
-        );
         const usedInvitation = await markInvitationCodeAsUsed(invitationCode.trim(), newUser.id);
         
         if (usedInvitation && usedInvitation.createdBy) {

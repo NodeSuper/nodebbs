@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin';
-import { getSetting } from '../utils/settings.js';
+import { getSetting } from '../services/settings.js';
 
 /**
  * 中间件：检查是否需要邮箱验证

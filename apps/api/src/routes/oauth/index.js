@@ -16,7 +16,7 @@ import { eq } from 'drizzle-orm';
 import {
   unlinkOAuthAccount,
   getUserAccounts,
-} from '../../utils/oauth-helpers.js';
+} from './helpers.js';
 
 // 导入各 provider 路由
 import githubRoutes from './providers/github.js';

@@ -1,7 +1,7 @@
 import db from '../../db/index.js';
 import { users, qrLoginRequests } from '../../db/schema.js';
 import { eq, and, gt } from 'drizzle-orm';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
 import crypto from 'crypto';
 
 export default async function qrLoginRoutes(fastify, options) {

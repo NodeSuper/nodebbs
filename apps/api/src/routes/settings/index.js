@@ -1,7 +1,7 @@
 import db from '../../db/index.js';
 import { systemSettings } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { clearSettingsCache } from '../../utils/settings.js';
+import { clearSettingsCache } from '../../services/settings.js';
 import {
   ACCESS_LEVEL,
   SETTING_KEYS,

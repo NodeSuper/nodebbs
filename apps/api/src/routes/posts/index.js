@@ -1,7 +1,7 @@
 import db from '../../db/index.js';
 import { posts, topics, users, likes, subscriptions, moderationLogs, blockedUsers, userItems, shopItems } from '../../db/schema.js';
 import { eq, sql, desc, and, inArray, ne, like, or, not, count } from 'drizzle-orm';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
 import { sysCurrencies, sysAccounts } from '../../extensions/ledger/schema.js';
 import { DEFAULT_CURRENCY_CODE } from '../../extensions/ledger/constants.js';

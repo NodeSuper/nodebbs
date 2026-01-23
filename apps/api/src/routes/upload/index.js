@@ -2,7 +2,7 @@ import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { getSetting } from '../../utils/settings.js';
+import { getSetting } from '../../services/settings.js';
 import { dirname } from '../../utils/index.js';
 
 export default async function uploadRoutes(fastify) {

@@ -1,7 +1,7 @@
 /**
  * Apple OAuth 路由
  */
-import { normalizeOAuthProfile } from '../../../utils/oauth-helpers.js';
+import { normalizeOAuthProfile } from '../helpers.js';
 import { generateRandomState, handleOAuthLogin } from '../helpers.js';
 import { getFrontendOrigin } from '../../../utils/http-helpers.js';
 import jwt from 'jsonwebtoken';
