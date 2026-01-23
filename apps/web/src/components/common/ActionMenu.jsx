@@ -75,7 +75,7 @@ export function ActionMenu({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className={className}>
+          <Button variant="ghost" size="icon" className={className}>
             <TriggerIcon className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

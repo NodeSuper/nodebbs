@@ -161,7 +161,7 @@ export function DataTable({
       )}
 
       {/* 表格容器 */}
-      <div className='relative bg-card/40 backdrop-blur-xl border border-border/50 rounded-xl overflow-hidden transition-all hover:border-border/80 group'>
+      <div className='relative bg-card/40 backdrop-blur-xl border border-border/50 rounded-xl overflow-hidden transition-all hover:border-border/80'>
         
         {/* Loading Overlay - 仅在非初始加载（已有数据）时显示 */}
         {loading && data.length > 0 && (
