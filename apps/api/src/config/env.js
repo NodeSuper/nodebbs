@@ -2,11 +2,6 @@
  * 环境变量配置中心
  * 集中管理和校验所有环境变量
  */
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // 简单的环境变量获取与校验
 const getEnv = (key, defaultValue) => {
