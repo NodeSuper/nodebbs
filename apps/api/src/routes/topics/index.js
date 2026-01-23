@@ -17,7 +17,6 @@ import {
 } from '../../db/schema.js';
 import { eq, sql, desc, and, or, like, inArray, not, count } from 'drizzle-orm';
 import slugify from 'slug';
-import { getSetting } from '../../services/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
 import { shouldHideUserInfo } from '../../utils/visibility.js';
 
@@ -621,7 +620,7 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 检查是否开启内容审核
-      const contentModerationEnabled = await getSetting(
+      const contentModerationEnabled = await fastify.settings.get(
         'content_moderation_enabled',
         false
       );
@@ -775,7 +774,7 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 检查是否开启内容审核
-      const contentModerationEnabled = await getSetting(
+      const contentModerationEnabled = await fastify.settings.get(
         'content_moderation_enabled',
         false
       );

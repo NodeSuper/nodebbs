@@ -1,5 +1,4 @@
 import fp from 'fastify-plugin';
-import { getSetting } from '../services/settings.js';
 
 /**
  * 中间件：检查是否需要邮箱验证
@@ -7,7 +6,8 @@ import { getSetting } from '../services/settings.js';
  */
 export async function requireEmailVerification(request, reply) {
   // 检查是否启用邮箱验证要求
-  const emailVerificationRequired = await getSetting(
+  // 使用 request.server.settings 访问配置插件
+  const emailVerificationRequired = await request.server.settings.get(
     'email_verification_required',
     false
   );
@@ -28,27 +28,8 @@ export async function requireEmailVerification(request, reply) {
 }
 
 /**
- * 检查用户是否需要验证邮箱（工具函数）
- * @param {Object} user - 用户对象
- * @returns {Promise<{required: boolean, verified: boolean, canProceed: boolean}>}
- */
-export async function checkEmailVerification(user) {
-  const emailVerificationRequired = await getSetting(
-    'email_verification_required',
-    false
-  );
-
-  return {
-    required: emailVerificationRequired,
-    verified: user.isEmailVerified || false,
-    canProceed: !emailVerificationRequired || user.isEmailVerified,
-  };
-}
-
-/**
  * Fastify 插件：注册邮箱验证中间件
  */
-
 export default fp(async function (fastify, opts) {
   fastify.decorate('requireEmailVerification', requireEmailVerification);
 });

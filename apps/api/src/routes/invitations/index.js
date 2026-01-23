@@ -9,7 +9,7 @@ import {
   disableInvitationCode,
   enableInvitationCode,
   getInvitationStats,
-} from '../../services/invitation.js';
+} from '../../services/invitationService.js';
 import { DEFAULT_CURRENCY_CODE } from '../../extensions/ledger/constants.js';
 
 export default async function invitationsRoutes(fastify) {

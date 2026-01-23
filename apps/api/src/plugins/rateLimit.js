@@ -1,6 +1,5 @@
 import fp from 'fastify-plugin';
 import rateLimit from '@fastify/rate-limit';
-import { getSetting } from '../services/settings.js';
 
 async function rateLimitPlugin(fastify, opts) {
   // 先尝试可选认证，以便限速器可以识别用户
@@ -18,24 +17,25 @@ async function rateLimitPlugin(fastify, opts) {
     global: true,
     max: async (request, key) => {
       // 检查是否启用限速
-      const enabled = await getSetting('rate_limit_enabled', true);
+      // 注意：这里使用 fastify.settings.get
+      const enabled = await fastify.settings.get('rate_limit_enabled', true);
       if (!enabled) {
         return 999999; // 禁用时返回极大值
       }
 
       // 获取基础限制
-      const maxRequests = await getSetting('rate_limit_max_requests', 100);
+      const maxRequests = await fastify.settings.get('rate_limit_max_requests', 100);
       
       // 如果是已登录用户，应用倍数
       if (request.user?.id) {
-        const multiplier = await getSetting('rate_limit_auth_multiplier', 2);
+        const multiplier = await fastify.settings.get('rate_limit_auth_multiplier', 2);
         return Math.floor(maxRequests * multiplier);
       }
       
       return maxRequests;
     },
     timeWindow: async (request, key) => {
-      const windowMs = await getSetting('rate_limit_window_ms', 60000);
+      const windowMs = await fastify.settings.get('rate_limit_window_ms', 60000);
       return windowMs;
     },
     keyGenerator: (request) => {

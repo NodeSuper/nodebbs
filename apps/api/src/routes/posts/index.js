@@ -1,7 +1,6 @@
 import db from '../../db/index.js';
 import { posts, topics, users, likes, subscriptions, moderationLogs, blockedUsers, userItems, shopItems } from '../../db/schema.js';
 import { eq, sql, desc, and, inArray, ne, like, or, not, count } from 'drizzle-orm';
-import { getSetting } from '../../services/settings.js';
 import { userEnricher } from '../../services/userEnricher.js';
 import { sysCurrencies, sysAccounts } from '../../extensions/ledger/schema.js';
 import { DEFAULT_CURRENCY_CODE } from '../../extensions/ledger/constants.js';
@@ -627,7 +626,7 @@ export default async function postRoutes(fastify, options) {
     const postNumber = Number(maxPostNumber) + 1;
 
     // 检查是否开启内容审核
-    const contentModerationEnabled = await getSetting('content_moderation_enabled', false);
+    const contentModerationEnabled = await fastify.settings.get('content_moderation_enabled', false);
     const approvalStatus = contentModerationEnabled ? 'pending' : 'approved';
 
     // ============ 积分扣除逻辑 (Reply Cost) ============
@@ -855,7 +854,7 @@ export default async function postRoutes(fastify, options) {
     }
 
     // 检查是否开启内容审核
-    const contentModerationEnabled = await getSetting(
+    const contentModerationEnabled = await fastify.settings.get(
       'content_moderation_enabled',
       false
     );

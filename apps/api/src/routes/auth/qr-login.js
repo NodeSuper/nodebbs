@@ -1,7 +1,6 @@
 import db from '../../db/index.js';
 import { users, qrLoginRequests } from '../../db/schema.js';
 import { eq, and, gt } from 'drizzle-orm';
-import { getSetting } from '../../services/settings.js';
 import crypto from 'crypto';
 
 export default async function qrLoginRoutes(fastify, options) {
@@ -27,13 +26,13 @@ export default async function qrLoginRoutes(fastify, options) {
     },
     async (request, reply) => {
       // 检查扫码登录是否启用
-      const qrLoginEnabled = await getSetting('qr_login_enabled', false);
+      const qrLoginEnabled = await fastify.settings.get('qr_login_enabled', false);
       if (!qrLoginEnabled) {
         return reply.code(403).send({ error: '扫码登录功能未启用' });
       }
 
       // 获取二维码有效期配置
-      const timeout = await getSetting('qr_login_timeout', 300);
+      const timeout = await fastify.settings.get('qr_login_timeout', 300);
 
       // 生成唯一的请求ID
       const requestId = crypto.randomBytes(32).toString('hex');

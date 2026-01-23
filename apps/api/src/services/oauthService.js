@@ -9,7 +9,7 @@ import { users, accounts } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
 import { normalizeEmail } from '../utils/normalization.js';
-import { getSetting } from './settings.js';
+import { getSetting } from './settingsService.js';
 
 /**
  * 生成随机 state 参数

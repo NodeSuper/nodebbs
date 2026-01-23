@@ -1,7 +1,6 @@
 import db from '../../db/index.js';
 import { systemSettings } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { clearSettingsCache } from '../../services/settings.js';
 import {
   ACCESS_LEVEL,
   SETTING_KEYS,
@@ -270,7 +269,7 @@ export default async function settingsRoutes(fastify) {
           .returning();
 
         // 清除缓存
-        clearSettingsCache();
+        fastify.settings.clearCache();
 
         return {
           key: updated.key,

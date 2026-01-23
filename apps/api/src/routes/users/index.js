@@ -9,7 +9,6 @@ import crypto from 'crypto';
 import { userEnricher } from '../../services/userEnricher.js';
 import { validateUsername } from '../../utils/validateUsername.js';
 import { normalizeEmail, normalizeUsername } from '../../utils/normalization.js';
-import { getSetting } from '../../services/settings.js';
 import { VerificationCodeType } from '../../plugins/message/config/verificationCode.js';
 import { verifyCode, deleteVerificationCode } from '../../plugins/message/utils/verificationCode.js';
 import { moderationLogs } from '../../db/schema.js';
@@ -474,7 +473,7 @@ export default async function userRoutes(fastify, options) {
     const userId = request.user.id;
 
     // 获取系统设置
-    const allowUsernameChange = await getSetting('allow_username_change', false);
+    const allowUsernameChange = await fastify.settings.get('allow_username_change', false);
     if (!allowUsernameChange) {
       return reply.code(403).send({ error: '系统暂不允许修改用户名' });
     }
@@ -483,7 +482,7 @@ export default async function userRoutes(fastify, options) {
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     // 检查是否需要密码验证
-    const requiresPassword = await getSetting('username_change_requires_password', true);
+    const requiresPassword = await fastify.settings.get('username_change_requires_password', true);
     if (requiresPassword) {
       if (!password) {
         return reply.code(400).send({ error: '请提供当前密码' });
@@ -495,7 +494,7 @@ export default async function userRoutes(fastify, options) {
     }
 
     // 检查用户名修改次数限制
-    const changeLimit = await getSetting('username_change_limit', 3);
+    const changeLimit = await fastify.settings.get('username_change_limit', 3);
     if (changeLimit > 0 && user.usernameChangeCount >= changeLimit) {
       return reply.code(400).send({
         error: `已达到用户名修改次数上限（${changeLimit}次）`
@@ -503,7 +502,7 @@ export default async function userRoutes(fastify, options) {
     }
 
     // 检查冷却期
-    const cooldownDays = await getSetting('username_change_cooldown_days', 30);
+    const cooldownDays = await fastify.settings.get('username_change_cooldown_days', 30);
     if (user.usernameChangedAt) {
       const lastChangeDate = new Date(user.usernameChangedAt);
       const now = new Date();
@@ -617,7 +616,7 @@ export default async function userRoutes(fastify, options) {
     const userId = request.user.id;
 
     // 获取系统设置
-    const allowEmailChange = await getSetting('allow_email_change', true);
+    const allowEmailChange = await fastify.settings.get('allow_email_change', true);
     if (!allowEmailChange) {
       return reply.code(403).send({ error: '系统暂不允许修改邮箱' });
     }
@@ -630,7 +629,7 @@ export default async function userRoutes(fastify, options) {
     }
 
     // 检查是否需要密码验证
-    const requiresPassword = await getSetting('email_change_requires_password', true);
+    const requiresPassword = await fastify.settings.get('email_change_requires_password', true);
     if (requiresPassword) {
       if (!password) {
         return reply.code(400).send({ error: '请提供当前密码' });

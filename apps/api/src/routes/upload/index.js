@@ -2,7 +2,6 @@ import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { getSetting } from '../../services/settings.js';
 import { dirname } from '../../utils/index.js';
 
 export default async function uploadRoutes(fastify) {
@@ -36,7 +35,7 @@ export default async function uploadRoutes(fastify) {
     }
   }, async (request, reply) => {
     // 1. Check permissions
-    const allowedRoles = await getSetting('upload_allowed_roles', ['admin', 'moderator', 'vip']);
+    const allowedRoles = await fastify.settings.get('upload_allowed_roles', ['admin', 'moderator', 'vip']);
     if (!allowedRoles.includes(request.user.role)) {
       return reply.code(403).send({ error: '您没有上传文件的权限' });
     }
