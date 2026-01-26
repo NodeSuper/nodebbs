@@ -1,7 +1,8 @@
 import db from '../../db/index.js';
-import { reports, posts, topics, users, moderationLogs } from '../../db/schema.js';
+import { reports, posts, topics, users, moderationLogs, userStatus } from '../../db/schema.js';
 import { eq, sql, desc, and, ne, like, or, inArray, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
+import { getPermissionService } from '../../services/permissionService.js';
 
 // 生成举报通知消息
 function getReportNotificationMessage(reportType, action) {
@@ -392,6 +393,186 @@ export default async function moderationRoutes(fastify, options) {
     await fastify.clearUserCache(id);
 
     return { message: '用户已解封', user: updated };
+  });
+
+  // ============= 禁言管理接口 =============
+
+  // Mute user (管理员/版主)
+  fastify.post('/users/:id/mute', {
+    preHandler: [fastify.requireModerator],
+    schema: {
+      tags: ['moderation'],
+      description: '禁言用户（管理员/版主）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          duration: { type: 'number', description: '禁言时长（分钟），不填则永久禁言' },
+          reason: { type: 'string', maxLength: 500 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { duration, reason } = request.body || {};
+
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    // 检查权限：管理员可以禁言任何人，版主不能禁言管理员
+    if (user.role === 'admin' && !request.user.isAdmin) {
+      return reply.code(403).send({ error: '版主不能禁言管理员' });
+    }
+
+    // 计算禁言到期时间
+    let mutedUntil = null;
+    if (duration && duration > 0) {
+      mutedUntil = new Date(Date.now() + duration * 60 * 1000);
+    }
+
+    const permissionService = getPermissionService();
+    await permissionService.muteUser(id, {
+      until: mutedUntil,
+      reason,
+      mutedBy: request.user.id,
+    });
+
+    // 记录审核日志
+    await db.insert(moderationLogs).values({
+      action: 'mute',
+      targetType: 'user',
+      targetId: id,
+      moderatorId: request.user.id,
+      reason,
+      previousStatus: 'active',
+      newStatus: 'muted',
+      metadata: JSON.stringify({ duration, mutedUntil }),
+    });
+
+    // 清除用户缓存
+    await fastify.clearUserCache(id);
+
+    return {
+      message: mutedUntil
+        ? `用户已禁言至 ${mutedUntil.toLocaleString()}`
+        : '用户已永久禁言',
+      mutedUntil,
+      reason,
+    };
+  });
+
+  // Unmute user (管理员/版主)
+  fastify.post('/users/:id/unmute', {
+    preHandler: [fastify.requireModerator],
+    schema: {
+      tags: ['moderation'],
+      description: '解除用户禁言（管理员/版主）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    const permissionService = getPermissionService();
+    await permissionService.unmuteUser(id);
+
+    // 记录审核日志
+    await db.insert(moderationLogs).values({
+      action: 'unmute',
+      targetType: 'user',
+      targetId: id,
+      moderatorId: request.user.id,
+      previousStatus: 'muted',
+      newStatus: 'active',
+    });
+
+    // 清除用户缓存
+    await fastify.clearUserCache(id);
+
+    return { message: '用户禁言已解除' };
+  });
+
+  // Get user status (管理员/版主)
+  fastify.get('/users/:id/status', {
+    preHandler: [fastify.requireModerator],
+    schema: {
+      tags: ['moderation'],
+      description: '获取用户状态（管理员/版主）',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params;
+
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!user) {
+      return reply.code(404).send({ error: '用户不存在' });
+    }
+
+    const permissionService = getPermissionService();
+    const status = await permissionService.getUserStatus(id);
+
+    // 获取操作者信息
+    let mutedByUser = null;
+    let bannedByUser = null;
+
+    if (status.mutedBy) {
+      const [mutedBy] = await db
+        .select({ id: users.id, username: users.username })
+        .from(users)
+        .where(eq(users.id, status.mutedBy))
+        .limit(1);
+      mutedByUser = mutedBy;
+    }
+
+    if (status.bannedBy) {
+      const [bannedBy] = await db
+        .select({ id: users.id, username: users.username })
+        .from(users)
+        .where(eq(users.id, status.bannedBy))
+        .limit(1);
+      bannedByUser = bannedBy;
+    }
+
+    return {
+      ...status,
+      user: {
+        id: user.id,
+        username: user.username,
+        isBanned: user.isBanned,
+      },
+      mutedByUser,
+      bannedByUser,
+    };
   });
 
   // Change user role (admin only)

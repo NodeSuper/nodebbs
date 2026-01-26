@@ -905,3 +905,6 @@ export * from '../extensions/ads/schema.js';
 
 // ============ Message System (消息系统) ============
 export * from '../plugins/message/schema.js';
+
+// ============ RBAC System (权限系统) ============
+export * from './rbac-schema.js';

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { authApi } from '@/lib/api';
+import { authApi, rbacApi } from '@/lib/api';
 import LoginDialog from '@/components/auth/LoginDialog';
 import { useSettings } from '@/contexts/SettingsContext';
 import { ROLE_ADMIN, ROLE_MODERATOR } from '@/constants/roles';
@@ -9,14 +9,29 @@ import { ROLE_ADMIN, ROLE_MODERATOR } from '@/constants/roles';
 const AuthContext = createContext(null);
 
 // 增强用户对象，添加权限辅助属性
-function enhanceUser(user) {
+function enhanceUser(user, rbacData = null) {
   if (!user) return null;
-  
-  return {
+
+  const enhanced = {
     ...user,
+    // 向后兼容的属性
     isAdmin: user.role === ROLE_ADMIN,
-    isModerator: [ROLE_ADMIN, ROLE_MODERATOR].includes(user.role)
+    isModerator: [ROLE_ADMIN, ROLE_MODERATOR].includes(user.role),
   };
+
+  // 如果有 RBAC 数据，添加到用户对象
+  if (rbacData) {
+    enhanced.userRoles = rbacData.roles || [];
+    enhanced.permissions = rbacData.permissions || [];
+    enhanced.displayRole = rbacData.displayRole || null;
+    // 使用 RBAC 数据更新权限标志（如果可用）
+    if (rbacData.roles?.length > 0) {
+      enhanced.isAdmin = rbacData.roles.some(r => r.slug === 'admin');
+      enhanced.isModerator = rbacData.roles.some(r => ['admin', 'moderator'].includes(r.slug));
+    }
+  }
+
+  return enhanced;
 }
 
 export function AuthProvider({ children, initialUser }) {
@@ -57,7 +72,14 @@ export function AuthProvider({ children, initialUser }) {
     try {
       setLoading(true);
       const currentUser = await authApi.getCurrentUser();
-      setUser(enhanceUser(currentUser));
+      // 尝试获取 RBAC 权限数据
+      let rbacData = null;
+      try {
+        rbacData = await rbacApi.getMyPermissions();
+      } catch (e) {
+        // RBAC 接口可能不可用，忽略错误
+      }
+      setUser(enhanceUser(currentUser, rbacData));
       setError(null);
     } catch (err) {
       setUser(null);
@@ -72,7 +94,14 @@ export function AuthProvider({ children, initialUser }) {
     try {
       setError(null);
       const response = await authApi.login(identifier, password, captchaToken);
-      setUser(enhanceUser(response.user));
+      // 尝试获取 RBAC 权限数据
+      let rbacData = null;
+      try {
+        rbacData = await rbacApi.getMyPermissions();
+      } catch (e) {
+        // RBAC 接口可能不可用，忽略错误
+      }
+      setUser(enhanceUser(response.user, rbacData));
       // 登录成功刷新设置 (因为设置可能依赖用户角色)
       refreshSettings();
       // 登录成功后关闭对话框
@@ -89,7 +118,14 @@ export function AuthProvider({ children, initialUser }) {
     try {
       setError(null);
       const response = await authApi.register(data);
-      setUser(enhanceUser(response.user));
+      // 尝试获取 RBAC 权限数据
+      let rbacData = null;
+      try {
+        rbacData = await rbacApi.getMyPermissions();
+      } catch (e) {
+        // RBAC 接口可能不可用，忽略错误
+      }
+      setUser(enhanceUser(response.user, rbacData));
       // 注册成功刷新设置
       refreshSettings();
       // 注册成功后关闭对话框
@@ -118,7 +154,14 @@ export function AuthProvider({ children, initialUser }) {
   const refreshUser = useCallback(async () => {
     try {
       const currentUser = await authApi.getCurrentUser();
-      setUser(enhanceUser(currentUser));
+      // 尝试获取 RBAC 权限数据
+      let rbacData = null;
+      try {
+        rbacData = await rbacApi.getMyPermissions();
+      } catch (e) {
+        // RBAC 接口可能不可用，忽略错误
+      }
+      setUser(enhanceUser(currentUser, rbacData));
       return currentUser;
     } catch (err) {
       console.error('Failed to refresh user:', err);

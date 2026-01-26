@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { topicApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTopicContext } from '@/contexts/TopicContext';
@@ -18,24 +19,25 @@ import { useTopicContext } from '@/contexts/TopicContext';
  */
 export function useTopicSidebar() {
   const router = useRouter();
-  const { 
-    topic, 
-    updateTopic, 
-    toggleBookmark, 
-    toggleSubscribe, 
+  const {
+    topic,
+    updateTopic,
+    toggleBookmark,
+    toggleSubscribe,
     toggleTopicStatus,
     actionLoading,  // 使用 Context 统一管理的 loading 状态
   } = useTopicContext();
-  
+
   const { user, isAuthenticated, openLoginDialog } = useAuth();
-  
+  const { canPinTopic, canCloseTopic, canEditTopic, canDeleteTopic } = usePermission();
+
   // 侧边栏专属的本地状态
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
-  // 权限检查
-  const canCloseOrPinTopic = user && ['moderator', 'admin'].includes(user.role);
+  // 权限检查 - 使用 RBAC 系统
+  const canCloseOrPinTopic = canPinTopic() || canCloseTopic();
   const isTopicOwner = user && topic.userId === user.id;
 
   /**

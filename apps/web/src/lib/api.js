@@ -623,6 +623,21 @@ export const moderationApi = {
     return apiClient.patch(`/moderation/users/${id}/role`, { role });
   },
 
+  // 禁言用户 (管理员/版主)
+  async muteUser(id, options = {}) {
+    return apiClient.post(`/moderation/users/${id}/mute`, options);
+  },
+
+  // 解除禁言 (管理员/版主)
+  async unmuteUser(id) {
+    return apiClient.post(`/moderation/users/${id}/unmute`);
+  },
+
+  // 获取用户状态 (管理员/版主)
+  async getUserStatus(id) {
+    return apiClient.get(`/moderation/users/${id}/status`);
+  },
+
   // ============= 内容审核 API =============
   // 获取待审核统计数据
   async getStat() {
@@ -955,6 +970,126 @@ export const invitationsApi = {
     // 切换规则启用状态
     async toggle(role) {
       return apiClient.patch(`/invitations/rules/${role}/toggle`);
+    },
+  },
+};
+
+// ============= RBAC 权限管理 API =============
+export const rbacApi = {
+  // 获取当前用户的权限信息
+  async getMyPermissions() {
+    return apiClient.get('/auth/me/permissions');
+  },
+
+  // 获取公开角色信息
+  async getPublicRoles() {
+    return apiClient.get('/roles/public');
+  },
+
+  // 获取 RBAC 配置（模块、操作定义）
+  async getConfig() {
+    return apiClient.get('/roles/config');
+  },
+
+  // 管理员 API
+  admin: {
+    // 获取所有角色
+    async getRoles() {
+      return apiClient.get('/roles');
+    },
+
+    // 创建角色
+    async createRole(data) {
+      return apiClient.post('/roles', data);
+    },
+
+    // 获取角色详情
+    async getRole(id) {
+      return apiClient.get(`/roles/${id}`);
+    },
+
+    // 更新角色
+    async updateRole(id, data) {
+      return apiClient.patch(`/roles/${id}`, data);
+    },
+
+    // 删除角色
+    async deleteRole(id) {
+      return apiClient.delete(`/roles/${id}`);
+    },
+
+    // 获取角色权限
+    async getRolePermissions(id) {
+      return apiClient.get(`/roles/${id}/permissions`);
+    },
+
+    // 设置角色权限
+    async setRolePermissions(id, permissions) {
+      return apiClient.request(`/roles/${id}/permissions`, {
+        method: 'PUT',
+        body: JSON.stringify({ permissions }),
+      });
+    },
+
+    // 获取所有权限
+    async getPermissions() {
+      return apiClient.get('/roles/permissions');
+    },
+
+    // 创建权限
+    async createPermission(data) {
+      return apiClient.post('/roles/permissions', data);
+    },
+
+    // 更新权限
+    async updatePermission(id, data) {
+      return apiClient.patch(`/roles/permissions/${id}`, data);
+    },
+
+    // 删除权限
+    async deletePermission(id) {
+      return apiClient.delete(`/roles/permissions/${id}`);
+    },
+
+    // 获取用户角色
+    async getUserRoles(userId) {
+      return apiClient.get(`/roles/users/${userId}/roles`);
+    },
+
+    // 分配角色给用户
+    async assignRole(userId, roleId, expiresAt = null) {
+      return apiClient.post(`/roles/users/${userId}/roles`, { roleId, expiresAt });
+    },
+
+    // 移除用户角色
+    async removeRole(userId, roleId) {
+      return apiClient.delete(`/roles/users/${userId}/roles/${roleId}`);
+    },
+
+    // ============= 分类权限管理 =============
+    // 获取分类的权限配置
+    async getCategoryPermissions(categoryId) {
+      return apiClient.get(`/roles/categories/${categoryId}/permissions`);
+    },
+
+    // 设置分类的权限配置
+    async setCategoryPermissions(categoryId, permissions) {
+      return apiClient.put(`/roles/categories/${categoryId}/permissions`, { permissions });
+    },
+
+    // 获取分类的版主列表
+    async getCategoryModerators(categoryId) {
+      return apiClient.get(`/roles/categories/${categoryId}/moderators`);
+    },
+
+    // 为分类添加版主权限
+    async addCategoryModerator(categoryId, roleId) {
+      return apiClient.post(`/roles/categories/${categoryId}/moderators`, { roleId });
+    },
+
+    // 移除分类的版主权限
+    async removeCategoryModerator(categoryId, roleId) {
+      return apiClient.delete(`/roles/categories/${categoryId}/moderators/${roleId}`);
     },
   },
 };

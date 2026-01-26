@@ -25,6 +25,7 @@ import {
   Gift,
   Medal,
   Megaphone,
+  Key,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,6 +69,8 @@ export default function DashboardSidebar() {
       icon: UserCog,
       children: [
         { href: '/dashboard/users', icon: Users, label: '用户管理' },
+        { href: '/dashboard/roles', icon: Shield, label: '角色管理' },
+        { href: '/dashboard/permissions', icon: Key, label: '权限管理' },
         { href: '/dashboard/invitations', icon: Gift, label: '邀请码' },
         { href: '/dashboard/invitation-rules', icon: Settings, label: '邀请码规则' },
       ],

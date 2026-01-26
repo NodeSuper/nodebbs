@@ -20,10 +20,11 @@ import { FormDialog } from '@/components/common/FormDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Ban, ShieldCheck, UserCog, Trash2, UserPlus, Pencil, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, Ban, ShieldCheck, UserCog, Trash2, UserPlus, Pencil, CheckCircle2, XCircle, VolumeX, Volume2 } from 'lucide-react';
 import { userApi, moderationApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Time from '@/components/common/Time';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([]);
@@ -36,8 +37,13 @@ export default function UsersManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showMuteDialog, setShowMuteDialog] = useState(false);
 
   const [newRole, setNewRole] = useState('user');
+  const [muteForm, setMuteForm] = useState({
+    duration: 60, // 默认 60 分钟
+    reason: '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create'); // 'create' (创建) or 'edit' (编辑)
@@ -162,6 +168,73 @@ export default function UsersManagement() {
     } catch (err) {
       console.error('解封失败:', err);
       toast.error('解封失败：' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openMuteDialog = (user) => {
+    setSelectedUser(user);
+    setMuteForm({
+      duration: 60,
+      reason: '',
+    });
+    setShowMuteDialog(true);
+  };
+
+  const handleMuteUser = async () => {
+    setSubmitting(true);
+    try {
+      await moderationApi.muteUser(selectedUser.id, {
+        duration: muteForm.duration,
+        reason: muteForm.reason,
+      });
+
+      const durationText = muteForm.duration
+        ? `${muteForm.duration} 分钟`
+        : '永久';
+      toast.success(`已禁言用户 ${selectedUser.username}（${durationText}）`);
+      setShowMuteDialog(false);
+
+      // 更新本地状态
+      setUsers(users.map(u =>
+        u.id === selectedUser.id ? { ...u, isMuted: true } : u
+      ));
+    } catch (err) {
+      console.error('禁言失败:', err);
+      toast.error('禁言失败：' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUnmuteClick = async (e, user) => {
+    const confirmed = await confirm(e, {
+      title: '确认解除禁言？',
+      description: (
+        <>
+          确定要解除用户 "{user.username}" 的禁言吗？
+          <br />
+          解除后该用户将恢复发帖和回复权限。
+        </>
+      ),
+      confirmText: '确认解除',
+    });
+
+    if (!confirmed) return;
+
+    setSubmitting(true);
+    try {
+      await moderationApi.unmuteUser(user.id);
+      toast.success(`已解除用户 ${user.username} 的禁言`);
+
+      // 更新本地状态
+      setUsers(users.map(u =>
+        u.id === user.id ? { ...u, isMuted: false } : u
+      ));
+    } catch (err) {
+      console.error('解除禁言失败:', err);
+      toast.error('解除禁言失败：' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -450,6 +523,13 @@ export default function UsersManagement() {
                   </Badge>
                 );
               }
+              if (user.isMuted) {
+                return (
+                  <Badge variant="warning" className="text-xs bg-amber-100 text-amber-800 border-amber-200">
+                    禁言中
+                  </Badge>
+                );
+              }
               return (
                 <Badge variant="outline" className="text-xs">
                   正常
@@ -504,6 +584,21 @@ export default function UsersManagement() {
                   },
                   { separator: true },
                   {
+                    label: '解除禁言',
+                    icon: Volume2,
+                    onClick: (e) => handleUnmuteClick(e, user),
+                    hidden: !user.isMuted,
+                  },
+                  {
+                    label: '禁言用户',
+                    icon: VolumeX,
+                    variant: 'warning',
+                    onClick: () => openMuteDialog(user),
+                    disabled: !canModifyUser(user),
+                    hidden: user.isMuted || user.isBanned,
+                  },
+                  { separator: true },
+                  {
                     label: '软删除',
                     icon: Trash2,
                     variant: 'warning',
@@ -543,6 +638,7 @@ export default function UsersManagement() {
             { value: 'moderator-all', label: '版主' },
             { value: 'admin-all', label: '管理员' },
             { value: 'all-active', label: '正常用户' },
+            { value: 'all-muted', label: '禁言中' },
             { value: 'all-banned', label: '已封禁' },
             { value: 'all-deleted', label: '已删除' },
           ],
@@ -699,6 +795,54 @@ export default function UsersManagement() {
               </Label>
             </div>
           </div>
+      </FormDialog>
+
+      {/* 禁言对话框 */}
+      <FormDialog
+        open={showMuteDialog}
+        onOpenChange={setShowMuteDialog}
+        title="禁言用户"
+        description={`禁言用户 "${selectedUser?.username}"，禁言期间将无法发帖和回复`}
+        submitText="确认禁言"
+        onSubmit={handleMuteUser}
+        loading={submitting}
+        maxWidth="sm:max-w-[450px]"
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="muteDuration">禁言时长（分钟）</Label>
+            <Select
+              value={muteForm.duration?.toString() || '0'}
+              onValueChange={(value) => setMuteForm({ ...muteForm, duration: value === '0' ? null : parseInt(value) })}
+              disabled={submitting}
+            >
+              <SelectTrigger id="muteDuration">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 分钟</SelectItem>
+                <SelectItem value="30">30 分钟</SelectItem>
+                <SelectItem value="60">1 小时</SelectItem>
+                <SelectItem value="360">6 小时</SelectItem>
+                <SelectItem value="1440">1 天</SelectItem>
+                <SelectItem value="10080">7 天</SelectItem>
+                <SelectItem value="43200">30 天</SelectItem>
+                <SelectItem value="0">永久</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="muteReason">禁言原因（可选）</Label>
+            <Textarea
+              id="muteReason"
+              placeholder="请输入禁言原因..."
+              value={muteForm.reason}
+              onChange={(e) => setMuteForm({ ...muteForm, reason: e.target.value })}
+              disabled={submitting}
+              rows={3}
+            />
+          </div>
+        </div>
       </FormDialog>
     </div>
   );

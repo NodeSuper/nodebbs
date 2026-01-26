@@ -30,6 +30,7 @@ import { initLedger, listCurrencies, cleanLedger } from './ledger.js';
 import { initShopItems, cleanShopItems } from './shop.js';
 import { initCaptchaProviders, listCaptchaProviders } from './captcha.js';
 import { initAdSlots, listAdSlots, cleanAds } from './ads.js';
+import { initRBAC, listRBACConfig, migrateExistingUsers, cleanRBAC } from './roles.js';
 
 const { Pool } = pg;
 
@@ -93,6 +94,7 @@ function listAllSettings() {
   listCurrencies();
   listBadges();
   listAdSlots();
+  listRBACConfig();
 }
 
 /**
@@ -138,6 +140,12 @@ async function initAllSettings(reset = false) {
 
     // 10. 初始化广告位数据
     const adsResult = await initAdSlots(db, reset);
+
+    // 11. 初始化 RBAC 系统（角色和权限）
+    const rbacResult = await initRBAC(db, reset);
+
+    // 12. 迁移现有用户角色
+    const userMigrationResult = await migrateExistingUsers(db);
 
     // 显示统计信息
     console.log('\n' + '='.repeat(80));
@@ -243,6 +251,28 @@ async function initAllSettings(reset = false) {
     }
     console.log(`  - 总计: ${adsResult.total} 个广告位\n`);
 
+    // RBAC 系统统计
+    console.log(`RBAC 系统统计:`);
+    console.log(`  角色:`);
+    if (reset) {
+      console.log(`    - 重置: ${rbacResult.roles.updatedCount} 个角色`);
+    } else {
+      console.log(`    - 新增: ${rbacResult.roles.addedCount} 个角色`);
+      console.log(`    - 跳过: ${rbacResult.roles.skippedCount} 个角色（已存在）`);
+    }
+    console.log(`    - 总计: ${rbacResult.roles.total} 个角色`);
+    console.log(`  权限:`);
+    if (reset) {
+      console.log(`    - 重置: ${rbacResult.permissions.updatedCount} 个权限`);
+    } else {
+      console.log(`    - 新增: ${rbacResult.permissions.addedCount} 个权限`);
+      console.log(`    - 跳过: ${rbacResult.permissions.skippedCount} 个权限（已存在）`);
+    }
+    console.log(`    - 总计: ${rbacResult.permissions.total} 个权限`);
+    console.log(`  用户角色迁移:`);
+    console.log(`    - 迁移: ${userMigrationResult.migratedCount} 个用户`);
+    console.log(`    - 跳过: ${userMigrationResult.skippedCount} 个用户\n`);
+
     // 显示按分类的统计
     console.log('系统设置按分类统计:');
     Object.entries(SETTINGS_BY_CATEGORY).forEach(([category, settings]) => {
@@ -290,6 +320,8 @@ async function main() {
       await cleanBadges(db);
       // 3. Clean Ads (and Ad Slots)
       await cleanAds(db);
+      // 4. Clean RBAC (roles, permissions, user_roles)
+      await cleanRBAC(db);
     } catch (error) {
       console.error('清空失败:', error);
     } finally {
