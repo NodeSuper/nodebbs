@@ -220,6 +220,12 @@ export default async function qrLoginRoutes(fastify, options) {
         return reply.code(404).send({ error: '用户不存在' });
       }
 
+      // 检查账号是否被封禁（支持临时封禁）
+      const banStatus = await fastify.checkUserBanStatus(user);
+      if (banStatus.isBanned) {
+        return reply.code(403).send({ error: fastify.getBanMessage(banStatus) });
+      }
+
       // 生成Web端JWT token (只包含用户ID，其他信息从数据库实时获取)
       const token = fastify.jwt.sign({
         id: user.id,

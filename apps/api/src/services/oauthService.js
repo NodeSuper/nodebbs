@@ -98,9 +98,10 @@ export async function handleOAuthLogin(
     throw new Error('该账号已被删除');
   }
 
-  // 检查用户是否被封禁
-  if (user.isBanned) {
-    throw new Error('账号已被封禁');
+  // 检查用户是否被封禁（支持临时封禁）
+  const banStatus = await fastify.checkUserBanStatus(user);
+  if (banStatus.isBanned) {
+    throw new Error(fastify.getBanMessage(banStatus));
   }
 
   return {

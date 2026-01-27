@@ -129,6 +129,10 @@ async function authPlugin(fastify) {
     return message;
   }
 
+  // 暴露封禁检查函数供其他路由使用（如登录）
+  fastify.decorate('checkUserBanStatus', checkUserBanStatus);
+  fastify.decorate('getBanMessage', getBanMessage);
+
   // 获取用户信息（带缓存）
   async function getUserInfo(userId) {
     const cacheKey = `user:${userId}`;

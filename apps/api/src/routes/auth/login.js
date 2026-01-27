@@ -86,9 +86,10 @@ export default async function loginRoute(fastify, options) {
         return reply.code(403).send({ error: '该账号已被删除' });
       }
 
-      // 检查账号是否被封禁
-      if (user.isBanned) {
-        return reply.code(403).send({ error: '账号已被封禁' });
+      // 检查账号是否被封禁（支持临时封禁）
+      const banStatus = await fastify.checkUserBanStatus(user);
+      if (banStatus.isBanned) {
+        return reply.code(403).send({ error: fastify.getBanMessage(banStatus) });
       }
 
       // 验证密码
