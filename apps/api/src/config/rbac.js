@@ -148,133 +148,362 @@ export const CONDITION_TYPES = {
   },
 };
 
-// ============ 权限与条件的映射 ============
-
-// 定义每个权限支持哪些条件类型
-export const PERMISSION_CONDITIONS = {
-  // 话题相关
-  'topic.create': ['categories', 'rateLimit', 'level', 'minCredits', 'minPosts', 'accountAge', 'timeRange'],
-  'topic.read': ['categories', 'fieldFilter'],
-  'topic.update': ['own', 'categories'],
-  'topic.delete': ['own', 'categories'],
-  'topic.manage': ['categories', 'fieldFilter'],
-  'topic.pin': ['categories'],
-  'topic.close': ['categories'],
-  'topic.move': ['categories'],
-  'topic.approve': ['categories'],
-
-  // 回复相关
-  'post.create': ['categories', 'rateLimit', 'level', 'minCredits', 'accountAge', 'timeRange'],
-  'post.read': ['categories', 'fieldFilter'],
-  'post.update': ['own'],
-  'post.delete': ['own', 'categories'],
-  'post.manage': ['categories', 'fieldFilter'],
-  'post.approve': ['categories'],
-
-  // 用户相关
-  'user.read': ['fieldFilter'],
-  'user.update': ['own'],
-  'user.delete': [],
-  'user.manage': ['fieldFilter'],
-  'user.ban': [],
-  'user.role.assign': [],
-
-  // 分类相关
-  'category.create': [],
-  'category.read': ['fieldFilter'],
-  'category.update': [],
-  'category.delete': [],
-  'category.manage': ['fieldFilter'],
-
-  // 上传相关
-  'upload.create': ['maxFileSize', 'maxFilesPerDay', 'allowedFileTypes', 'rateLimit'],
-  'upload.image': ['maxFileSize', 'maxFilesPerDay', 'rateLimit'],
-  'upload.file': ['maxFileSize', 'maxFilesPerDay', 'allowedFileTypes', 'rateLimit'],
-
-  // 邀请相关
-  'invitation.create': ['rateLimit', 'level', 'minCredits'],
-  'invitation.read': ['own', 'fieldFilter'],
-  'invitation.manage': ['fieldFilter'],
-
-  // 审核相关
-  'moderation.reports': ['fieldFilter'],
-  'moderation.content': ['categories', 'fieldFilter'],
-  'moderation.approve': ['categories'],
-  'moderation.manage': ['fieldFilter'],
-
-  // 系统相关
-  'system.settings': [],
-  'system.dashboard': [],
-  'system.logs': ['fieldFilter'],
-  'system.manage': [],
-};
-
-// 默认条件（当权限未在映射中定义时使用）
-export const DEFAULT_CONDITIONS = ['own', 'categories', 'level'];
-
 // ============ 系统权限定义（唯一数据源） ============
 
 /**
  * 系统权限定义
- * 所有权限都从这里定义，确保 PERMISSION_CONDITIONS 和数据库一致
+ * 包含权限基本信息和支持的条件类型
  */
 export const SYSTEM_PERMISSIONS = [
-  // 话题权限
-  { slug: 'topic.create', name: '创建话题', module: 'topic', action: 'create', isSystem: true },
-  { slug: 'topic.read', name: '查看话题', module: 'topic', action: 'read', isSystem: true },
-  { slug: 'topic.update', name: '编辑话题', module: 'topic', action: 'update', isSystem: true },
-  { slug: 'topic.delete', name: '删除话题', module: 'topic', action: 'delete', isSystem: true },
-  { slug: 'topic.manage', name: '管理话题', module: 'topic', action: 'manage', isSystem: true },
-  { slug: 'topic.pin', name: '置顶话题', module: 'topic', action: 'pin', isSystem: true },
-  { slug: 'topic.close', name: '关闭话题', module: 'topic', action: 'close', isSystem: true },
-  { slug: 'topic.approve', name: '审核话题', module: 'topic', action: 'approve', isSystem: true },
-  { slug: 'topic.move', name: '移动话题', module: 'topic', action: 'move', isSystem: true },
+  // ========== 话题权限 ==========
+  {
+    slug: 'topic.create',
+    name: '创建话题',
+    module: 'topic',
+    action: 'create',
+    isSystem: true,
+    conditions: ['categories', 'rateLimit', 'level', 'minCredits', 'minPosts', 'accountAge', 'timeRange'],
+  },
+  {
+    slug: 'topic.read',
+    name: '查看话题',
+    module: 'topic',
+    action: 'read',
+    isSystem: true,
+    conditions: ['categories', 'fieldFilter'],
+  },
+  {
+    slug: 'topic.update',
+    name: '编辑话题',
+    module: 'topic',
+    action: 'update',
+    isSystem: true,
+    conditions: ['own', 'categories'],
+  },
+  {
+    slug: 'topic.delete',
+    name: '删除话题',
+    module: 'topic',
+    action: 'delete',
+    isSystem: true,
+    conditions: ['own', 'categories'],
+  },
+  {
+    slug: 'topic.manage',
+    name: '管理话题',
+    module: 'topic',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['categories', 'fieldFilter'],
+  },
+  {
+    slug: 'topic.pin',
+    name: '置顶话题',
+    module: 'topic',
+    action: 'pin',
+    isSystem: true,
+    conditions: ['categories'],
+  },
+  {
+    slug: 'topic.close',
+    name: '关闭话题',
+    module: 'topic',
+    action: 'close',
+    isSystem: true,
+    conditions: ['categories'],
+  },
+  {
+    slug: 'topic.approve',
+    name: '审核话题',
+    module: 'topic',
+    action: 'approve',
+    isSystem: true,
+    conditions: ['categories'],
+  },
+  {
+    slug: 'topic.move',
+    name: '移动话题',
+    module: 'topic',
+    action: 'move',
+    isSystem: true,
+    conditions: ['categories'],
+  },
 
-  // 帖子/回复权限
-  { slug: 'post.create', name: '发表回复', module: 'post', action: 'create', isSystem: true },
-  { slug: 'post.read', name: '查看回复', module: 'post', action: 'read', isSystem: true },
-  { slug: 'post.update', name: '编辑回复', module: 'post', action: 'update', isSystem: true },
-  { slug: 'post.delete', name: '删除回复', module: 'post', action: 'delete', isSystem: true },
-  { slug: 'post.manage', name: '管理回复', module: 'post', action: 'manage', isSystem: true },
-  { slug: 'post.approve', name: '审核回复', module: 'post', action: 'approve', isSystem: true },
+  // ========== 回复权限 ==========
+  {
+    slug: 'post.create',
+    name: '发表回复',
+    module: 'post',
+    action: 'create',
+    isSystem: true,
+    conditions: ['categories', 'rateLimit', 'level', 'minCredits', 'accountAge', 'timeRange'],
+  },
+  {
+    slug: 'post.read',
+    name: '查看回复',
+    module: 'post',
+    action: 'read',
+    isSystem: true,
+    conditions: ['categories', 'fieldFilter'],
+  },
+  {
+    slug: 'post.update',
+    name: '编辑回复',
+    module: 'post',
+    action: 'update',
+    isSystem: true,
+    conditions: ['own'],
+  },
+  {
+    slug: 'post.delete',
+    name: '删除回复',
+    module: 'post',
+    action: 'delete',
+    isSystem: true,
+    conditions: ['own', 'categories'],
+  },
+  {
+    slug: 'post.manage',
+    name: '管理回复',
+    module: 'post',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['categories', 'fieldFilter'],
+  },
+  {
+    slug: 'post.approve',
+    name: '审核回复',
+    module: 'post',
+    action: 'approve',
+    isSystem: true,
+    conditions: ['categories'],
+  },
 
-  // 用户管理权限
-  { slug: 'user.read', name: '查看用户', module: 'user', action: 'read', isSystem: true },
-  { slug: 'user.update', name: '编辑用户', module: 'user', action: 'update', isSystem: true },
-  { slug: 'user.delete', name: '删除用户', module: 'user', action: 'delete', isSystem: true },
-  { slug: 'user.manage', name: '管理用户', module: 'user', action: 'manage', isSystem: true },
-  { slug: 'user.ban', name: '封禁用户', module: 'user', action: 'ban', isSystem: true },
-  { slug: 'user.role.assign', name: '分配角色', module: 'user', action: 'role.assign', isSystem: true },
+  // ========== 用户权限 ==========
+  {
+    slug: 'user.read',
+    name: '查看用户',
+    module: 'user',
+    action: 'read',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
+  {
+    slug: 'user.update',
+    name: '编辑用户',
+    module: 'user',
+    action: 'update',
+    isSystem: true,
+    conditions: ['own'],
+  },
+  {
+    slug: 'user.delete',
+    name: '删除用户',
+    module: 'user',
+    action: 'delete',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'user.manage',
+    name: '管理用户',
+    module: 'user',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
+  {
+    slug: 'user.ban',
+    name: '封禁用户',
+    module: 'user',
+    action: 'ban',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'user.role.assign',
+    name: '分配角色',
+    module: 'user',
+    action: 'role.assign',
+    isSystem: true,
+    conditions: [],
+  },
 
-  // 分类管理权限
-  { slug: 'category.create', name: '创建分类', module: 'category', action: 'create', isSystem: true },
-  { slug: 'category.read', name: '查看分类', module: 'category', action: 'read', isSystem: true },
-  { slug: 'category.update', name: '编辑分类', module: 'category', action: 'update', isSystem: true },
-  { slug: 'category.delete', name: '删除分类', module: 'category', action: 'delete', isSystem: true },
-  { slug: 'category.manage', name: '管理分类', module: 'category', action: 'manage', isSystem: true },
+  // ========== 分类权限 ==========
+  {
+    slug: 'category.create',
+    name: '创建分类',
+    module: 'category',
+    action: 'create',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'category.read',
+    name: '查看分类',
+    module: 'category',
+    action: 'read',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
+  {
+    slug: 'category.update',
+    name: '编辑分类',
+    module: 'category',
+    action: 'update',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'category.delete',
+    name: '删除分类',
+    module: 'category',
+    action: 'delete',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'category.manage',
+    name: '管理分类',
+    module: 'category',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
 
-  // 系统管理权限
-  { slug: 'system.settings', name: '系统设置', module: 'system', action: 'settings', isSystem: true },
-  { slug: 'system.dashboard', name: '管理后台', module: 'system', action: 'dashboard', isSystem: true },
-  { slug: 'system.logs', name: '系统日志', module: 'system', action: 'logs', isSystem: true },
-  { slug: 'system.manage', name: '系统管理', module: 'system', action: 'manage', isSystem: true },
+  // ========== 系统权限 ==========
+  {
+    slug: 'system.settings',
+    name: '系统设置',
+    module: 'system',
+    action: 'settings',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'system.dashboard',
+    name: '管理后台',
+    module: 'system',
+    action: 'dashboard',
+    isSystem: true,
+    conditions: [],
+  },
+  {
+    slug: 'system.logs',
+    name: '系统日志',
+    module: 'system',
+    action: 'logs',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
+  {
+    slug: 'system.manage',
+    name: '系统管理',
+    module: 'system',
+    action: 'manage',
+    isSystem: true,
+    conditions: [],
+  },
 
-  // 上传权限
-  { slug: 'upload.create', name: '上传文件', module: 'upload', action: 'create', isSystem: true },
-  { slug: 'upload.image', name: '上传图片', module: 'upload', action: 'image', isSystem: true },
-  { slug: 'upload.file', name: '上传附件', module: 'upload', action: 'file', isSystem: true },
+  // ========== 上传权限 ==========
+  {
+    slug: 'upload.create',
+    name: '上传文件',
+    module: 'upload',
+    action: 'create',
+    isSystem: true,
+    conditions: ['maxFileSize', 'maxFilesPerDay', 'allowedFileTypes', 'rateLimit'],
+  },
+  {
+    slug: 'upload.image',
+    name: '上传图片',
+    module: 'upload',
+    action: 'image',
+    isSystem: true,
+    conditions: ['maxFileSize', 'maxFilesPerDay', 'rateLimit'],
+  },
+  {
+    slug: 'upload.file',
+    name: '上传附件',
+    module: 'upload',
+    action: 'file',
+    isSystem: true,
+    conditions: ['maxFileSize', 'maxFilesPerDay', 'allowedFileTypes', 'rateLimit'],
+  },
 
-  // 邀请权限
-  { slug: 'invitation.create', name: '创建邀请码', module: 'invitation', action: 'create', isSystem: true },
-  { slug: 'invitation.read', name: '查看邀请码', module: 'invitation', action: 'read', isSystem: true },
-  { slug: 'invitation.manage', name: '管理邀请码', module: 'invitation', action: 'manage', isSystem: true },
+  // ========== 邀请权限 ==========
+  {
+    slug: 'invitation.create',
+    name: '创建邀请码',
+    module: 'invitation',
+    action: 'create',
+    isSystem: true,
+    conditions: ['rateLimit', 'level', 'minCredits'],
+  },
+  {
+    slug: 'invitation.read',
+    name: '查看邀请码',
+    module: 'invitation',
+    action: 'read',
+    isSystem: true,
+    conditions: ['own', 'fieldFilter'],
+  },
+  {
+    slug: 'invitation.manage',
+    name: '管理邀请码',
+    module: 'invitation',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
 
-  // 审核权限
-  { slug: 'moderation.reports', name: '处理举报', module: 'moderation', action: 'reports', isSystem: true },
-  { slug: 'moderation.content', name: '审核内容', module: 'moderation', action: 'content', isSystem: true },
-  { slug: 'moderation.approve', name: '审核通过', module: 'moderation', action: 'approve', isSystem: true },
-  { slug: 'moderation.manage', name: '审核管理', module: 'moderation', action: 'manage', isSystem: true },
+  // ========== 审核权限 ==========
+  {
+    slug: 'moderation.reports',
+    name: '处理举报',
+    module: 'moderation',
+    action: 'reports',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
+  {
+    slug: 'moderation.content',
+    name: '审核内容',
+    module: 'moderation',
+    action: 'content',
+    isSystem: true,
+    conditions: ['categories', 'fieldFilter'],
+  },
+  {
+    slug: 'moderation.approve',
+    name: '审核通过',
+    module: 'moderation',
+    action: 'approve',
+    isSystem: true,
+    conditions: ['categories'],
+  },
+  {
+    slug: 'moderation.manage',
+    name: '审核管理',
+    module: 'moderation',
+    action: 'manage',
+    isSystem: true,
+    conditions: ['fieldFilter'],
+  },
 ];
+
+// ============ 权限条件映射（自动生成） ============
+
+/**
+ * 权限支持的条件类型映射
+ * 从 SYSTEM_PERMISSIONS 自动生成，保持向后兼容
+ */
+export const PERMISSION_CONDITIONS = Object.fromEntries(
+  SYSTEM_PERMISSIONS.map(p => [p.slug, p.conditions || []])
+);
+
+// 默认条件（当权限未定义 conditions 时使用）
+export const DEFAULT_CONDITIONS = ['own', 'categories', 'level'];
 
 // ============ 系统角色定义 ============
 
@@ -414,17 +643,21 @@ export function getRbacConfig() {
 
 /**
  * 校验 RBAC 配置的一致性
- * 确保 PERMISSION_CONDITIONS 中的所有权限都在 SYSTEM_PERMISSIONS 中定义
  * @returns {{ valid: boolean, errors: string[] }}
  */
 export function validateRbacConfig() {
   const errors = [];
   const permissionSlugs = new Set(SYSTEM_PERMISSIONS.map(p => p.slug));
+  const conditionKeys = new Set(Object.keys(CONDITION_TYPES));
 
-  // 1. 检查 PERMISSION_CONDITIONS 中的权限是否都在 SYSTEM_PERMISSIONS 中
-  for (const slug of Object.keys(PERMISSION_CONDITIONS)) {
-    if (!permissionSlugs.has(slug)) {
-      errors.push(`PERMISSION_CONDITIONS 中定义了 "${slug}"，但 SYSTEM_PERMISSIONS 中未找到`);
+  // 1. 检查 SYSTEM_PERMISSIONS 中的 conditions 引用的条件类型是否有效
+  for (const perm of SYSTEM_PERMISSIONS) {
+    if (perm.conditions) {
+      for (const cond of perm.conditions) {
+        if (!conditionKeys.has(cond)) {
+          errors.push(`SYSTEM_PERMISSIONS "${perm.slug}" 引用了未定义的条件类型 "${cond}"`);
+        }
+      }
     }
   }
 
@@ -454,7 +687,7 @@ export function validateRbacConfig() {
   const moduleValues = new Set(MODULE_OPTIONS.map(m => m.value));
   for (const perm of SYSTEM_PERMISSIONS) {
     if (!moduleValues.has(perm.module)) {
-      errors.push(`SYSTEM_PERMISSIONS 中 "${perm.slug}" 的 module "${perm.module}" 未在 MODULE_OPTIONS 中定义`);
+      errors.push(`SYSTEM_PERMISSIONS "${perm.slug}" 的 module "${perm.module}" 未在 MODULE_OPTIONS 中定义`);
     }
   }
 
@@ -462,7 +695,7 @@ export function validateRbacConfig() {
   const roleSlugs = new Set(SYSTEM_ROLES.map(r => r.slug));
   for (const role of SYSTEM_ROLES) {
     if (role.parentSlug && !roleSlugs.has(role.parentSlug)) {
-      errors.push(`SYSTEM_ROLES 中 "${role.slug}" 的 parentSlug "${role.parentSlug}" 未找到`);
+      errors.push(`SYSTEM_ROLES "${role.slug}" 的 parentSlug "${role.parentSlug}" 未找到`);
     }
   }
 
