@@ -228,7 +228,7 @@ function ConditionEditor({ conditions, permission, onChange, disabled, hasConfig
   };
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer direction="right" open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button
           type="button"
@@ -248,7 +248,7 @@ function ConditionEditor({ conditions, permission, onChange, disabled, hasConfig
               为 &quot;{permission.name}&quot; 设置生效条件
             </DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-4 overflow-y-auto max-h-[50vh]">
+          <div className="px-4 pb-4 overflow-y-auto max-h-[calc(100vh-200px)]">
             {conditionTypes.map(renderConditionInput)}
           </div>
           <DrawerFooter>
