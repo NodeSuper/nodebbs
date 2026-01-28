@@ -44,7 +44,7 @@ export const users = pgTable(
     name: varchar('name', { length: 255 }),
     bio: text('bio'),
     avatar: varchar('avatar', { length: 500 }),
-    role: varchar('role', { length: 20 }).notNull().default('user'), // user (用户), vip (会员), moderator (版主), admin (管理员)
+    role: varchar('role', { length: 20 }).notNull().default('user'), // user (用户), admin (管理员)
     isBanned: boolean('is_banned').notNull().default(false),
     bannedUntil: timestamp('banned_until', { withTimezone: true }), // 封禁到期时间（null=永久）
     bannedReason: text('banned_reason'), // 封禁原因

@@ -12,7 +12,7 @@ import {
   userRoles,
   users,
 } from '../db/schema.js';
-import { createFieldFilter, mergeFieldRules, filterFields } from '../utils/fieldFilter.js';
+import { createFieldFilter, filterFields } from '../utils/fieldFilter.js';
 
 // 权限缓存 TTL（秒）
 const PERMISSION_CACHE_TTL = 300; // 5 分钟
@@ -483,7 +483,6 @@ class PermissionService {
       } : null,
       // 向后兼容的权限检查
       isAdmin: userRolesList.some(r => r.slug === 'admin'),
-      isModerator: userRolesList.some(r => ['admin', 'moderator'].includes(r.slug)),
     };
   }
 
@@ -592,92 +591,6 @@ class PermissionService {
         }))
       );
     }
-  }
-
-  // ============ 用户封禁管理方法 ============
-
-  /**
-   * 封禁用户（更新 users 表）
-   * @param {number} userId - 用户 ID
-   * @param {Object} options - 选项
-   */
-  async banUser(userId, options = {}) {
-    const { until, reason, bannedBy } = options;
-
-    await db
-      .update(users)
-      .set({
-        isBanned: true,
-        bannedUntil: until || null,
-        bannedReason: reason || null,
-        bannedBy: bannedBy || null,
-      })
-      .where(eq(users.id, userId));
-
-    // 清除用户缓存
-    if (this.fastify?.clearUserCache) {
-      await this.fastify.clearUserCache(userId);
-    }
-  }
-
-  /**
-   * 解除封禁
-   * @param {number} userId - 用户 ID
-   */
-  async unbanUser(userId) {
-    await db
-      .update(users)
-      .set({
-        isBanned: false,
-        bannedUntil: null,
-        bannedReason: null,
-        bannedBy: null,
-      })
-      .where(eq(users.id, userId));
-
-    // 清除用户缓存
-    if (this.fastify?.clearUserCache) {
-      await this.fastify.clearUserCache(userId);
-    }
-  }
-
-  /**
-   * 检查用户封禁状态（从 users 表检查）
-   * @param {number} userId - 用户 ID
-   * @returns {Promise<{isBanned: boolean, reason?: string, until?: Date}>}
-   */
-  async checkBanStatus(userId) {
-    const [user] = await db
-      .select({
-        isBanned: users.isBanned,
-        bannedUntil: users.bannedUntil,
-        bannedReason: users.bannedReason,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!user) {
-      return { isBanned: false };
-    }
-
-    // 检查封禁是否已过期
-    if (user.isBanned) {
-      const now = new Date();
-      if (user.bannedUntil && new Date(user.bannedUntil) <= now) {
-        // 封禁已过期，自动解除
-        await this.unbanUser(userId);
-        return { isBanned: false };
-      }
-
-      return {
-        isBanned: true,
-        reason: user.bannedReason,
-        until: user.bannedUntil,
-      };
-    }
-
-    return { isBanned: false };
   }
 
   /**

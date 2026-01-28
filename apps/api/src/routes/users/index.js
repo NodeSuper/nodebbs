@@ -32,7 +32,7 @@ export default async function userRoutes(fastify, options) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string', maxLength: 255 },
-          role: { type: 'string', enum: ['user', 'moderator', 'admin', 'vip'], default: 'user' },
+          role: { type: 'string', enum: ['user', 'admin'], default: 'user' },
           isEmailVerified: { type: 'boolean', default: false }
         }
       },
@@ -112,7 +112,7 @@ export default async function userRoutes(fastify, options) {
           page: { type: 'number', default: 1 },
           limit: { type: 'number', default: 20, maximum: 100 },
           search: { type: 'string' },
-          role: { type: 'string', enum: ['user', 'moderator', 'admin', 'vip'] },
+          role: { type: 'string', enum: ['user', 'admin'] },
           isBanned: { type: 'boolean' },
           includeDeleted: { type: 'boolean', default: true }
         }
@@ -308,15 +308,15 @@ export default async function userRoutes(fastify, options) {
     }
 
     // 检查用户权限
-    const isModerator = request.user?.isModerator;
+    const isAdmin = request.user?.isAdmin;
     
     // 如果用户已被删除且访问者不是管理员/版主，返回 404
-    if (user.isDeleted && !isModerator) {
+    if (user.isDeleted && !isAdmin) {
       return reply.code(404).send({ error: '用户不存在' });
     }
     
     // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
-    if (user.isBanned && !isModerator) {
+    if (user.isBanned && !isAdmin) {
       user.avatar = null;
     }
 
@@ -875,11 +875,11 @@ export default async function userRoutes(fastify, options) {
       .offset(offset);
 
     // 检查用户权限
-    const isModerator = request.user?.isModerator;
+    const isAdmin = request.user?.isAdmin;
     
     // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
     followers.forEach(follower => {
-      if (follower.isBanned && !isModerator) {
+      if (follower.isBanned && !isAdmin) {
         follower.avatar = null;
       }
       delete follower.isBanned;
@@ -947,11 +947,11 @@ export default async function userRoutes(fastify, options) {
       .offset(offset);
 
     // 检查用户权限
-    const isModerator = request.user?.isModerator;
+    const isAdmin = request.user?.isAdmin;
     
     // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
     following.forEach(followedUser => {
-      if (followedUser.isBanned && !isModerator) {
+      if (followedUser.isBanned && !isAdmin) {
         followedUser.avatar = null;
       }
       delete followedUser.isBanned;
@@ -1012,10 +1012,10 @@ export default async function userRoutes(fastify, options) {
     // 隐私检查：只有本人或管理员/版主可以查看收藏列表
     const currentUser = request.user;
     const isOwner = currentUser && currentUser.id === user.id;
-    const isModerator =
-      currentUser?.isModerator;
+    const isAdmin =
+      currentUser?.isAdmin;
 
-    if (!isOwner && !isModerator) {
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ error: '无权查看该用户的收藏列表' });
     }
     
@@ -1066,11 +1066,11 @@ export default async function userRoutes(fastify, options) {
       .limit(limit)
       .offset(offset);
 
-    // 检查用户权限 (isModerator 已在上文定义)
+    // 检查用户权限 (isAdmin 已在上文定义)
     
     // 如果话题作者被封禁且访问者不是管理员/版主，隐藏头像
     bookmarkedTopics.forEach(topic => {
-      if (topic.userIsBanned && !isModerator) {
+      if (topic.userIsBanned && !isAdmin) {
         topic.userAvatar = null;
       }
       delete topic.userIsBanned;
@@ -1210,7 +1210,7 @@ export default async function userRoutes(fastify, options) {
           username: { type: 'string', minLength: 3, maxLength: 50 },
           email: { type: 'string', format: 'email' },
           name: { type: 'string', maxLength: 255 },
-          role: { type: 'string', enum: ['user', 'moderator', 'admin', 'vip'] },
+          role: { type: 'string', enum: ['user', 'admin'] },
           isEmailVerified: { type: 'boolean' }
         }
       },

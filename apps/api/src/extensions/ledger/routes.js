@@ -174,7 +174,7 @@ export default async function ledgerRoutes(fastify, options) {
       const { currency = DEFAULT_CURRENCY_CODE, userId } = req.query;
       
       let targetUserId = req.user.id;
-      if (req.user.role === 'admin' && userId) {
+      if (req.user.isAdmin && userId) {
           targetUserId = userId;
       }
 

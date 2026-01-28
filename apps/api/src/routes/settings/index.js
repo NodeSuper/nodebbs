@@ -20,11 +20,6 @@ function canAccessSetting(setting, userRole) {
     return true;
   }
 
-  // 版主级别设置
-  if (accessLevel === ACCESS_LEVEL.MODERATOR) {
-    return userRole === 'moderator' || userRole === 'admin';
-  }
-
   // 管理员级别设置
   if (accessLevel === ACCESS_LEVEL.ADMIN) {
     return userRole === 'admin';

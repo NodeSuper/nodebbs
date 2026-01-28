@@ -230,7 +230,7 @@ export class RBACSeeder extends BaseSeeder {
     });
 
     this.logger.subHeader('Inheritance:');
-    this.logger.item('admin -> moderator -> vip -> user', '👑');
+    this.logger.item('admin -> user', '👑');
 
     this.logger.subHeader('System Permissions:');
     const modulePermissions = {};

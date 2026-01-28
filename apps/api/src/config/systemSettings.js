@@ -8,7 +8,6 @@
  */
 export const ACCESS_LEVEL = {
   PUBLIC: 'public', // 所有人可见
-  MODERATOR: 'moderator', // 版主及以上可见
   ADMIN: 'admin', // 仅管理员可见
 };
 
@@ -110,7 +109,7 @@ export const SETTING_KEYS = {
     valueType: 'boolean',
     description: '是否启用内容审核（新发布的内容需要审核后才能公开显示）',
     category: 'features',
-    accessLevel: ACCESS_LEVEL.MODERATOR,
+    accessLevel: ACCESS_LEVEL.ADMIN,
   },
   QR_LOGIN_ENABLED: {
     key: 'qr_login_enabled',
@@ -130,7 +129,7 @@ export const SETTING_KEYS = {
   },
   UPLOAD_ALLOWED_ROLES: {
     key: 'upload_allowed_roles',
-    defaultValue: JSON.stringify(['admin', 'moderator', 'vip']),
+    defaultValue: JSON.stringify(['admin']),
     valueType: 'json',
     description: '允许上传文件的角色列表',
     category: 'features',

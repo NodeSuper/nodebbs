@@ -35,7 +35,7 @@ export default async function uploadRoutes(fastify) {
     }
   }, async (request, reply) => {
     // 1. Check permissions
-    const allowedRoles = await fastify.settings.get('upload_allowed_roles', ['admin', 'moderator', 'vip']);
+    const allowedRoles = await fastify.settings.get('upload_allowed_roles', ['admin']);
     if (!allowedRoles.includes(request.user.role)) {
       return reply.code(403).send({ error: '您没有上传文件的权限' });
     }

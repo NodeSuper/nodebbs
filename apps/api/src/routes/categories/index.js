@@ -133,8 +133,8 @@ export default async function categoryRoutes(fastify, options) {
       return false;
     };
 
-    // 过滤私有分类（只有管理员和版主可以看到）
-    if (!user || !['admin', 'moderator'].includes(user.role)) {
+    // 过滤私有分类（只有管理员可以看到）
+    if (!user?.isAdmin) {
       allCategories = allCategories.filter(cat => !isPrivateCategory(cat, allCategories));
     }
 
@@ -239,7 +239,7 @@ export default async function categoryRoutes(fastify, options) {
     const isPrivate = await checkPrivate(category);
     
     // 如果是私有分类，检查权限
-    if (isPrivate && (!user || !['admin', 'moderator'].includes(user.role))) {
+    if (isPrivate && !user?.isAdmin) {
       return reply.code(403).send({ error: '无权访问此分类' });
     }
 

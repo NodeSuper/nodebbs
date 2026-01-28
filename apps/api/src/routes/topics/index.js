@@ -145,10 +145,9 @@ export default async function topicRoutes(fastify, options) {
 
       // 如果不是版主/管理员，只显示已批准的内容
       // 如果是查看自己的话题，显示所有状态
-      const isModerator = request.user?.isModerator;
       const isOwnTopics = userId && request.user && userId === request.user.id;
 
-      if (!isModerator && !isOwnTopics) {
+      if (!isAdmin && !isOwnTopics) {
         conditions.push(eq(topics.approvalStatus, 'approved'));
       }
 
@@ -202,7 +201,7 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 过滤私有分类（只有管理员和版主可以看到）
-      if (!isModerator) {
+      if (!isAdmin) {
         conditions.push(eq(categories.isPrivate, false));
       }
 
@@ -293,12 +292,12 @@ export default async function topicRoutes(fastify, options) {
       // 根据用户权限过滤敏感字段
       const finalResults = results.map((topic) => {
         // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
-        if (bannedUserIds.has(topic.userId) && !isModerator) {
+        if (bannedUserIds.has(topic.userId) && !isAdmin) {
           topic.userAvatar = null;
         }
 
         // 管理员和版主可以看到所有字段
-        if (isModerator) {
+        if (isAdmin) {
           return topic;
         }
 
@@ -389,11 +388,11 @@ export default async function topicRoutes(fastify, options) {
     async (request, reply) => {
       const { id } = request.params;
 
-      const isModerator = request.user?.isModerator;
+      const isAdmin = request.user?.isAdmin;
 
       // 构建查询条件：管理员和版主可以查看已删除的话题
       const conditions = [eq(topics.id, id)];
-      if (!isModerator) {
+      if (!isAdmin) {
         conditions.push(eq(topics.isDeleted, false));
       }
 
@@ -436,17 +435,17 @@ export default async function topicRoutes(fastify, options) {
       const isAuthor = request.user && request.user.id === topic.userId;
 
       // 检查私有分类访问权限
-      if (topic.categoryIsPrivate && !isModerator) {
+      if (topic.categoryIsPrivate && !isAdmin) {
         return reply.code(404).send({ error: '话题不存在' });
       }
 
       // 检查访问权限：待审核或已拒绝的话题只有版主/管理员或作者本人可以访问
-      if (topic.approvalStatus !== 'approved' && !isModerator && !isAuthor) {
+      if (topic.approvalStatus !== 'approved' && !isAdmin && !isAuthor) {
         return reply.code(404).send({ error: '话题不存在' });
       }
 
       // 检查已删除话题的访问权限：只有管理员和版主可以查看
-      if (topic.isDeleted && !isModerator) {
+      if (topic.isDeleted && !isAdmin) {
         return reply.code(404).send({ error: '话题不存在' });
       }
 
@@ -559,7 +558,7 @@ export default async function topicRoutes(fastify, options) {
         firstPostId: firstPost?.id,
         firstPostLikeCount: firstPost?.likeCount || 0,
         // 如果被封禁则覆盖头像
-        userAvatar: shouldHideUserInfo({ isBanned: topic.userIsBanned }, isModerator) ? null : topic.userAvatar,
+        userAvatar: shouldHideUserInfo({ isBanned: topic.userIsBanned }, isAdmin) ? null : topic.userAvatar,
 
         isFirstPostLiked,
         editCount: firstPost?.editCount || 0,
@@ -611,8 +610,8 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 检查私有分类权限
-      const isModerator = request.user?.isModerator;
-      if (category.isPrivate && !isModerator) {
+      const isAdmin = request.user?.isAdmin;
+      if (category.isPrivate && !isAdmin) {
         return reply.code(403).send({
           error: '访问被拒绝',
           message: '你没有权限在该私有分类中发帖',
@@ -753,10 +752,10 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 检查权限
-      const isModerator = request.user?.isModerator;
+      const isAdmin = request.user?.isAdmin;
       const isOwner = topic.userId === request.user.id;
 
-      if (!isModerator && !isOwner) {
+      if (!isAdmin && !isOwner) {
         return reply
           .code(403)
           .send({ error: '你没有权限编辑该话题' });
@@ -766,7 +765,7 @@ export default async function topicRoutes(fastify, options) {
       if (
         (request.body.isPinned !== undefined ||
           request.body.isClosed !== undefined) &&
-        !isModerator
+        !isAdmin
       ) {
         return reply
           .code(403)
@@ -794,7 +793,7 @@ export default async function topicRoutes(fastify, options) {
       const previousStatus = topic.approvalStatus;
 
       // 如果内容审核开启，且编辑者是普通用户（非版主/管理员）
-      if (contentModerationEnabled && isOwner && !isModerator) {
+      if (contentModerationEnabled && isOwner && !isAdmin) {
         // 编辑标题或内容时，需要重新审核
         if (request.body.title || content !== undefined) {
           // 已批准的内容编辑后需要重新审核
@@ -982,17 +981,17 @@ export default async function topicRoutes(fastify, options) {
       }
 
       // 检查权限
-      const isModerator = request.user?.isModerator;
+      const isAdmin = request.user?.isAdmin;
       const isOwner = topic.userId === request.user.id;
 
-      if (!isModerator && !isOwner) {
+      if (!isAdmin && !isOwner) {
         return reply
           .code(403)
           .send({ error: '你没有权限删除该话题' });
       }
 
       // 仅版主和管理员可以永久删除话题
-      if (permanent && !isModerator) {
+      if (permanent && !isAdmin) {
         return reply
           .code(403)
           .send({

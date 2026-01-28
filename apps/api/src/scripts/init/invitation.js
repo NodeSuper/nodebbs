@@ -18,22 +18,6 @@ export const INVITATION_RULES = [
     isActive: true,
   },
   {
-    role: 'vip',
-    dailyLimit: 5,
-    maxUsesPerCode: 1,
-    expireDays: 60,
-    pointsCost: 0,
-    isActive: true,
-  },
-  {
-    role: 'moderator',
-    dailyLimit: 20,
-    maxUsesPerCode: 1,
-    expireDays: 90,
-    pointsCost: 0,
-    isActive: true,
-  },
-  {
     role: 'admin',
     dailyLimit: 100,
     maxUsesPerCode: 1,

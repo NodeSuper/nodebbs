@@ -39,7 +39,7 @@ export const roles = pgTable(
   'roles',
   {
     ...$defaults,
-    slug: varchar('slug', { length: 50 }).notNull().unique(), // admin, moderator, vip, user
+    slug: varchar('slug', { length: 50 }).notNull().unique(), // admin, user
     name: varchar('name', { length: 100 }).notNull(), // 显示名称
     description: text('description'), // 角色描述
     color: varchar('color', { length: 20 }), // 角色标识颜色 (如 #ff0000)

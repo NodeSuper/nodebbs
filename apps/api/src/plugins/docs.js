@@ -112,7 +112,7 @@ async function docsPlugin(fastify, opts) {
               },
               role: {
                 type: 'string',
-                enum: ['user', 'moderator', 'admin', 'vip'],
+                enum: ['user', 'admin'],
                 description: '用户角色',
               },
               isBanned: { type: 'boolean', description: '是否被封禁' },
@@ -135,7 +135,7 @@ async function docsPlugin(fastify, opts) {
               avatar: { type: 'string', nullable: true, description: '头像URL' },
               role: {
                 type: 'string',
-                enum: ['user', 'moderator', 'admin', 'vip'],
+                enum: ['user', 'admin'],
                 description: '用户角色',
               },
               isBanned: { type: 'boolean', description: '是否被封禁' },
@@ -190,7 +190,7 @@ async function docsPlugin(fastify, opts) {
               avatar: { type: 'string', nullable: true, description: '头像URL' },
               role: {
                 type: 'string',
-                enum: ['user', 'moderator', 'admin', 'vip'],
+                enum: ['user', 'admin'],
                 description: '用户角色',
               },
               messagePermission: {
@@ -338,7 +338,7 @@ async function docsPlugin(fastify, opts) {
               },
               userRole: {
                 type: 'string',
-                enum: ['user', 'moderator', 'admin', 'vip'],
+                enum: ['user', 'admin'],
                 description: '作者角色',
               },
               content: { type: 'string', description: '帖子内容' },
@@ -385,7 +385,7 @@ async function docsPlugin(fastify, opts) {
               },
               userRole: {
                 type: 'string',
-                enum: ['user', 'moderator', 'admin', 'vip'],
+                enum: ['user', 'admin'],
                 description: '作者角色',
               },
               content: { type: 'string', description: '帖子内容' },

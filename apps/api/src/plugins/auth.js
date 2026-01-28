@@ -6,7 +6,7 @@ import { users } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import ms from 'ms';
 import env from '../config/env.js';
-import { ROLE_ADMIN, ROLE_MODERATOR } from '../constants/roles.js';
+import { ROLE_ADMIN } from '../constants/roles.js';
 import { createPermissionService, getPermissionService } from '../services/permissionService.js';
 
 async function authPlugin(fastify) {
@@ -65,11 +65,7 @@ async function authPlugin(fastify) {
   function enhanceUser(user) {
     if (!user) return null;
 
-    // 添加 getter 属性，避免 JSON 序列化时包含这些字段（如果需要的话）
-    // 或者直接添加属性，方便查看
-    // 这里直接添加属性，因为 request.user 通常只在内部使用
     user.isAdmin = user.role === ROLE_ADMIN;
-    user.isModerator = [ROLE_ADMIN, ROLE_MODERATOR].includes(user.role);
 
     return user;
   }
@@ -154,7 +150,6 @@ async function authPlugin(fastify) {
     });
   }
   
-  // 清除用户缓存（当用户信息更新时调用）
   // 清除用户缓存（当用户信息更新时调用）
   fastify.decorate('clearUserCache', async function(userId) {
     await fastify.cache.invalidate([`user:${userId}`, `user:full:${userId}`]);
