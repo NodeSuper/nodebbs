@@ -457,30 +457,6 @@ class PermissionService {
   }
 
   /**
-   * 检查每日上传数量限制
-   * @param {number} userId - 用户 ID
-   * @param {string} permissionSlug - 权限标识
-   * @param {number} currentDayCount - 当天已上传数量
-   * @returns {Promise<{allowed: boolean, remaining?: number}>}
-   */
-  async checkDailyUploadLimit(userId, permissionSlug, currentDayCount) {
-    const userPermissions = await this.getUserPermissions(userId);
-    const permission = userPermissions.find(p => p.slug === permissionSlug);
-
-    if (!permission || !permission.conditions?.maxFilesPerDay) {
-      return { allowed: true };
-    }
-
-    const maxFiles = permission.conditions.maxFilesPerDay;
-    const remaining = maxFiles - currentDayCount;
-
-    return {
-      allowed: remaining > 0,
-      remaining: Math.max(0, remaining),
-    };
-  }
-
-  /**
    * 获取权限的条件配置
    * @param {number} userId - 用户 ID
    * @param {string} permissionSlug - 权限标识

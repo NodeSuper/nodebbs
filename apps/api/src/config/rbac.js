@@ -136,15 +136,6 @@ export const CONDITION_TYPES = {
     placeholder: '不限制',
     min: 0,
   },
-  maxFilesPerDay: {
-    key: 'maxFilesPerDay',
-    label: '每日上传数量',
-    type: 'number',
-    component: 'number',
-    description: '每天最多上传文件数量',
-    placeholder: '不限制',
-    min: 0,
-  },
   allowedFileTypes: {
     key: 'allowedFileTypes',
     label: '允许的文件类型',
@@ -176,6 +167,13 @@ export const CONDITION_TYPES = {
 /**
  * 系统权限定义
  * 包含权限基本信息和支持的条件类型
+ *
+ * conditions 设计原则：
+ * - 内容创建类：支持 categories（分类限制）、rateLimit（频率限制）、accountAge（账号门槛）、timeRange（时间段）
+ * - 内容修改类：支持 own（仅自己）、categories（分类限制）、timeRange（时间段）
+ * - 内容查看类：支持 categories（分类限制）
+ * - 管理操作类：支持 categories（分类限制，若适用）
+ * - 上传类：支持完整的上传限制条件
  */
 export const SYSTEM_PERMISSIONS = [
   // ========== 话题权限 ==========
@@ -185,6 +183,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'create',
     isSystem: true,
+    // 场景：限制新用户发帖、限制发帖频率、限制在特定分类发帖、限制发帖时间段
     conditions: ['categories', 'rateLimit', 'accountAge', 'timeRange'],
   },
   {
@@ -193,6 +192,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'read',
     isSystem: true,
+    // 场景：限制查看特定分类的话题
     conditions: ['categories'],
   },
   {
@@ -201,7 +201,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'update',
     isSystem: true,
-    conditions: ['own', 'categories'],
+    // 场景：普通用户只能编辑自己的话题、版主可编辑特定分类的话题、限制编辑时间段
+    conditions: ['own', 'categories', 'timeRange'],
   },
   {
     slug: 'topic.delete',
@@ -209,6 +210,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'delete',
     isSystem: true,
+    // 场景：普通用户只能删除自己的话题、版主可删除特定分类的话题
     conditions: ['own', 'categories'],
   },
   {
@@ -217,6 +219,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'pin',
     isSystem: true,
+    // 场景：版主只能置顶自己管辖分类的话题
     conditions: ['categories'],
   },
   {
@@ -225,7 +228,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'close',
     isSystem: true,
-    conditions: ['categories'],
+    // 场景：用户可关闭自己的话题、版主可关闭特定分类的话题
+    conditions: ['own', 'categories'],
   },
   {
     slug: 'topic.approve',
@@ -233,6 +237,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'approve',
     isSystem: true,
+    // 场景：版主只能审核自己管辖分类的话题
     conditions: ['categories'],
   },
   {
@@ -241,6 +246,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'move',
     isSystem: true,
+    // 场景：版主只能移动自己管辖分类的话题
     conditions: ['categories'],
   },
 
@@ -251,6 +257,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'create',
     isSystem: true,
+    // 场景：限制新用户回复、限制回复频率、限制在特定分类回复、限制回复时间段
     conditions: ['categories', 'rateLimit', 'accountAge', 'timeRange'],
   },
   {
@@ -259,6 +266,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'read',
     isSystem: true,
+    // 场景：限制查看特定分类的回复
     conditions: ['categories'],
   },
   {
@@ -267,7 +275,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'update',
     isSystem: true,
-    conditions: ['own'],
+    // 场景：普通用户只能编辑自己的回复、版主可编辑特定分类的回复、限制编辑时间段
+    conditions: ['own', 'categories', 'timeRange'],
   },
   {
     slug: 'post.delete',
@@ -275,6 +284,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'delete',
     isSystem: true,
+    // 场景：普通用户只能删除自己的回复、版主可删除特定分类的回复
     conditions: ['own', 'categories'],
   },
   {
@@ -283,6 +293,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'approve',
     isSystem: true,
+    // 场景：版主只能审核自己管辖分类的回复
     conditions: ['categories'],
   },
 
@@ -293,6 +304,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'read',
     isSystem: true,
+    // 场景：通常无限制
     conditions: [],
   },
   {
@@ -301,6 +313,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'update',
     isSystem: true,
+    // 场景：普通用户只能编辑自己的资料
     conditions: ['own'],
   },
   {
@@ -309,7 +322,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'delete',
     isSystem: true,
-    conditions: [],
+    // 场景：用户可注销自己的账号（own）、管理员可删除任意用户
+    conditions: ['own'],
   },
   {
     slug: 'user.ban',
@@ -317,7 +331,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'ban',
     isSystem: true,
-    conditions: [],
+    // 场景：管理操作，可限制频率防止滥用
+    conditions: ['rateLimit'],
   },
   {
     slug: 'user.role.assign',
@@ -325,6 +340,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'role.assign',
     isSystem: true,
+    // 场景：管理操作，通常无限制
     conditions: [],
   },
 
@@ -335,6 +351,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'category',
     action: 'create',
     isSystem: true,
+    // 场景：管理操作，通常无限制
     conditions: [],
   },
   {
@@ -343,6 +360,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'category',
     action: 'read',
     isSystem: true,
+    // 场景：通常无限制
     conditions: [],
   },
   {
@@ -351,6 +369,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'category',
     action: 'update',
     isSystem: true,
+    // 场景：管理操作，通常无限制
     conditions: [],
   },
   {
@@ -359,6 +378,7 @@ export const SYSTEM_PERMISSIONS = [
     module: 'category',
     action: 'delete',
     isSystem: true,
+    // 场景：管理操作，通常无限制
     conditions: [],
   },
 
@@ -369,7 +389,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'upload',
     action: 'create',
     isSystem: true,
-    conditions: ['uploadTypes', 'maxFileSize', 'maxFilesPerDay', 'allowedFileTypes', 'rateLimit'],
+    // 场景：限制上传类型、文件大小、文件格式、上传频率（含每日限制）、账号门槛
+    conditions: ['uploadTypes', 'maxFileSize', 'allowedFileTypes', 'rateLimit', 'accountAge'],
   },
 ];
 

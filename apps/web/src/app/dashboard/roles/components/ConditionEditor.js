@@ -22,21 +22,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings2 } from 'lucide-react';
+import { Settings2, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MultiSelectCombobox } from './MultiSelectCombobox';
 
 /**
+ * 条件字段容器组件
+ * 统一处理标题、描述、清除按钮等公共功能
+ */
+function ConditionField({ label, description, hasValue, onClear, children, inline = false }) {
+  return (
+    <div className="py-3 border-b last:border-b-0">
+      {inline ? (
+        // 行内布局（用于 switch）
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">{label}</Label>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          </div>
+          {children}
+        </div>
+      ) : (
+        // 堆叠布局（默认）
+        <div className="space-y-2">
+          <div className="min-h-6 flex items-center justify-between">
+            <Label className="text-sm font-medium">{label}</Label>
+            {hasValue && onClear && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-6 h-6 text-muted-foreground hover:text-destructive"
+                onClick={onClear}
+              >
+                <Trash className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          {children}
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * 条件编辑器组件
  * 根据条件类型渲染对应的输入控件
- *
- * @param {Object} conditions - 当前条件值
- * @param {Object} permission - 权限对象 { name, slug }
- * @param {Function} onChange - 条件变化回调
- * @param {boolean} disabled - 是否禁用
- * @param {boolean} hasConfig - 是否已有配置
- * @param {Array} conditionTypes - 条件类型定义列表
- * @param {Object} dynamicDataSources - 动态数据源 { categories: [...] }
  */
 export function ConditionEditor({
   conditions,
@@ -85,67 +118,79 @@ export function ConditionEditor({
     setLocalConditions(prev => ({ ...prev, [key]: value }));
   };
 
+  const clearCondition = (key) => {
+    setLocalConditions(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   // 渲染条件输入控件
   const renderConditionInput = (conditionType) => {
     const { key, label, component, description, options, dataSource, placeholder, min, schema } = conditionType;
+    const value = localConditions[key];
 
     // 布尔开关
     if (component === 'switch') {
       return (
-        <div key={key} className="flex items-center justify-between py-3 border-b last:border-b-0">
-          <div className="space-y-0.5">
-            <Label className="text-sm font-medium">{label}</Label>
-            <p className="text-xs text-muted-foreground">{description}</p>
-          </div>
+        <ConditionField key={key} label={label} description={description} inline>
           <Switch
-            checked={localConditions[key] === true}
+            checked={value === true}
             onCheckedChange={(checked) => updateCondition(key, checked || undefined)}
           />
-        </div>
+        </ConditionField>
       );
     }
 
     // 数字输入
     if (component === 'number') {
       return (
-        <div key={key} className="space-y-2 py-3 border-b last:border-b-0">
-          <Label className="text-sm font-medium">{label}</Label>
+        <ConditionField
+          key={key}
+          label={label}
+          description={description}
+          hasValue={value !== undefined && value !== ''}
+          onClear={() => clearCondition(key)}
+        >
           <Input
             type="number"
             min={min ?? 0}
             placeholder={placeholder || '不限制'}
-            value={localConditions[key] ?? ''}
+            value={value ?? ''}
             onChange={(e) => updateCondition(key, e.target.value ? parseInt(e.target.value) : undefined)}
           />
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </div>
+        </ConditionField>
       );
     }
 
     // 多选下拉框
     if (component === 'multiSelect') {
-      // 获取选项：优先使用动态数据源，否则使用静态 options
       const selectOptions = dataSource && dynamicDataSources[dataSource]
         ? dynamicDataSources[dataSource]
         : options || [];
 
       return (
-        <div key={key} className="space-y-2 py-3 border-b last:border-b-0">
-          <Label className="text-sm font-medium">{label}</Label>
+        <ConditionField
+          key={key}
+          label={label}
+          description={description}
+          hasValue={Array.isArray(value) && value.length > 0}
+          onClear={() => clearCondition(key)}
+        >
           <MultiSelectCombobox
-            value={localConditions[key] || []}
+            value={value || []}
             onChange={(val) => updateCondition(key, val.length > 0 ? val : undefined)}
             options={selectOptions}
             placeholder="选择..."
           />
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </div>
+        </ConditionField>
       );
     }
 
     // 频率限制
     if (component === 'rateLimit') {
-      const rateLimit = localConditions[key] || { count: '', period: 'hour' };
+      const rateLimit = value || { count: '', period: 'hour' };
       const periodOptions = schema?.period?.options || [
         { value: 'minute', label: '每分钟' },
         { value: 'hour', label: '每小时' },
@@ -153,14 +198,19 @@ export function ConditionEditor({
       ];
 
       return (
-        <div key={key} className="space-y-2 py-3 border-b last:border-b-0">
-          <Label className="text-sm font-medium">{label}</Label>
+        <ConditionField
+          key={key}
+          label={label}
+          description={description}
+          hasValue={rateLimit.count !== '' && rateLimit.count !== undefined}
+          onClear={() => clearCondition(key)}
+        >
           <div className="flex gap-2">
             <Input
               type="number"
               min="1"
               placeholder="次数"
-              value={rateLimit.count || ''}
+              value={rateLimit.count ?? ''}
               onChange={(e) => updateCondition(key, {
                 ...rateLimit,
                 count: e.target.value ? parseInt(e.target.value) : ''
@@ -169,7 +219,7 @@ export function ConditionEditor({
             />
             <Select
               value={rateLimit.period || 'hour'}
-              onValueChange={(value) => updateCondition(key, { ...rateLimit, period: value })}
+              onValueChange={(val) => updateCondition(key, { ...rateLimit, period: val })}
             >
               <SelectTrigger className="flex-1">
                 <SelectValue />
@@ -181,17 +231,22 @@ export function ConditionEditor({
               </SelectContent>
             </Select>
           </div>
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </div>
+        </ConditionField>
       );
     }
 
     // 时间范围
     if (component === 'timeRange') {
-      const timeRange = localConditions[key] || { start: '', end: '' };
+      const timeRange = value || { start: '', end: '' };
+
       return (
-        <div key={key} className="space-y-2 py-3 border-b last:border-b-0">
-          <Label className="text-sm font-medium">{label}</Label>
+        <ConditionField
+          key={key}
+          label={label}
+          description={description}
+          hasValue={!!(timeRange.start || timeRange.end)}
+          onClear={() => clearCondition(key)}
+        >
           <div className="flex gap-2 items-center">
             <Input
               type="time"
@@ -205,31 +260,34 @@ export function ConditionEditor({
               onChange={(e) => updateCondition(key, { ...timeRange, end: e.target.value })}
             />
           </div>
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </div>
+        </ConditionField>
       );
     }
 
     // 文本列表（逗号分隔）
     if (component === 'textList') {
       return (
-        <div key={key} className="space-y-2 py-3 border-b last:border-b-0">
-          <Label className="text-sm font-medium">{label}</Label>
+        <ConditionField
+          key={key}
+          label={label}
+          description={description}
+          hasValue={Array.isArray(value) && value.length > 0}
+          onClear={() => clearCondition(key)}
+        >
           <Input
             placeholder={placeholder || '多个值用逗号分隔'}
-            defaultValue={localConditions[key]?.join(', ') || ''}
+            defaultValue={value?.join(', ') || ''}
             onBlur={(e) => {
               const val = e.target.value;
               if (!val) {
-                updateCondition(key, undefined);
+                clearCondition(key);
               } else {
                 const items = val.split(',').map(s => s.trim()).filter(Boolean);
                 updateCondition(key, items.length > 0 ? items : undefined);
               }
             }}
           />
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </div>
+        </ConditionField>
       );
     }
 
