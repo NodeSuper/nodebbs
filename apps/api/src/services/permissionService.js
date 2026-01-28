@@ -12,7 +12,6 @@ import {
   userRoles,
   users,
 } from '../db/schema.js';
-import { createFieldFilter, filterFields } from '../utils/fieldFilter.js';
 
 // 权限缓存 TTL（秒）
 const PERMISSION_CACHE_TTL = 300; // 5 分钟
@@ -235,20 +234,6 @@ class PermissionService {
       // categories: [1, 2, 3] 表示只能在指定分类操作
       if (permission.conditions.categories && context.categoryId !== undefined) {
         if (!permission.conditions.categories.includes(context.categoryId)) {
-          return false;
-        }
-      }
-
-      // level: 5 表示需要达到指定等级
-      if (permission.conditions.level !== undefined && context.userLevel !== undefined) {
-        if (context.userLevel < permission.conditions.level) {
-          return false;
-        }
-      }
-
-      // minCredits: 100 表示需要达到指定积分
-      if (permission.conditions.minCredits !== undefined && context.userCredits !== undefined) {
-        if (context.userCredits < permission.conditions.minCredits) {
           return false;
         }
       }
@@ -638,78 +623,16 @@ class PermissionService {
     return false;
   }
 
-  // ============ 字段过滤方法 ============
-
   /**
-   * 获取用户对某个权限的字段过滤规则
-   * 从 role_permissions.conditions.fieldFilter 中读取
-   * @param {number} userId - 用户 ID
-   * @param {string} permissionSlug - 权限标识
-   * @returns {Promise<string[]|null>} 字段过滤规则
-   */
-  async getFieldFilterRules(userId, permissionSlug) {
-    const userPermissions = await this.getUserPermissions(userId);
-    const permission = userPermissions.find(p => p.slug === permissionSlug);
-
-    if (!permission) {
-      return null;
-    }
-
-    // 从 conditions.fieldFilter 读取字段过滤规则
-    if (permission.conditions?.fieldFilter) {
-      return permission.conditions.fieldFilter;
-    }
-
-    // 默认返回所有字段
-    return ['*'];
-  }
-
-  /**
-   * 根据用户权限过滤响应数据
-   * @param {number} userId - 用户 ID
-   * @param {string} permissionSlug - 权限标识
-   * @param {any} data - 要过滤的数据
-   * @returns {Promise<any>} 过滤后的数据
-   */
-  async filterResponse(userId, permissionSlug, data) {
-    const rules = await this.getFieldFilterRules(userId, permissionSlug);
-    if (!rules) {
-      return data;
-    }
-    return filterFields(data, rules);
-  }
-
-  /**
-   * 创建字段过滤器（可复用）
-   * @param {number} userId - 用户 ID
-   * @param {string} permissionSlug - 权限标识
-   * @returns {Promise<function>} 过滤函数
-   */
-  async createResponseFilter(userId, permissionSlug) {
-    const rules = await this.getFieldFilterRules(userId, permissionSlug);
-    if (!rules) {
-      return (data) => data;
-    }
-    return createFieldFilter(rules);
-  }
-
-  /**
-   * 检查权限并返回过滤后的数据（便捷方法）
-   * 参考 accesscontrol 的 permission.filter() 模式
+   * 检查权限（便捷方法）
    * @param {number} userId - 用户 ID
    * @param {string} permissionSlug - 权限标识
    * @param {Object} context - 上下文
-   * @returns {Promise<{granted: boolean, filter: function, attributes: string[]}>}
+   * @returns {Promise<{granted: boolean}>}
    */
   async can(userId, permissionSlug, context = {}) {
-    const hasPermission = await this.hasPermission(userId, permissionSlug, context);
-    const rules = await this.getFieldFilterRules(userId, permissionSlug);
-
-    return {
-      granted: hasPermission,
-      attributes: rules || ['*'],
-      filter: hasPermission ? createFieldFilter(rules || ['*']) : () => null,
-    };
+    const granted = await this.hasPermission(userId, permissionSlug, context);
+    return { granted };
   }
 }
 
