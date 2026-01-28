@@ -318,28 +318,43 @@ async function authPlugin(fastify) {
    *
    * @param {Object} request - Fastify request 对象
    * @param {string|string[]} permissionSlug - 权限标识或权限标识数组
-   * @param {Object} context - 权限检查上下文
-   * @param {number} context.ownerId - 资源所有者ID（用于 own 条件）
-   * @param {number} context.categoryId - 分类ID（用于 categories 条件）
+   * @param {Object} context - 权限检查上下文，根据权限条件传递对应字段
+   * @param {number} [context.ownerId] - 资源所有者ID，用于 `own: true` 条件（检查是否操作自己的资源）
+   * @param {number} [context.categoryId] - 分类ID，用于 `categories: [1,2,3]` 条件（检查是否在允许的分类内）
+   * @param {number} [context.userPostCount] - 用户发帖数，用于 `minPosts: 10` 条件（检查发帖数是否达标）
+   * @param {Date|string} [context.userCreatedAt] - 用户注册时间，用于 `accountAge: 30` 条件（自动注入，无需手动传递）
+   * @param {number} [context.fileSize] - 文件大小（字节），用于 `maxFileSize: 1024` 条件（检查上传文件大小限制，单位KB）
+   * @param {string} [context.fileType] - 文件类型/扩展名，用于 `allowedFileTypes: ["jpg","png"]` 条件
+   * @param {string} [context.uploadType] - 上传目录类型，用于 `uploadTypes: ["avatar","topic"]` 条件
    * @param {Object} options - 配置选项
    * @param {boolean} options.any - 满足任一权限即可
    * @returns {Promise<boolean>} 是否有权限
    * @throws {Error} 无权限时抛出 403 错误
    *
+   * @note 不需要 context 的条件：
+   *   - `timeRange: { start, end }` - 自动使用当前时间判断
+   *   - `rateLimit: { count, period }` - 使用内部缓存计数器
+   *
    * @example
-   * // 在 handler 中检查权限
+   * // 检查编辑帖子权限（需要是自己的帖子且在指定分类）
    * async (request, reply) => {
    *   const topic = await db.select()...;
    *   if (!topic) return reply.code(404).send({ error: '话题不存在' });
    *
-   *   // 检查权限（复用已查询的 topic）
    *   await fastify.checkPermission(request, 'topic.update', {
    *     ownerId: topic.userId,
    *     categoryId: topic.categoryId
    *   });
-   *
    *   // 继续处理...
    * }
+   *
+   * @example
+   * // 检查上传权限
+   * await fastify.checkPermission(request, 'attachment.upload', {
+   *   fileSize: file.size,
+   *   fileType: file.mimetype,
+   *   uploadType: 'topic'
+   * });
    */
   fastify.decorate('checkPermission', async function(request, permissionSlug, context = {}, options = {}) {
     const user = request.user;
