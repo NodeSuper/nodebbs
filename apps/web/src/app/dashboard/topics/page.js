@@ -110,7 +110,7 @@ export default function AdminTopicsPage() {
         return updatedTopics;
       });
     } catch (error) {
-      toast.error('操作失败');
+      toast.error(error.message || '操作失败');
     }
   };
 

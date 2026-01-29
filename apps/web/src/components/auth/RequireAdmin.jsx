@@ -1,34 +1,35 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { Loading } from '../common/Loading';
 
 /**
- * 认证守卫组件
- * 用于保护需要管理员才能访问的页面
+ * 管理后台访问守卫组件
+ * 检查用户是否有任一管理后台权限
  */
 export default function RequireAdmin({ children }) {
-  const { user, isAuthenticated, loading, openLoginDialog } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const { hasDashboardAccess } = usePermission();
 
   const router = useRouter();
+  const canAccess = isAuthenticated && hasDashboardAccess();
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || !user?.isAdmin)) {
+    if (!loading && !canAccess) {
       router.push('/');
     }
-  }, [user, isAuthenticated, loading, router]);
+  }, [canAccess, loading, router]);
 
-  // 加载状态
   if (loading) {
     return <Loading variant='overlay' />;
   }
 
-  if (!isAuthenticated || !user?.isAdmin) {
+  if (!canAccess) {
     return null;
   }
 
-  // 已登录，显示内容
   return <>{children}</>;
 }

@@ -4,6 +4,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMemo } from 'react';
 
 /**
+ * 管理后台权限列表
+ */
+export const DASHBOARD_PERMISSIONS = [
+  'dashboard.access',
+  'dashboard.topics',
+  'dashboard.posts',
+  'dashboard.categories',
+  'dashboard.tags',
+  'dashboard.users',
+  'dashboard.roles',
+  'dashboard.invitations',
+  'dashboard.reports',
+  'dashboard.moderation',
+  'dashboard.extensions',
+  'dashboard.ads',
+  'dashboard.settings',
+];
+
+/**
  * RBAC 权限检查 Hook
  * 提供权限检查方法和角色信息
  */
@@ -184,6 +203,17 @@ export function usePermission() {
       return isAdmin;
     };
 
+    /**
+     * 检查用户是否可以访问管理后台
+     * 拥有任一 dashboard.* 权限即可访问
+     * @returns {boolean}
+     */
+    const hasDashboardAccess = () => {
+      if (!user) return false;
+      if (isAdmin) return true;
+      return DASHBOARD_PERMISSIONS.some(slug => permissions.includes(slug));
+    };
+
     return {
       // 角色检查
       isAdmin,
@@ -212,6 +242,9 @@ export function usePermission() {
 
       // 用户管理
       canManageUser,
+
+      // 管理后台
+      hasDashboardAccess,
     };
   }, [user]);
 }

@@ -42,6 +42,7 @@ import ThemeSwitcher from '@/components/common/ThemeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useLedger } from '@/extensions/ledger/contexts/LedgerContext';
+import { usePermission } from '@/hooks/usePermission';
 import { Loading } from '../common/Loading';
 import { getImageUrl, IMAGE_PRESETS } from '@/lib/utils';
 
@@ -50,6 +51,7 @@ export default function Header() {
   const { user, isAuthenticated, loading, logout, openLoginDialog } = useAuth();
   const { settings } = useSettings();
   const { isWalletEnabled } = useLedger();
+  const { hasDashboardAccess } = usePermission();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -225,7 +227,7 @@ export default function Header() {
                       </DropdownMenuItem>
 
                       {/* 管理员入口 */}
-                      {user?.isAdmin && (
+                      {hasDashboardAccess() && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
