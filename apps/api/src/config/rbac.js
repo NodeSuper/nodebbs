@@ -29,15 +29,10 @@ export const MODULE_SPECIAL_ACTIONS = {
   topic: [
     { value: 'pin', label: '置顶' },
     { value: 'close', label: '关闭' },
-    { value: 'move', label: '移动' },
-    { value: 'approve', label: '审核' },
   ],
-  post: [
-    { value: 'approve', label: '审核' },
-  ],
+  post: [],
   user: [
     { value: 'ban', label: '封禁' },
-    { value: 'role.assign', label: '分配角色' },
   ],
   category: [],
   upload: [],
@@ -231,24 +226,6 @@ export const SYSTEM_PERMISSIONS = [
     // 场景：用户可关闭自己的话题、版主可关闭特定分类的话题
     conditions: ['own', 'categories'],
   },
-  {
-    slug: 'topic.approve',
-    name: '审核话题',
-    module: 'topic',
-    action: 'approve',
-    isSystem: true,
-    // 场景：版主只能审核自己管辖分类的话题
-    conditions: ['categories'],
-  },
-  {
-    slug: 'topic.move',
-    name: '移动话题',
-    module: 'topic',
-    action: 'move',
-    isSystem: true,
-    // 场景：版主只能移动自己管辖分类的话题
-    conditions: ['categories'],
-  },
 
   // ========== 回复权限 ==========
   {
@@ -290,15 +267,6 @@ export const SYSTEM_PERMISSIONS = [
     // 场景：普通用户只能删除自己的回复
     conditions: ['own'],
   },
-  {
-    slug: 'post.approve',
-    name: '审核回复',
-    module: 'post',
-    action: 'approve',
-    isSystem: true,
-    // 回复依附于话题，分类限制由 topic.read 统一控制
-    conditions: [],
-  },
 
   // ========== 用户权限 ==========
   {
@@ -336,15 +304,6 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 场景：管理操作，可限制频率防止滥用
     conditions: ['rateLimit'],
-  },
-  {
-    slug: 'user.role.assign',
-    name: '分配角色',
-    module: 'user',
-    action: 'role.assign',
-    isSystem: true,
-    // 场景：管理操作，通常无限制
-    conditions: [],
   },
 
   // ========== 分类权限 ==========
