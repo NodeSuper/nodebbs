@@ -20,7 +20,7 @@ import { uploadApi } from '@/lib/api';
 export function IconUpload({ 
   value, 
   onChange, 
-  type = 'site', 
+  type = 'assets', 
   accept = 'image/*',
   placeholder,
   hint = '点击上传',

@@ -44,7 +44,6 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useLedger } from '@/extensions/ledger/contexts/LedgerContext';
 import { usePermission } from '@/hooks/usePermission';
 import { Loading } from '../common/Loading';
-import { getImageUrl, IMAGE_PRESETS } from '@/lib/utils';
 
 export default function Header() {
   const router = useRouter();
@@ -88,7 +87,7 @@ export default function Header() {
             {/* Logo */}
             <Link href='/' className='flex items-center space-x-2.5 group'>
               <img
-                src={getImageUrl(settings?.site_logo?.value, IMAGE_PRESETS.icon.logo) || '/logo.svg'}
+                src={settings?.site_logo?.value || '/logo.svg'}
                 alt='logo'
                 className='h-7 w-auto max-w-[120px] transition-transform group-hover:scale-105'
               />

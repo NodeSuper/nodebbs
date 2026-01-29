@@ -6,7 +6,6 @@ import {
   DEFAULT_FONT_SIZE,
   STORAGE_KEYS,
 } from '@/config/theme.config';
-import { getImageUrl, IMAGE_PRESETS } from '@/lib/utils';
 
 /**
  * 获取 RootLayout 所需的数据
@@ -122,10 +121,10 @@ export async function getLayoutMetadata() {
   // 动态确定 logo 的 MIME 类型
   const logoType = logo.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
 
-  // 使用 getImageUrl 处理图片 URL（内置 SVG 跳过逻辑）
-  const processedLogo = getImageUrl(logo, IMAGE_PRESETS.icon.logo);
+  // 使用 getImageUrl 处理图片 URL（内置 SVG 跳过逻辑）(已移除)
+  const processedLogo = logo;
   const processedFavicon = favicon; // ICO 格式不处理
-  const processedAppleTouchIcon = getImageUrl(appleTouchIcon, IMAGE_PRESETS.icon.apple);
+  const processedAppleTouchIcon = appleTouchIcon;
 
   return {
     title: {

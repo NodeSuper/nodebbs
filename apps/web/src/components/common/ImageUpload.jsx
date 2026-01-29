@@ -9,14 +9,14 @@ import { uploadApi } from '@/lib/api';
  * @param {Object} props
  * @param {string} props.value - 当前图片 URL
  * @param {Function} props.onChange - 图片上传成功后的回调 (url) => void
- * @param {'common' | 'avatar' | 'badge' | 'topic' | 'item' | 'frame'} props.type - 上传类型
+ * @param {'avatars' | 'badges' | 'topics' | 'items' | 'frames' | 'emojis' | 'assets'} props.type - 上传类型
  * @param {string} props.className - 容器类名
  * @param {string} props.placeholder - 占位文本
  */
 export function ImageUpload({ 
   value, 
   onChange, 
-  type = 'common', 
+  type = 'assets', 
   className,
   placeholder = "点击或拖拽上传图片" 
 }) {

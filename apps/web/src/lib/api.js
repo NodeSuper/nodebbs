@@ -866,7 +866,7 @@ export const dashboardApi = {
 
 // ============= 通用上传 API =============
 export const uploadApi = {
-  async upload(file, type = 'common') {
+  async upload(file, type = 'assets') {
     const formData = new FormData();
     formData.append('file', file);
 

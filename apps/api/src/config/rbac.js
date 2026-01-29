@@ -162,13 +162,13 @@ export const CONDITION_TYPES = {
     component: 'multiSelect',
     description: '允许的上传目录类型',
     options: [
-      { value: 'avatar', label: '头像' },
-      { value: 'topic', label: '话题图片' },
-      { value: 'badge', label: '徽章' },
-      { value: 'item', label: '道具' },
-      { value: 'frame', label: '头像框' },
-      { value: 'site', label: '站点资源' },
-      { value: 'common', label: '通用' },
+      { value: 'avatars', label: '头像' },
+      { value: 'topics', label: '话题' },
+      { value: 'badges', label: '徽章' },
+      { value: 'items', label: '道具' },
+      { value: 'frames', label: '头像框' },
+      { value: 'emojis', label: '表情' },
+      { value: 'assets', label: '通用' },
     ],
   },
 };
@@ -321,6 +321,7 @@ export const SYSTEM_PERMISSIONS = [
     // 场景：管理操作，可限制频率防止滥用
     conditions: ['rateLimit'],
   },
+  // TODO: user.list or user.manage 管理用户 列出所有用户
 
   // ========== 分类权限 ==========
   {

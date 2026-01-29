@@ -16,8 +16,8 @@ export default async function uploadRoutes(fastify) {
         properties: {
           type: {
             type: 'string',
-            enum: ['common', 'avatar', 'badge', 'topic', 'item', 'frame', 'site'],
-            default: 'common'
+            enum: ['assets', 'avatars', 'badges', 'topics', 'items', 'frames', 'emojis'],
+            default: 'assets'
           }
         }
       },
