@@ -1,7 +1,8 @@
 import db from '../../db/index.js';
 import { categories, topics } from '../../db/schema.js';
-import { eq, sql, desc, isNull, like, and, or, count } from 'drizzle-orm';
-import slugify from 'slug'
+import { eq, sql, desc, isNull, like, and, or, count, inArray } from 'drizzle-orm';
+import slugify from 'slug';
+import { getPermissionService } from '../../services/permissionService.js';
 
 export default async function categoryRoutes(fastify, options) {
   // 批量更新分类排序（仅管理员）
@@ -138,6 +139,20 @@ export default async function categoryRoutes(fastify, options) {
       allCategories = allCategories.filter(cat => !isPrivateCategory(cat, allCategories));
     }
 
+    // 获取用户允许访问的分类（基于 RBAC 权限）
+    const permissionService = getPermissionService();
+    const currentUserId = user?.id ?? null;
+    const allowedCategoryIds = await permissionService.getAllowedCategoryIds(currentUserId, 'topic.read');
+
+    // 如果有分类限制，过滤分类列表
+    if (allowedCategoryIds !== null) {
+      if (allowedCategoryIds.length === 0) {
+        // 无权访问任何分类
+        return [];
+      }
+      allCategories = allCategories.filter(cat => allowedCategoryIds.includes(cat.id));
+    }
+
     // 获取话题统计信息
     const categoriesWithStats = await Promise.all(
       allCategories.map(async (category) => {
@@ -241,6 +256,19 @@ export default async function categoryRoutes(fastify, options) {
     // 如果是私有分类，检查权限
     if (isPrivate && !user?.isAdmin) {
       return reply.code(403).send({ error: '无权访问此分类' });
+    }
+
+    // 检查用户是否有权限查看该分类（基于 RBAC）
+    const permissionService = getPermissionService();
+    const currentUserId = user?.id ?? null;
+    const readPermission = await permissionService.checkPermissionWithReason(
+      currentUserId,
+      'topic.read',
+      { categoryId: category.id }
+    );
+
+    if (!readPermission.granted) {
+      return reply.code(404).send({ error: '分类不存在' });
     }
 
     // Get topic count

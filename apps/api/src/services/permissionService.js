@@ -254,11 +254,13 @@ class PermissionService {
 
   /**
    * 获取用户的所有权限
-   * @param {number} userId - 用户 ID
+   * @param {number|null} userId - 用户 ID，null 表示未登录用户（使用 guest 角色）
    * @returns {Promise<Array>} 权限列表（包含条件）
    */
   async getUserPermissions(userId) {
-    const cacheKey = `user:${userId}:permissions`;
+    // 对于未登录用户（null/undefined/空值），使用专门的 guest 缓存 key
+    const isGuest = !userId;
+    const cacheKey = isGuest ? 'user:guest:permissions' : `user:${userId}:permissions`;
 
     if (this.fastify?.cache) {
       return await this.fastify.cache.remember(cacheKey, PERMISSION_CACHE_TTL, async () => {
@@ -270,13 +272,31 @@ class PermissionService {
   }
 
   async _fetchUserPermissions(userId) {
-    const userRolesList = await this.getUserRoles(userId);
-    if (!userRolesList.length) {
-      return [];
-    }
+    let roleIds;
 
-    // 获取所有角色ID（包括继承的父角色）
-    const roleIds = await this._getAllRoleIdsWithInheritance(userId);
+    if (!userId) {
+      // 未登录用户使用 guest 角色
+      const guestRole = await db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.slug, 'guest'))
+        .limit(1);
+
+      if (!guestRole.length) {
+        this.fastify?.log?.warn('[RBAC] Guest 角色不存在，未登录用户无任何权限');
+        return [];
+      }
+
+      roleIds = [guestRole[0].id];
+    } else {
+      const userRolesList = await this.getUserRoles(userId);
+      if (!userRolesList.length) {
+        return [];
+      }
+
+      // 获取所有角色ID（包括继承的父角色）
+      roleIds = await this._getAllRoleIdsWithInheritance(userId);
+    }
 
     if (!roleIds.length) {
       return [];
@@ -345,9 +365,11 @@ class PermissionService {
    */
   async checkPermissionWithReason(userId, permissionSlug, context = {}) {
     // 快捷路径：admin 角色拥有所有权限，无需检查条件
-    const isAdmin = await this.hasRole(userId, 'admin');
-    if (isAdmin) {
-      return { granted: true };
+    if (userId) {
+      const isAdmin = await this.hasRole(userId, 'admin');
+      if (isAdmin) {
+        return { granted: true };
+      }
     }
 
     const userPermissions = await this.getUserPermissions(userId);
@@ -643,6 +665,31 @@ class PermissionService {
   }
 
   /**
+   * 获取用户允许访问的分类 ID 列表
+   * @param {number|null} userId - 用户 ID，null/undefined 表示未登录用户
+   * @param {string} permissionSlug - 权限标识，默认为 'topic.read'
+   * @returns {Promise<number[]|null>} 分类 ID 列表，null 表示无限制
+   */
+  async getAllowedCategoryIds(userId, permissionSlug = 'topic.read') {
+    // 管理员无限制
+    if (userId) {
+      const isAdmin = await this.hasRole(userId, 'admin');
+      if (isAdmin) return null;
+    }
+
+    const userPermissions = await this.getUserPermissions(userId);
+    const permission = userPermissions.find(p => p.slug === permissionSlug);
+
+    if (!permission) {
+      // 没有该权限，返回空数组（无法访问任何分类）
+      return [];
+    }
+
+    // 返回分类限制，null 表示无限制
+    return permission.conditions?.categories || null;
+  }
+
+  /**
    * 检查用户是否有任一权限
    * @param {number} userId - 用户 ID
    * @param {Array<string>} permissionSlugs - 权限标识列表
@@ -888,6 +935,18 @@ class PermissionService {
    */
   async clearRoleUsersPermissionCache(roleId) {
     if (!this.fastify?.cache) return;
+
+    // 检查是否是 guest 角色，如果是则清除 guest 权限缓存
+    const [role] = await db
+      .select({ slug: roles.slug })
+      .from(roles)
+      .where(eq(roles.id, roleId))
+      .limit(1);
+
+    if (role?.slug === 'guest') {
+      await this.fastify.cache.invalidate(['user:guest:permissions']);
+      this.fastify.log?.info('[RBAC] 已清除 guest 角色权限缓存');
+    }
 
     // 查询所有拥有该角色的用户
     const usersWithRole = await db

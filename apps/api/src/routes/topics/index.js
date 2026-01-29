@@ -249,6 +249,20 @@ export default async function topicRoutes(fastify, options) {
         conditions.push(eq(categories.isPrivate, false));
       }
 
+      // 获取用户允许访问的分类（基于 RBAC 权限）
+      const permissionService = getPermissionService();
+      const currentUserId = request.user?.id ?? null;
+      const allowedCategoryIds = await permissionService.getAllowedCategoryIds(currentUserId, 'topic.read');
+
+      // 如果有分类限制
+      if (allowedCategoryIds !== null) {
+        if (allowedCategoryIds.length === 0) {
+          // 无权访问任何分类
+          return { items: [], page, limit, total: 0 };
+        }
+        conditions.push(inArray(topics.categoryId, allowedCategoryIds));
+      }
+
       let query = db
         .select({
           id: topics.id,
@@ -480,6 +494,19 @@ export default async function topicRoutes(fastify, options) {
 
       // 检查私有分类访问权限
       if (topic.categoryIsPrivate && !isAdmin) {
+        return reply.code(404).send({ error: '话题不存在' });
+      }
+
+      // 检查用户是否有权限查看该分类的话题（基于 RBAC）
+      const permissionService = getPermissionService();
+      const userId = request.user?.id ?? null;
+      const readPermission = await permissionService.checkPermissionWithReason(
+        userId,
+        'topic.read',
+        { categoryId: topic.categoryId }
+      );
+
+      if (!readPermission.granted) {
         return reply.code(404).send({ error: '话题不存在' });
       }
 
