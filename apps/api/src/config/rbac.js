@@ -257,8 +257,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'create',
     isSystem: true,
-    // 场景：限制新用户回复、限制回复频率、限制在特定分类回复、限制回复时间段
-    conditions: ['categories', 'rateLimit', 'accountAge', 'timeRange'],
+    // 回复依附于话题，分类限制由 topic.read 统一控制
+    // 场景：限制新用户回复、限制回复频率、限制回复时间段
+    conditions: ['rateLimit', 'accountAge', 'timeRange'],
   },
   {
     slug: 'post.read',
@@ -266,8 +267,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'read',
     isSystem: true,
-    // 场景：限制查看特定分类的回复
-    conditions: ['categories'],
+    // 回复的可见性由 topic.read 的 categories 条件统一控制
+    conditions: [],
   },
   {
     slug: 'post.update',
@@ -275,8 +276,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'update',
     isSystem: true,
-    // 场景：普通用户只能编辑自己的回复、版主可编辑特定分类的回复、限制编辑时间段
-    conditions: ['own', 'categories', 'timeRange'],
+    // 回复依附于话题，分类限制由 topic.read 统一控制
+    // 场景：普通用户只能编辑自己的回复、限制编辑时间段
+    conditions: ['own', 'timeRange'],
   },
   {
     slug: 'post.delete',
@@ -284,8 +286,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'delete',
     isSystem: true,
-    // 场景：普通用户只能删除自己的回复、版主可删除特定分类的回复
-    conditions: ['own', 'categories'],
+    // 回复依附于话题，分类限制由 topic.read 统一控制
+    // 场景：普通用户只能删除自己的回复
+    conditions: ['own'],
   },
   {
     slug: 'post.approve',
@@ -293,8 +296,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'approve',
     isSystem: true,
-    // 场景：版主只能审核自己管辖分类的回复
-    conditions: ['categories'],
+    // 回复依附于话题，分类限制由 topic.read 统一控制
+    conditions: [],
   },
 
   // ========== 用户权限 ==========

@@ -6,6 +6,7 @@ import { sysCurrencies, sysAccounts } from '../../extensions/ledger/schema.js';
 import { DEFAULT_CURRENCY_CODE } from '../../extensions/ledger/constants.js';
 import { getPassiveEffects } from '../../extensions/badges/services/badgeService.js';
 import { applyUserInfoVisibility, shouldHideUserInfo } from '../../utils/visibility.js';
+import { getPermissionService } from '../../services/permissionService.js';
 
 // 辅助函数：检查两个用户之间是否存在拉黑关系（双向检查）
 async function isBlocked(userId1, userId2) {
@@ -90,6 +91,19 @@ export default async function postRoutes(fastify, options) {
 
       // 只有管理员和版主可以查看已删除话题的回复
       if (topic.isDeleted && !isAdmin) {
+        return reply.code(404).send({ error: '话题不存在' });
+      }
+
+      // 检查用户是否有权限查看该话题的分类（基于 RBAC topic.read）
+      const permissionService = getPermissionService();
+      const currentUserId = request.user?.id ?? null;
+      const readPermission = await permissionService.checkPermissionWithReason(
+        currentUserId,
+        'topic.read',
+        { categoryId: topic.categoryId }
+      );
+
+      if (!readPermission.granted) {
         return reply.code(404).send({ error: '话题不存在' });
       }
     }
@@ -212,6 +226,21 @@ export default async function postRoutes(fastify, options) {
       // 过滤已封禁用户的回复（非管理员）
       if (!isAdmin) {
         whereConditions.push(eq(users.isBanned, false));
+      }
+
+      // 如果没有指定 topicId，需要基于 topic.read 权限过滤分类
+      // （指定 topicId 时已在上面单独检查过）
+      if (!topicId) {
+        const permissionService = getPermissionService();
+        const currentUserId = request.user?.id ?? null;
+        const allowedCategoryIds = await permissionService.getAllowedCategoryIds(currentUserId, 'topic.read');
+
+        if (allowedCategoryIds !== null) {
+          if (allowedCategoryIds.length === 0) {
+            return { items: [], page, limit, total: 0 };
+          }
+          whereConditions.push(inArray(topics.categoryId, allowedCategoryIds));
+        }
       }
     }
 
@@ -529,6 +558,7 @@ export default async function postRoutes(fastify, options) {
       .select({
         id: posts.id,
         topicId: posts.topicId,
+        categoryId: topics.categoryId,
         userId: posts.userId,
         username: users.username,
         userName: users.name,
@@ -546,6 +576,7 @@ export default async function postRoutes(fastify, options) {
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
+      .innerJoin(topics, eq(posts.topicId, topics.id))
       .where(and(eq(posts.id, id), eq(posts.isDeleted, false)))
       .limit(1);
 
@@ -553,14 +584,28 @@ export default async function postRoutes(fastify, options) {
       return reply.code(404).send({ error: '帖子不存在' });
     }
 
+    // 检查用户是否有权限查看该话题的分类（基于 RBAC topic.read）
+    const permissionService = getPermissionService();
+    const currentUserId = request.user?.id ?? null;
+    const readPermission = await permissionService.checkPermissionWithReason(
+      currentUserId,
+      'topic.read',
+      { categoryId: post.categoryId }
+    );
+
+    if (!readPermission.granted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
     // 检查用户权限
     const isAdmin = request.user?.isAdmin;
-    
+
     // 如果用户被封禁且访问者不是管理员/版主，隐藏头像
     if (shouldHideUserInfo({ isBanned: post.userIsBanned }, isAdmin)) {
       post.userAvatar = null;
     }
     delete post.userIsBanned;
+    delete post.categoryId; // 不返回 categoryId 给前端
 
     // 检查当前用户是否已点赞
     if (request.user) {
@@ -606,10 +651,20 @@ export default async function postRoutes(fastify, options) {
       return reply.code(404).send({ error: '话题不存在' });
     }
 
-    // 检查创建回复权限（带分类上下文）
-    await fastify.checkPermission(request, 'post.create', {
-      categoryId: topic.categoryId,
-    });
+    // 检查用户是否有权限访问该话题的分类
+    const permissionService = getPermissionService();
+    const readPermission = await permissionService.checkPermissionWithReason(
+      request.user.id,
+      'topic.read',
+      { categoryId: topic.categoryId }
+    );
+
+    if (!readPermission.granted) {
+      return reply.code(404).send({ error: '话题不存在' });
+    }
+
+    // 检查创建回复权限
+    await fastify.checkPermission(request, 'post.create');
 
     if (topic.isClosed) {
       return reply.code(403).send({ error: '话题已关闭，无法回复' });
@@ -852,14 +907,25 @@ export default async function postRoutes(fastify, options) {
       return reply.code(404).send({ error: '帖子不存在' });
     }
 
-    // 获取话题以获得分类ID
+    // 获取话题以检查分类权限
     const [topic] = await db.select({ categoryId: topics.categoryId })
       .from(topics).where(eq(topics.id, post.topicId)).limit(1);
 
-    // 检查更新权限（复用已查询的数据）
+    // 检查用户是否有权限访问该话题的分类
+    const permissionService = getPermissionService();
+    const readPermission = await permissionService.checkPermissionWithReason(
+      request.user.id,
+      'topic.read',
+      { categoryId: topic?.categoryId }
+    );
+
+    if (!readPermission.granted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // 检查更新权限
     await fastify.checkPermission(request, 'post.update', {
       ownerId: post.userId,
-      categoryId: topic?.categoryId,
     });
 
     // 检查是否开启内容审核
@@ -969,14 +1035,25 @@ export default async function postRoutes(fastify, options) {
       return reply.code(404).send({ error: '帖子不存在' });
     }
 
-    // 获取话题以获得分类ID
+    // 获取话题以检查分类权限
     const [topic] = await db.select({ categoryId: topics.categoryId })
       .from(topics).where(eq(topics.id, post.topicId)).limit(1);
 
-    // 检查删除权限（复用已查询的数据）
+    // 检查用户是否有权限访问该话题的分类
+    const permissionService = getPermissionService();
+    const readPermission = await permissionService.checkPermissionWithReason(
+      request.user.id,
+      'topic.read',
+      { categoryId: topic?.categoryId }
+    );
+
+    if (!readPermission.granted) {
+      return reply.code(404).send({ error: '帖子不存在' });
+    }
+
+    // 检查删除权限
     await fastify.checkPermission(request, 'post.delete', {
       ownerId: post.userId,
-      categoryId: topic?.categoryId,
     });
 
     // 无法删除第一条帖子（请改为删除话题）
