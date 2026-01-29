@@ -380,8 +380,7 @@ async function authPlugin(fastify) {
    */
   fastify.decorate('hasPermission', async function(request, permissionSlug, context = {}) {
     const prepared = preparePermissionCheck(request, context);
-    const result = await permissionService.checkPermissionWithReason(prepared.userId, permissionSlug, prepared.context);
-    return result.granted;
+    return permissionService.hasPermission(prepared.userId, permissionSlug, prepared.context);
   });
 
   /**
