@@ -45,9 +45,13 @@ function mergePermissionConditions(cond1, cond2) {
     }
     
     switch (key) {
-      case 'own':
-        // own: 只要有一个不要求 own，就不限制（false 更宽松）
-        merged.own = val1 && val2;
+      case 'scope':
+        // scope: 取并集（更多范围 = 更宽松）
+        if (Array.isArray(val1) && Array.isArray(val2)) {
+          merged.scope = [...new Set([...val1, ...val2])];
+        } else {
+          merged.scope = val1 || val2;
+        }
         break;
         
       case 'categories':
@@ -385,9 +389,22 @@ class PermissionService {
 
     // 检查条件
     if (permission.conditions) {
-      // own: true 表示只能操作自己的资源
-      if (permission.conditions.own && context.ownerId !== undefined) {
-        if (context.ownerId !== userId) {
+      // scope: ['own', 'list'] 操作范围限制
+      if (permission.conditions.scope) {
+        const scopes = permission.conditions.scope;
+        const { requestType, ownerId } = context;
+        
+        // 1. 列表查询：需要 'list' 权限
+        if (requestType === 'list' && !scopes.includes('list')) {
+          return {
+            granted: false,
+            code: 'SCOPE_LIST_NOT_ALLOWED',
+            reason: '你没有列表查询的权限',
+          };
+        }
+        
+        // 2. 修改/删除操作：如果包含 'own'，必须是资源所有者
+        if (scopes.includes('own') && ownerId !== undefined && ownerId !== userId) {
           return {
             granted: false,
             code: 'NOT_OWNER',

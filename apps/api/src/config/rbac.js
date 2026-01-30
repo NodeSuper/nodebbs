@@ -76,12 +76,22 @@ export const MODULE_SPECIAL_ACTIONS = {
  */
 export const CONDITION_TYPES = {
   // ===== 通用条件 =====
-  own: {
-    key: 'own',
-    label: '仅限自己的资源',
-    type: 'boolean',
-    component: 'switch',
-    description: '只能操作自己创建的内容',
+  
+  // ===== 操作范围 =====
+  scope: {
+    key: 'scope',
+    label: '操作范围',
+    type: 'array',
+    component: 'multiSelect',
+    description: '限制操作的查询/访问范围',
+    excludeRoles: ['guest'],  // 完全排除的角色
+    excludeRolePermissions: {  // 特定角色的特定权限排除（支持通配符 *）
+      user: ['*.read'],  // user 角色的所有读权限不显示 scope
+    },
+    options: [
+      { value: 'own', label: '仅自己的资源' },
+      { value: 'list', label: '列表查询（无需过滤参数）' },
+    ],
   },
 
   // ===== 范围限制 =====
@@ -180,9 +190,9 @@ export const CONDITION_TYPES = {
  * 包含权限基本信息和支持的条件类型
  *
  * conditions 设计原则：
- * - 内容创建类：支持 categories（分类限制）、rateLimit（频率限制）、accountAge（账号门槛）、timeRange（时间段）
- * - 内容修改类：支持 own（仅自己）、categories（分类限制）、timeRange（时间段）
- * - 内容查看类：支持 categories（分类限制）
+ * - 内容创建类：支持 scope（操作范围）、categories（分类限制）、rateLimit（频率限制）、accountAge（账号门槛）、timeRange（时间段）
+ * - 内容修改类：支持 scope（own 仅自己）、categories（分类限制）、timeRange（时间段）
+ * - 内容查看类：支持 scope（查询范围）、categories（分类限制）
  * - 管理操作类：支持 categories（分类限制，若适用）
  * - 上传类：支持完整的上传限制条件
  */
@@ -203,8 +213,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'read',
     isSystem: true,
-    // 场景：限制查看特定分类的话题
-    conditions: ['categories'],
+    // 场景：限制查看特定分类的话题、支持查询范围控制
+    conditions: ['scope', 'categories'],
   },
   {
     slug: 'topic.update',
@@ -213,7 +223,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'update',
     isSystem: true,
     // 场景：普通用户只能编辑自己的话题、版主可编辑特定分类的话题、限制编辑时间段
-    conditions: ['own', 'categories', 'timeRange'],
+    conditions: ['scope', 'categories', 'timeRange'],
   },
   {
     slug: 'topic.delete',
@@ -222,7 +232,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'delete',
     isSystem: true,
     // 场景：普通用户只能删除自己的话题、版主可删除特定分类的话题
-    conditions: ['own', 'categories'],
+    conditions: ['scope', 'categories'],
   },
   {
     slug: 'topic.pin',
@@ -240,7 +250,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'close',
     isSystem: true,
     // 场景：用户可关闭自己的话题、版主可关闭特定分类的话题
-    conditions: ['own', 'categories'],
+    conditions: ['scope', 'categories'],
   },
 
   // ========== 回复权限 ==========
@@ -260,8 +270,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'post',
     action: 'read',
     isSystem: true,
-    // 回复的可见性由 topic.read 的 categories 条件统一控制
-    conditions: [],
+    // 场景：支持查询范围控制（管理员可无参数列表查询）
+    conditions: ['scope'],
   },
   {
     slug: 'post.update',
@@ -271,7 +281,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 回复依附于话题，分类限制由 topic.read 统一控制
     // 场景：普通用户只能编辑自己的回复、限制编辑时间段
-    conditions: ['own', 'timeRange'],
+    conditions: ['scope', 'timeRange'],
   },
   {
     slug: 'post.delete',
@@ -281,7 +291,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 回复依附于话题，分类限制由 topic.read 统一控制
     // 场景：普通用户只能删除自己的回复
-    conditions: ['own'],
+    conditions: ['scope'],
   },
 
   // ========== 用户权限 ==========
@@ -291,8 +301,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'read',
     isSystem: true,
-    // 场景：通常无限制
-    conditions: [],
+    // 场景：支持查询范围控制（管理员可列表查询）
+    conditions: ['scope'],
   },
   {
     slug: 'user.update',
@@ -301,7 +311,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'update',
     isSystem: true,
     // 场景：普通用户只能编辑自己的资料
-    conditions: ['own'],
+    conditions: ['scope'],
   },
   {
     slug: 'user.delete',
@@ -309,8 +319,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'delete',
     isSystem: true,
-    // 场景：用户可注销自己的账号（own）、管理员可删除任意用户
-    conditions: ['own'],
+    // 场景：用户可注销自己的账号（scope: own）、管理员可删除任意用户
+    conditions: ['scope'],
   },
   {
     slug: 'user.ban',
@@ -569,8 +579,8 @@ export const ROLE_PERMISSION_MAP = {
     'topic.create', 'topic.read', 'topic.update', 'topic.delete',
     // 回复：创建、查看、编辑/删除自己的
     'post.create', 'post.read', 'post.update', 'post.delete',
-    // 用户：查看、编辑自己的资料
-    'user.read', 'user.update',
+    // 用户：查看、编辑、注销自己的资料
+    'user.read', 'user.update', 'user.delete',
     // 分类：查看
     'category.read',
     // 上传
@@ -592,13 +602,22 @@ export const ROLE_PERMISSION_MAP = {
  */
 export const ROLE_PERMISSION_CONDITIONS = {
   user: {
-    'topic.update': { own: true },  // 只能编辑自己的话题
-    'topic.delete': { own: true },  // 只能删除自己的话题
-    'post.update': { own: true },   // 只能编辑自己的回复
-    'post.delete': { own: true },   // 只能删除自己的回复
-    'user.update': { own: true },   // 只能编辑自己的资料
-    'upload.create': { uploadTypes: ['avatar'] }, // 只能上传头像
+    // 话题权限
+    'topic.update': { scope: ['own'] },  // 只能编辑自己的话题
+    'topic.delete': { scope: ['own'] },  // 只能删除自己的话题
+    
+    // 回复权限
+    'post.update': { scope: ['own'] },   // 只能编辑自己的回复
+    'post.delete': { scope: ['own'] },   // 只能删除自己的回复
+    
+    // 用户权限
+    'user.update': { scope: ['own'] },   // 只能编辑自己的资料
+    'user.delete': { scope: ['own'] },   // 只能删除自己的账号
+    
+    // 上传权限
+    'upload.create': { uploadTypes: ['avatars', 'topics'] }, // 只能上传头像和话题图片
   },
+  // guest 角色不需要 scope 限制（路由层已控制）
 };
 
 /**
