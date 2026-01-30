@@ -221,8 +221,8 @@ export function usePermission() {
      */
     const getPermissionConditions = (slug) => {
       if (!user) return null;
-      // 管理员无条件限制
-      if (isAdmin) return null;
+      // 管理员无条件限制，返回空对象表示“无限制”
+      if (isAdmin) return {};
       const perm = permissions.find(p => p.slug === slug);
       return perm?.conditions || null;
     };

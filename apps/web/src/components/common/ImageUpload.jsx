@@ -1,8 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
 import { uploadApi } from '@/lib/api';
+import { usePermission } from '@/hooks/usePermission';
+import { MAX_UPLOAD_SIZE_ADMIN_KB, MAX_UPLOAD_SIZE_DEFAULT_KB, DEFAULT_ALLOWED_EXTENSIONS, EXT_MIME_MAP } from '@/constants/upload';
 
 /**
  * 通用图片上传组件
@@ -20,21 +23,67 @@ export function ImageUpload({
   className,
   placeholder = "点击或拖拽上传图片" 
 }) {
+  const { getPermissionConditions, isAdmin } = usePermission();
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef(null);
 
+  // 动态获取上传配额
+  const uploadConditions = useMemo(() => getPermissionConditions('upload.create'), [getPermissionConditions]);
+  
+  // 核心逻辑：管理员拥有全局最高上限 (100MB)，普通用户根据 RBAC 条件决定 (默认 5MB)
+  const maxFileSizeKB = useMemo(() => {
+    if (isAdmin) return MAX_UPLOAD_SIZE_ADMIN_KB; // 管理员默认 100MB (与后端插件设置一致)
+    return uploadConditions?.maxFileSize || MAX_UPLOAD_SIZE_DEFAULT_KB; // 普通用户默认 5MB
+  }, [isAdmin, uploadConditions]);
+
+  const maxSizeBytes = maxFileSizeKB * 1024;
+  const maxFileSizeDisplay = maxFileSizeKB >= 1024 
+    ? (maxFileSizeKB / 1024).toFixed(0) + 'MB' 
+    : maxFileSizeKB + 'KB';
+
+
+
+  // 计算允许的文件扩展名
+  const allowedExts = useMemo(() => {
+    return uploadConditions?.allowedFileTypes || DEFAULT_ALLOWED_EXTENSIONS;
+  }, [uploadConditions]);
+
+  // 动态生成 accept 属性 (UX 优化：让文件选择框默认只显示允许的类型)
+  // 同时包含后缀和对应的 MIME 类型，提升各平台浏览器识别率
+  const acceptAttribute = useMemo(() => {
+    if (uploadConditions?.allowedFileTypes?.length > 0) {
+      const exts = uploadConditions.allowedFileTypes;
+      const combined = [
+        ...exts.map(ext => `.${ext}`),
+        ...exts.map(ext => EXT_MIME_MAP[ext] || []).flat()
+      ];
+      return [...new Set(combined)].join(',');
+    }
+    return "image/*"; // Default fallback
+  }, [uploadConditions]);
+
   const handleFile = async (file) => {
     if (!file) return;
 
-    // 基本验证
-    if (!file.type.startsWith('image/')) {
-      toast.error('请上传图片文件');
+    // 验证文件扩展名
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedExts.includes(ext)) {
+      toast.error(`不支持的文件类型，允许：${allowedExts.join(', ')}`);
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('图片大小不能超过 5MB');
+    // MIME 类型一致性预检 (校验 file.type 是否符合映射关系)
+    const expectedMimes = EXT_MIME_MAP[ext];
+    if (expectedMimes && !expectedMimes.includes(file.type)) {
+      toast.error('文件内容与后缀不匹配，请上传真实的图片文件');
+      return;
+    }
+
+    // 动态配额预验证 (前端友好提示)
+    if (file.size > maxSizeBytes) {
+      toast.error(`图片大小不能超过 ${maxFileSizeDisplay}`);
       return;
     }
 
@@ -87,7 +136,7 @@ export function ImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={acceptAttribute}
         className="hidden"
         onChange={handleChange}
       />
@@ -114,7 +163,7 @@ export function ImageUpload({
                 <span className="font-semibold">{placeholder}</span>
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                支持 JPG, PNG, GIF, WebP (最大 5MB)
+                支持 {allowedExts.map(ext => ext.toUpperCase()).join(', ')} (最大 {maxFileSizeDisplay})
               </p>
             </div>
           )}

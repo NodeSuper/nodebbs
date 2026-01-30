@@ -615,7 +615,11 @@ export const ROLE_PERMISSION_CONDITIONS = {
     'user.delete': { scope: ['own'] },   // 只能删除自己的账号
     
     // 上传权限
-    'upload.create': { uploadTypes: ['avatars', 'topics'] }, // 只能上传头像和话题图片
+    'upload.create': { 
+      uploadTypes: ['avatars'],
+      maxFileSize: 5120, // 5MB (单位：KB)
+      allowedFileTypes: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    },
   },
   // guest 角色不需要 scope 限制（路由层已控制）
 };

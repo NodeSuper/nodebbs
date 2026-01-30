@@ -1,8 +1,10 @@
 import { pipeline } from 'stream/promises';
+import { Transform } from 'stream';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { dirname } from '../../utils/index.js';
+import { MAX_UPLOAD_SIZE_DEFAULT_KB, DEFAULT_ALLOWED_EXTENSIONS, EXT_MIME_MAP } from '../../constants/upload.js';
 
 export default async function uploadRoutes(fastify) {
   fastify.post('/', {
@@ -28,86 +30,115 @@ export default async function uploadRoutes(fastify) {
             url: { type: 'string' },
             filename: { type: 'string' },
             mimetype: { type: 'string' },
-            type: { type: 'string' }
+            type: { type: 'string' },
+            size: { type: 'number' }
           }
         }
       }
     }
   }, async (request, reply) => {
-    const uploadType = request.query.type || 'common';
+    const uploadType = request.query.type || 'assets';
+    const userId = request.user.id;
 
-    // 检查上传权限（带上传类型上下文）
-    await fastify.checkPermission(request, 'upload.create', {
-      uploadType,
-    });
+    // 1. 获取动态权限条件（此时已绕过基础权限检查的 hasPermission，需手动获取条件）
+    const conditions = await fastify.permissionService.getPermissionConditions(userId, 'upload.create');
+    if (conditions === null) {
+      return reply.code(403).send({ error: '你没有上传文件的权限' });
+    }
 
-    // Process file
+    // 2. 检查上传类型权限
+    if (conditions.uploadTypes && !conditions.uploadTypes.includes(uploadType)) {
+      return reply.code(403).send({ error: `你没有上传 "${uploadType}" 类型文件的权限` });
+    }
+
+    // 获取具体限制数值（从 RBAC 条件中读取或使用合理的后备默认值）
+    const maxFileSizeKB = conditions.maxFileSize || MAX_UPLOAD_SIZE_DEFAULT_KB; 
+    // allowedFileTypes 为 null 表示无限制（如管理员），undefined 则使用默认白名单
+    const allowedExts = conditions.allowedFileTypes === null 
+      ? null 
+      : (conditions.allowedFileTypes || DEFAULT_ALLOWED_EXTENSIONS);
+
+    // 3. 处理文件流
     const data = await request.file();
-    
     if (!data) {
       return reply.code(400).send({ error: '请选择要上传的文件' });
     }
 
-    // Validate mime type (images only)
-    const allowedMimeTypes = [
-      'image/jpeg', 
-      'image/png', 
-      'image/gif', 
-      'image/webp',
-      'image/svg+xml',           // SVG 格式（站点 Logo）
-      'image/x-icon',            // ICO 格式（Favicon）
-      'image/vnd.microsoft.icon' // ICO 的另一种 MIME 类型
-    ];
-    if (!allowedMimeTypes.includes(data.mimetype)) {
-      return reply.code(400).send({ error: '仅支持上传图片格式 (jpg, png, gif, webp, svg, ico)' });
+    // 4. 验证文件后缀
+    const ext = path.extname(data.filename).toLowerCase().replace('.', '');
+    if (!ext) {
+      return reply.code(400).send({ error: '文件必须包含扩展名' });
+    }
+    // 如果 allowedExts 不为 null，则进行白名单校验
+    if (allowedExts && !allowedExts.includes(ext)) {
+      return reply.code(400).send({ error: `不支持的文件类型，允许：${allowedExts.join(', ')}` });
     }
 
-    // Generate unique filename
-    const ext = path.extname(data.filename).toLowerCase() || '.jpg';
-    const filename = `${randomUUID()}${ext}`;
+    // 4b. 验证 MIME 类型一致性 (双重校验，防止伪装绕过)
+    const expectedMimes = EXT_MIME_MAP[ext];
+    if (expectedMimes && !expectedMimes.includes(data.mimetype)) {
+      fastify.log.warn(`文件上传伪装尝试：ext=${ext}, mimetype=${data.mimetype}, user=${userId}`);
+      return reply.code(400).send({ error: '文件内容与后缀不匹配，请上传正确的图片文件' });
+    }
+
+    // 5. 生成唯一文件名
+    const filename = `${randomUUID()}.${ext}`;
     
-    // Ensure upload directory exists
+    // 6. 确保上传子目录存在
     const __dirname = dirname(import.meta.url);
     const uploadDir = path.join(__dirname, '../../../uploads', uploadType);
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
+    await fs.promises.mkdir(uploadDir, { recursive: true });
     const filepath = path.join(uploadDir, filename);
 
-    // Save file
-    try {
-      await pipeline(data.file, fs.createWriteStream(filepath));
+    // 7. 保存文件并实施流式大小实时监控（Fusing 熔断机制）
+    let byteCount = 0;
+    const maxSizeBytes = maxFileSizeKB * 1024;
+    const writeStream = fs.createWriteStream(filepath);
 
-      // 验证文件大小 (最大 5MB)
-      const maxSize = 5 * 1024 * 1024;
-      const stats = fs.statSync(filepath);
-      if (stats.size > maxSize) {
-        fs.unlinkSync(filepath);
-        return reply.code(400).send({ error: '文件大小超过 5MB 限制' });
-      }
+    try {
+      // 使用 Transform 流进行流量监控（避免双重消费流）
+      const monitor = new Transform({
+        transform(chunk, encoding, callback) {
+          byteCount += chunk.length;
+          if (byteCount > maxSizeBytes) {
+            const err = new Error('FILE_TOO_LARGE');
+            err.code = 'FILE_TOO_LARGE';
+            return callback(err);
+          }
+          callback(null, chunk);
+        }
+      });
+
+      await pipeline(data.file, monitor, writeStream);
     } catch (err) {
-      // 如果已创建文件则清理
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
+      // 捕获异常并清理可能已创建的部分文件
+      try {
+        await fs.promises.unlink(filepath);
+      } catch (e) {
+        // Ignore if file doesn't exist
       }
       
-      if (err.code === 'FST_PART_FILE_SIZE_EXCEEDED') {
-        return reply.code(400).send({ error: '文件大小超过限制' });
+      if (err.code === 'FILE_TOO_LARGE') {
+        const readableLimit = maxFileSizeKB >= 1024 ? (maxFileSizeKB / 1024).toFixed(1) + 'MB' : maxFileSizeKB + 'KB';
+        return reply.code(400).send({ error: `文件大小超过限制，当前等级最大允许 ${readableLimit}` });
       }
 
-      fastify.log.error('File save error:', err);
-      return reply.code(500).send({ error: '文件保存失败' });
+      if (err.code === 'FST_PART_FILE_SIZE_EXCEEDED' || err.code === 'FST_REQ_FILE_TOO_LARGE') {
+        return reply.code(400).send({ error: '文件大小超过服务器全局限制' });
+      }
+
+      fastify.log.error('File upload error:', err);
+      return reply.code(500).send({ error: '文件上传失败' });
     }
 
-    // Return URL
+    // 8. 返回访问 URL 和文件元数据
     const url = `/uploads/${uploadType}/${filename}`;
-
     return {
       url,
       filename,
       mimetype: data.mimetype,
-      type: uploadType
+      type: uploadType,
+      size: byteCount
     };
   });
 }

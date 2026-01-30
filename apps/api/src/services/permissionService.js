@@ -12,6 +12,7 @@ import {
   userRoles,
   users,
 } from '../db/schema.js';
+import { MAX_UPLOAD_SIZE_ADMIN_KB } from '../constants/upload.js';
 
 // 权限缓存 TTL（秒）
 const PERMISSION_CACHE_TTL = 300; // 5 分钟
@@ -361,6 +362,32 @@ class PermissionService {
   }
 
   /**
+   * 获取用户某个权限的具体条件
+   * @param {number} userId - 用户 ID
+   * @param {string} permissionSlug - 权限标识
+   * @returns {Promise<Object|null>} 条件对象，无权限时返回 null
+   */
+  async getPermissionConditions(userId, permissionSlug) {
+    if (userId) {
+      const isAdmin = await this.hasRole(userId, 'admin');
+      if (isAdmin) {
+        // 管理员返回极大的限制，避免调用方因空值回退到默认限制
+        return {
+          maxFileSize: MAX_UPLOAD_SIZE_ADMIN_KB, // 即使是 Admin 也给一个上限作为保险
+          allowedFileTypes: null, // 明确返回 null 表示无文件类型限制
+          // 不设置 uploadTypes 表示无目录限制
+        };
+      }
+    }
+
+    const userPermissions = await this.getUserPermissions(userId);
+    const permission = userPermissions.find(p => p.slug === permissionSlug);
+
+    if (!permission) return null;
+    return permission.conditions || {};
+  }
+
+  /**
    * 检查用户是否有某个权限（带详细原因）
    * @param {number} userId - 用户 ID
    * @param {string} permissionSlug - 权限标识
@@ -669,17 +696,6 @@ class PermissionService {
     return { allowed: true };
   }
 
-  /**
-   * 获取权限的条件配置
-   * @param {number} userId - 用户 ID
-   * @param {string} permissionSlug - 权限标识
-   * @returns {Promise<Object|null>}
-   */
-  async getPermissionConditions(userId, permissionSlug) {
-    const userPermissions = await this.getUserPermissions(userId);
-    const permission = userPermissions.find(p => p.slug === permissionSlug);
-    return permission?.conditions || null;
-  }
 
   /**
    * 获取用户允许访问的分类 ID 列表
