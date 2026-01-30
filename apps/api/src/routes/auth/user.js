@@ -89,7 +89,17 @@ export default async function userRoute(fastify, options) {
               },
               permissions: {
                 type: 'array',
-                items: { type: 'string' },
+                items: {
+                  type: 'object',
+                  properties: {
+                    slug: { type: 'string' },
+                    conditions: { 
+                      type: ['object', 'null'],
+                      additionalProperties: true,  // 允许任意属性通过序列化
+                    },
+                  },
+                },
+                description: '用户权限列表，包含权限标识和条件',
               },
               displayRole: {
                 type: ['object', 'null'],
@@ -145,7 +155,10 @@ export default async function userRoute(fastify, options) {
           oauthProviders,
           // RBAC 权限数据
           userRoles,
-          permissions: userPermissions.map(p => p.slug),
+          permissions: userPermissions.map(p => ({
+            slug: p.slug,
+            conditions: p.conditions || null,
+          })),
           displayRole: displayRole ? {
             slug: displayRole.slug,
             name: displayRole.name,
@@ -154,78 +167,6 @@ export default async function userRoute(fastify, options) {
           } : null,
         };
       });
-    }
-  );
-
-  // 获取当前用户的权限信息
-  fastify.get(
-    '/me/permissions',
-    {
-      preHandler: [fastify.authenticate],
-      schema: {
-        tags: ['auth'],
-        description: '获取当前用户的 RBAC 权限信息',
-        security: [{ bearerAuth: [] }],
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              roles: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'number' },
-                    slug: { type: 'string' },
-                    name: { type: 'string' },
-                    color: { type: 'string' },
-                    icon: { type: 'string' },
-                    priority: { type: 'number' },
-                    isDisplayed: { type: 'boolean' },
-                  },
-                },
-              },
-              permissions: {
-                type: 'array',
-                items: { type: 'string' },
-              },
-              displayRole: {
-                type: ['object', 'null'],
-                properties: {
-                  slug: { type: 'string' },
-                  name: { type: 'string' },
-                  color: { type: 'string' },
-                  icon: { type: 'string' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      const userId = request.user.id;
-
-      const [userRoles, userPermissions] = await Promise.all([
-        permissionService.getUserRoles(userId),
-        permissionService.getUserPermissions(userId),
-      ]);
-
-      // 获取展示角色（最高优先级且允许展示的角色）
-      const displayRole = userRoles
-        .filter(r => r.isDisplayed)
-        .sort((a, b) => b.priority - a.priority)[0] || null;
-
-      return {
-        roles: userRoles,
-        permissions: userPermissions.map(p => p.slug),
-        displayRole: displayRole ? {
-          slug: displayRole.slug,
-          name: displayRole.name,
-          color: displayRole.color,
-          icon: displayRole.icon,
-        } : null,
-      };
     }
   );
 

@@ -974,11 +974,6 @@ export const invitationsApi = {
 
 // ============= RBAC 权限管理 API =============
 export const rbacApi = {
-  // 获取当前用户的权限信息
-  async getMyPermissions() {
-    return apiClient.get('/auth/me/permissions');
-  },
-
   // 获取公开角色信息
   async getPublicRoles() {
     return apiClient.get('/roles/public');

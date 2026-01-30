@@ -47,7 +47,7 @@ export function usePermission() {
       if (!user) return false;
       // 管理员拥有所有权限
       if (isAdmin) return true;
-      return permissions.includes(slug);
+      return permissions.some(p => p.slug === slug);
     };
 
     /**
@@ -58,7 +58,7 @@ export function usePermission() {
     const hasAnyPermission = (slugs) => {
       if (!user) return false;
       if (isAdmin) return true;
-      return slugs.some(slug => permissions.includes(slug));
+      return slugs.some(slug => permissions.some(p => p.slug === slug));
     };
 
     /**
@@ -69,7 +69,7 @@ export function usePermission() {
     const hasAllPermissions = (slugs) => {
       if (!user) return false;
       if (isAdmin) return true;
-      return slugs.every(slug => permissions.includes(slug));
+      return slugs.every(slug => permissions.some(p => p.slug === slug));
     };
 
     /**
@@ -211,7 +211,20 @@ export function usePermission() {
     const hasDashboardAccess = () => {
       if (!user) return false;
       if (isAdmin) return true;
-      return DASHBOARD_PERMISSIONS.some(slug => permissions.includes(slug));
+      return DASHBOARD_PERMISSIONS.some(slug => permissions.some(p => p.slug === slug));
+    };
+
+    /**
+     * 获取指定权限的条件配置
+     * @param {string} slug - 权限标识
+     * @returns {Object|null} 条件对象，无条件时返回 null
+     */
+    const getPermissionConditions = (slug) => {
+      if (!user) return null;
+      // 管理员无条件限制
+      if (isAdmin) return null;
+      const perm = permissions.find(p => p.slug === slug);
+      return perm?.conditions || null;
     };
 
     return {
@@ -245,6 +258,9 @@ export function usePermission() {
 
       // 管理后台
       hasDashboardAccess,
+
+      // 权限条件
+      getPermissionConditions,
     };
   }, [user]);
 }
