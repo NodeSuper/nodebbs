@@ -1131,104 +1131,10 @@ export default async function userRoutes(fastify, options) {
     };
   });
 
-  // Upload avatar
-  fastify.post('/me/upload-avatar', {
-    preHandler: [fastify.authenticate],
-    schema: {
-      tags: ['users'],
-      description: '上传用户头像',
-      security: [{ bearerAuth: [] }],
-      consumes: ['multipart/form-data'],
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            avatar: { type: 'string' }
-          }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    const data = await request.file();
 
-    if (!data) {
-      return reply.code(400).send({ error: '未上传文件' });
-    }
+  // Upload avatar - DEPRECATED: Use /api/upload?type=avatars and then PATCH /users/me
+  // 以前的逻辑已迁移到通用上传接口 + 用户资料更新接口
 
-    // 验证文件类型
-    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedMimes.includes(data.mimetype)) {
-      return reply.code(400).send({ error: '文件类型无效，仅支持 JPG、PNG、GIF 和 WebP' });
-    }
-
-    // 验证文件大小 (最大 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    let fileSize = 0;
-
-    // 如果上传目录不存在则创建
-    const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'avatars');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // 生成唯一文件名
-    const ext = path.extname(data.filename);
-    const filename = `${request.user.id}-${crypto.randomBytes(8).toString('hex')}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-
-    try {
-      // 保存文件
-      await pipeline(data.file, fs.createWriteStream(filepath));
-
-      // 写入后检查文件大小
-      const stats = fs.statSync(filepath);
-      if (stats.size > maxSize) {
-        fs.unlinkSync(filepath); // 删除文件
-        return reply.code(400).send({ error: '文件大小超过 5MB 限制' });
-      }
-
-      // 更新数据库中的用户头像
-      const avatarUrl = `/uploads/avatars/${filename}`;
-      
-      // 更新前获取当前用户头像
-      const [currentUser] = await db.select().from(users).where(eq(users.id, request.user.id)).limit(1);
-      const oldAvatar = currentUser?.avatar;
-
-      await db.update(users)
-        .set({ avatar: avatarUrl, updatedAt: new Date() })
-        .where(eq(users.id, request.user.id));
-
-      // 清除用户缓存，确保前端刷新时获取最新头像
-      await fastify.clearUserCache(request.user.id);
-
-      // 如果旧头像存在且为本地文件，则将其删除
-      if (oldAvatar && oldAvatar.startsWith('/uploads/avatars/')) {
-        const oldFilename = path.basename(oldAvatar);
-        // 确保不会删除刚刚上传的文件（虽然因为随机命名不应该发生，但为了安全起见）
-        if (oldFilename !== filename) {
-          const oldFilepath = path.join(uploadsDir, oldFilename);
-          try {
-            if (fs.existsSync(oldFilepath)) {
-              fs.unlinkSync(oldFilepath);
-              // fastify.log.info(`Deleted old avatar: ${oldFilename}`);
-            }
-          } catch (err) {
-            fastify.log.error(`Failed to delete old avatar ${oldFilename}:`, err);
-            // 如果删除失败，不要让请求失败
-          }
-        }
-      }
-
-      return { avatar: avatarUrl };
-    } catch (err) {
-      // 如果已创建文件则清理
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
-      }
-      fastify.log.error(err);
-      return reply.code(500).send({ error: '文件上传失败' });
-    }
-  });
 
   // Update user by admin
   fastify.patch('/:userId', {

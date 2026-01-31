@@ -268,32 +268,6 @@ export const userApi = {
     return apiClient.patch(`/users/${userId}`, data);
   },
 
-  // 上传头像
-  async uploadAvatar(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const url = `${apiClient.baseURL}/users/me/upload-avatar`;
-    // const headers = {
-    //   'Authorization': `Bearer ${apiClient.token}`,
-    // };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      // headers, // Multipart form data 不需要手动设置 Content-Type? 需要验证 fetch 对 FormData 的处理
-      // 这里只需要 credentials 用于认证
-      credentials: 'include',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || data.error || 'Upload failed');
-    }
-
-    return response.json();
-  },
-
   // 修改密码
   async changePassword(currentPassword, newPassword) {
     return apiClient.post('/users/me/change-password', {

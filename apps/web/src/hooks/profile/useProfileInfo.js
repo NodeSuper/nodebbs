@@ -53,35 +53,32 @@ export function useProfileInfo() {
     }
   }, [user]);
 
-  // ===== 头像上传 =====
-  const handleAvatarChange = useCallback(async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('请选择图片文件');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('图片大小不能超过 5MB');
-      return;
-    }
-
-    setUploadingAvatar(true);
+  // ===== 更新头像 =====
+  const updateAvatar = useCallback(async (url) => {
+    if (!url) return;
+    
+    // 保存旧头像用于回滚
+    const oldAvatar = formData.avatar;
+    
+    // 乐观更新
+    setFormData((prev) => ({ ...prev, avatar: url }));
 
     try {
-      const result = await userApi.uploadAvatar(file);
-      setFormData((prev) => ({ ...prev, avatar: result.avatar }));
-      toast.success('头像上传成功');
-      setUploadingAvatar(false);
+      // 更新用户资料
+      await userApi.updateProfile({
+        avatar: url
+      });
+      
+      toast.success('头像已更新');
       refreshUser();
     } catch (err) {
-      console.error('上传头像失败:', err);
-      toast.error('上传头像失败：' + err.message);
-      setUploadingAvatar(false);
+      console.error('更新头像失败:', err);
+      toast.error('更新头像失败：' + err.message);
+      
+      // 失败回滚
+      setFormData((prev) => ({ ...prev, avatar: oldAvatar }));
     }
-  }, [refreshUser]);
+  }, [formData.avatar, refreshUser]);
 
   // ===== 提交表单 =====
   const handleSubmit = useCallback(async (e) => {
@@ -122,15 +119,13 @@ export function useProfileInfo() {
     updateField,
     /** 重置表单 */
     resetForm,
-    /** 头像上传处理 */
-    handleAvatarChange,
+    /** 更新头像 */
+    updateAvatar,
     /** 提交表单 */
     handleSubmit,
 
     // ===== 加载状态 =====
     /** 表单提交中 */
     loading,
-    /** 头像上传中 */
-    uploadingAvatar,
   };
 }

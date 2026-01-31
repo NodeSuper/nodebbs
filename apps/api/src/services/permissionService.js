@@ -338,11 +338,12 @@ class PermissionService {
     }
 
     // 检查条件
-    if (permission.conditions) {
-      // scope: ['own', 'list'] 操作范围限制
-      if (permission.conditions.scope) {
-        const scopes = permission.conditions.scope;
-        const { requestType, ownerId } = context;
+    const conditions = permission.conditions || {};
+
+    // scope: ['own', 'list'] 操作范围限制
+    if (conditions.scope) {
+      const scopes = conditions.scope;
+      const { requestType, ownerId } = context;
         
         // 1. 列表查询：需要 'list' 权限
         if (requestType === 'list' && !scopes.includes('list')) {
@@ -364,8 +365,8 @@ class PermissionService {
       }
 
       // categories: [1, 2, 3] 表示只能在指定分类操作
-      if (permission.conditions.categories && context.categoryId !== undefined) {
-        if (!permission.conditions.categories.includes(context.categoryId)) {
+      if (conditions.categories && context.categoryId !== undefined) {
+        if (!conditions.categories.includes(context.categoryId)) {
           return {
             granted: false,
             code: 'CATEGORY_NOT_ALLOWED',
@@ -375,22 +376,22 @@ class PermissionService {
       }
 
       // accountAge: 30 表示账号注册天数需达到指定值
-      if (permission.conditions.accountAge !== undefined && context.userCreatedAt !== undefined) {
+      if (conditions.accountAge !== undefined && context.userCreatedAt !== undefined) {
         const accountAgeDays = Math.floor(
           (Date.now() - new Date(context.userCreatedAt).getTime()) / (1000 * 60 * 60 * 24)
         );
-        if (accountAgeDays < permission.conditions.accountAge) {
+        if (accountAgeDays < conditions.accountAge) {
           return {
             granted: false,
             code: 'ACCOUNT_TOO_NEW',
-            reason: `账号注册需满 ${permission.conditions.accountAge} 天，当前 ${accountAgeDays} 天`,
+            reason: `账号注册需满 ${conditions.accountAge} 天，当前 ${accountAgeDays} 天`,
           };
         }
       }
 
       // timeRange: { start: "09:00", end: "18:00" } 表示只在指定时间段内有效
-      if (permission.conditions.timeRange) {
-        const { start, end } = permission.conditions.timeRange;
+      if (conditions.timeRange) {
+        const { start, end } = conditions.timeRange;
         if (start && end) {
           const now = new Date();
           const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -424,32 +425,33 @@ class PermissionService {
       }
 
       // maxFileSize: 1024 表示上传文件最大大小（KB）
-      if (permission.conditions.maxFileSize !== undefined && context.fileSize !== undefined) {
+      if (conditions.maxFileSize !== undefined && context.fileSize !== undefined) {
         const fileSizeKB = context.fileSize / 1024;
-        if (fileSizeKB > permission.conditions.maxFileSize) {
+        if (fileSizeKB > conditions.maxFileSize) {
           return {
             granted: false,
             code: 'FILE_TOO_LARGE',
-            reason: `文件大小超过限制，最大 ${permission.conditions.maxFileSize} KB`,
+            reason: `文件大小超过限制，最大 ${conditions.maxFileSize} KB`,
           };
         }
       }
 
       // allowedFileTypes: ["jpg", "png", "gif"] 表示允许的文件类型
-      if (permission.conditions.allowedFileTypes && context.fileType !== undefined) {
+      if (conditions.allowedFileTypes && context.fileType !== undefined) {
         const ext = context.fileType.toLowerCase().replace('.', '');
-        if (!permission.conditions.allowedFileTypes.includes(ext)) {
+        if (!conditions.allowedFileTypes.includes(ext)) {
           return {
             granted: false,
             code: 'FILE_TYPE_NOT_ALLOWED',
-            reason: `不支持的文件类型，允许：${permission.conditions.allowedFileTypes.join(', ')}`,
+            reason: `不支持的文件类型，允许：${conditions.allowedFileTypes.join(', ')}`,
           };
         }
       }
 
       // uploadTypes: ["avatar", "topic"] 表示允许的上传目录类型
-      if (permission.conditions.uploadTypes && context.uploadType !== undefined) {
-        if (!permission.conditions.uploadTypes.includes(context.uploadType)) {
+      // 安全策略：如果提供了 context.uploadType，必须显式在 uploadTypes 白名单中才允许
+      if (context.uploadType !== undefined) {
+        if (!conditions.uploadTypes || !conditions.uploadTypes.includes(context.uploadType)) {
           return {
             granted: false,
             code: 'UPLOAD_TYPE_NOT_ALLOWED',
@@ -460,8 +462,8 @@ class PermissionService {
 
       // rateLimit: { count: 10, period: "hour" } 表示限制操作频率
       // 注意：rateLimit 放在最后检查，避免其他条件失败时也增加计数器
-      if (permission.conditions.rateLimit) {
-        const { count, period } = permission.conditions.rateLimit;
+      if (conditions.rateLimit) {
+        const { count, period } = conditions.rateLimit;
         if (count && period) {
           const rateLimitResult = await this._checkAndIncrementRateLimit(
             userId,
@@ -479,7 +481,7 @@ class PermissionService {
           }
         }
       }
-    }
+
 
     return { granted: true };
   }

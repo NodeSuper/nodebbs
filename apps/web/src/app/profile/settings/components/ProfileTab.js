@@ -24,14 +24,18 @@ import { useEmailChange } from '@/hooks/profile/useEmailChange';
 import { useSettings } from '@/contexts/SettingsContext';
 import { UsernameChangeDialog } from './UsernameChangeDialog';
 import { EmailChangeDialog } from './EmailChangeDialog';
+import { AvatarUpload } from './AvatarUpload';
+
+import { useMemo } from 'react';
+import { usePermission } from '@/hooks/usePermission';
 
 /**
  * 个人资料 Tab
  * 内部管理表单状态，消费 useProfileInfo Hook
  */
 export function ProfileTab() {
-  const fileInputRef = useRef(null);
   const { settings } = useSettings();
+  const { hasPermission, getPermissionConditions, isAdmin } = usePermission();
 
   // 使用独立 Hooks
   const {
@@ -39,18 +43,27 @@ export function ProfileTab() {
     formData,
     updateField,
     resetForm,
-    handleAvatarChange,
+    updateAvatar, // New function
     handleSubmit,
     loading,
-    uploadingAvatar,
   } = useProfileInfo();
 
   const usernameChange = useUsernameChange();
   const emailChange = useEmailChange();
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
+  // 检查是否有头像上传权限
+  const canUploadAvatar = useMemo(() => {
+    if (isAdmin) return true;
+    if (!hasPermission('upload.create')) return false;
+
+    const conditions = getPermissionConditions('upload.create');
+    // 如果没有条件限制或没有指定 uploadTypes 限制，视作未授权（安全默认值）
+    // 即：必须显式在 conditions 中允许 avatars 才能上传
+    if (!conditions || !conditions.uploadTypes) return false;
+
+    // 检查 uploadTypes 是否包含 'avatars'
+    return conditions.uploadTypes.includes('avatars');
+  }, [isAdmin, hasPermission, getPermissionConditions]);
 
   if (!user) return null;
 
@@ -66,42 +79,18 @@ export function ProfileTab() {
           </div>
           <div className='p-6 space-y-6'>
             {/* 头像 */}
-            <div className='flex items-start space-x-4'>
+            <div className={`flex space-x-4`}>
               <UserAvatar url={formData.avatar} name={user.username} size="xl" />
-              <div className='flex-1'>
-                <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                  头像
-                </Label>
-                <input
-                  ref={fileInputRef}
-                  type='file'
-                  accept='image/*'
-                  onChange={handleAvatarChange}
-                  className='hidden'
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={handleAvatarClick}
-                  disabled={uploadingAvatar}
-                >
-                  {uploadingAvatar ? (
-                    <>
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                      上传中...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className='h-4 w-4' />
-                      上传新头像
-                    </>
-                  )}
-                </Button>
-                <p className='text-xs text-muted-foreground mt-2'>
-                  推荐尺寸：200x200px，支持 JPG、PNG 格式，最大 5MB
-                </p>
-              </div>
+              {canUploadAvatar ? (
+                <div className='flex-1'>
+                  <Label className='text-sm font-medium text-card-foreground block mb-2'>
+                    头像
+                  </Label>
+                  <AvatarUpload
+                    onUpload={updateAvatar}
+                  />
+                </div>
+              ) : null}
             </div>
 
             {/* 用户名 */}
