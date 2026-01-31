@@ -538,7 +538,6 @@ export const SYSTEM_ROLES = [
     isDefault: false,
     isDisplayed: true,
     priority: 100,
-    parentSlug: null,
   },
   {
     slug: 'user',
@@ -550,7 +549,6 @@ export const SYSTEM_ROLES = [
     isDefault: true, // 注册用户默认角色
     isDisplayed: false,
     priority: 10,
-    parentSlug: null,
   },
   {
     slug: 'guest',
@@ -562,7 +560,6 @@ export const SYSTEM_ROLES = [
     isDefault: false,
     isDisplayed: false,
     priority: 0,
-    parentSlug: null,
   },
 ];
 
@@ -735,22 +732,15 @@ export function validateRbacConfig() {
     }
   }
 
-  // 5. 检查 SYSTEM_ROLES 中 parentSlug 的有效性
+  // 5. 检查 ROLE_PERMISSION_MAP 中的角色是否都在 SYSTEM_ROLES 中定义
   const roleSlugs = new Set(SYSTEM_ROLES.map(r => r.slug));
-  for (const role of SYSTEM_ROLES) {
-    if (role.parentSlug && !roleSlugs.has(role.parentSlug)) {
-      errors.push(`SYSTEM_ROLES "${role.slug}" 的 parentSlug "${role.parentSlug}" 未找到`);
-    }
-  }
-
-  // 6. 检查 ROLE_PERMISSION_MAP 中的角色是否都在 SYSTEM_ROLES 中定义
   for (const roleSlug of Object.keys(ROLE_PERMISSION_MAP)) {
     if (!roleSlugs.has(roleSlug)) {
       errors.push(`ROLE_PERMISSION_MAP 中定义了角色 "${roleSlug}"，但 SYSTEM_ROLES 中未找到`);
     }
   }
 
-  // 7. 检查 ROLE_PERMISSION_CONDITIONS 中的角色是否都在 SYSTEM_ROLES 中定义
+  // 6. 检查 ROLE_PERMISSION_CONDITIONS 中的角色是否都在 SYSTEM_ROLES 中定义
   for (const roleSlug of Object.keys(ROLE_PERMISSION_CONDITIONS)) {
     if (!roleSlugs.has(roleSlug)) {
       errors.push(`ROLE_PERMISSION_CONDITIONS 中定义了角色 "${roleSlug}"，但 SYSTEM_ROLES 中未找到`);

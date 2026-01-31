@@ -66,7 +66,6 @@ export default async function rolesRoutes(fastify, options) {
                 isDefault: { type: 'boolean' },
                 isDisplayed: { type: 'boolean' },
                 priority: { type: 'number' },
-                parentId: { type: ['number', 'null'] },
               },
             },
           },
@@ -134,7 +133,6 @@ export default async function rolesRoutes(fastify, options) {
             description: { type: 'string' },
             color: { type: 'string' },
             icon: { type: 'string' },
-            parentId: { type: ['number', 'null'] },
             isDefault: { type: 'boolean' },
             isDisplayed: { type: 'boolean' },
             priority: { type: 'number' },
@@ -143,20 +141,12 @@ export default async function rolesRoutes(fastify, options) {
       },
     },
     async (request, reply) => {
-      const { slug, name, description, color, icon, parentId, isDefault, isDisplayed, priority } = request.body;
+      const { slug, name, description, color, icon, isDefault, isDisplayed, priority } = request.body;
 
       // 检查 slug 是否已存在
       const existing = await permissionService.getRoleBySlug(slug);
       if (existing) {
         return reply.code(400).send({ error: '角色标识已存在' });
-      }
-
-      // 检查父角色是否存在
-      if (parentId) {
-        const parentRole = await permissionService.getRoleById(parentId);
-        if (!parentRole) {
-          return reply.code(400).send({ error: '父角色不存在' });
-        }
       }
 
       const [newRole] = await db
@@ -167,7 +157,6 @@ export default async function rolesRoutes(fastify, options) {
           description,
           color,
           icon,
-          parentId: parentId || null,
           isSystem: false,
           isDefault: isDefault || false,
           isDisplayed: isDisplayed !== false,
@@ -231,7 +220,6 @@ export default async function rolesRoutes(fastify, options) {
             description: { type: 'string' },
             color: { type: 'string' },
             icon: { type: 'string' },
-            parentId: { type: ['number', 'null'] },
             isDefault: { type: 'boolean' },
             isDisplayed: { type: 'boolean' },
             priority: { type: 'number' },
@@ -253,34 +241,11 @@ export default async function rolesRoutes(fastify, options) {
         delete updateData.slug;
       }
 
-      // 检查是否设置了 parentId
-      if ('parentId' in updateData) {
-        // 检查是否形成循环继承
-        if (updateData.parentId !== null) {
-          const hasCircular = await permissionService.detectCircularInheritance(id, updateData.parentId);
-          if (hasCircular) {
-            return reply.code(400).send({ error: '不能形成循环继承关系' });
-          }
-          // 检查父角色是否存在
-          const parentRole = await permissionService.getRoleById(updateData.parentId);
-          if (!parentRole) {
-            return reply.code(400).send({ error: '父角色不存在' });
-          }
-        }
-      }
-
       const [updated] = await db
         .update(roles)
         .set(updateData)
         .where(eq(roles.id, id))
         .returning();
-
-      // 如果修改了继承关系（parentId），需要清除拥有该角色的用户的权限缓存
-      if ('parentId' in updateData) {
-        await permissionService.clearRoleUsersPermissionCache(id);
-        // 清除角色继承关系缓存
-        await permissionService.clearRoleInheritanceCache();
-      }
 
       return updated;
     }
@@ -316,8 +281,6 @@ export default async function rolesRoutes(fastify, options) {
 
       // 删除前先清除拥有该角色的用户的权限缓存
       await permissionService.clearRoleUsersPermissionCache(id);
-      // 清除角色继承关系缓存
-      await permissionService.clearRoleInheritanceCache();
 
       await db.delete(roles).where(eq(roles.id, id));
 
@@ -327,73 +290,26 @@ export default async function rolesRoutes(fastify, options) {
 
   // ============ 角色权限管理 ============
 
-  // 获取角色权限（包含继承的权限）
+  // 获取角色权限
   fastify.get(
     '/:id/permissions',
     {
       preHandler: [fastify.requireAdmin],
       schema: {
         tags: ['roles'],
-        description: '获取角色的权限列表（包含继承的权限）',
-        querystring: {
-          type: 'object',
-          properties: {
-            includeInherited: { type: 'boolean', default: true },
-          },
-        },
+        description: '获取角色的权限列表',
       },
     },
     async (request, reply) => {
       const { id } = request.params;
-      const { includeInherited = true } = request.query;
 
-      // 获取直接权限
-      const directPerms = await permissionService.getRolePermissions(id);
-
-      if (!includeInherited) {
-        return directPerms;
-      }
-
-      // 获取角色信息以检查是否有父角色
       const [role] = await db.select().from(roles).where(eq(roles.id, parseInt(id))).limit(1);
       if (!role) {
         return reply.code(404).send({ error: '角色不存在' });
       }
 
-      // 如果没有父角色，直接返回直接权限
-      if (!role.parentId) {
-        return directPerms;
-      }
-
-      // 递归获取所有父角色的权限
-      const getInheritedPermissions = async (parentId, visited = new Set()) => {
-        if (!parentId || visited.has(parentId)) return [];
-        visited.add(parentId);
-
-        const parentPerms = await permissionService.getRolePermissions(parentId);
-
-        // 获取父角色信息
-        const [parentRole] = await db.select().from(roles).where(eq(roles.id, parentId)).limit(1);
-        if (parentRole?.parentId) {
-          const grandParentPerms = await getInheritedPermissions(parentRole.parentId, visited);
-          return [...parentPerms, ...grandParentPerms];
-        }
-        return parentPerms;
-      };
-
-      const inheritedPerms = await getInheritedPermissions(role.parentId);
-
-      // 标记继承来源，并去重（直接权限优先）
-      const directPermIds = new Set(directPerms.map(p => p.id));
-      const uniqueInheritedPerms = inheritedPerms
-        .filter(p => !directPermIds.has(p.id))
-        .map(p => ({ ...p, inherited: true }));
-
-      // 合并返回：直接权限 + 继承权限
-      return [
-        ...directPerms.map(p => ({ ...p, inherited: false })),
-        ...uniqueInheritedPerms,
-      ];
+      const perms = await permissionService.getRolePermissions(id);
+      return perms;
     }
   );
 

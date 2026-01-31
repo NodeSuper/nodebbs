@@ -163,7 +163,6 @@ class PermissionService {
         icon: roles.icon,
         priority: roles.priority,
         isDisplayed: roles.isDisplayed,
-        parentId: roles.parentId,
         expiresAt: userRoles.expiresAt,
       })
       .from(userRoles)
@@ -180,81 +179,6 @@ class PermissionService {
       );
 
     return results;
-  }
-
-  /**
-   * 构建角色继承关系缓存
-   * 一次性查询所有角色并预计算继承关系
-   * @returns {Promise<Map>} 角色ID -> 祖先角色ID列表的映射
-   */
-  async _buildRoleInheritanceCache() {
-    const cacheKey = 'rbac:role_inheritance_map';
-
-    const cachedData = await this.fastify.cache.remember(cacheKey, 3600, async () => {
-      // 一次性查询所有角色
-      const allRoles = await db
-        .select({ id: roles.id, parentId: roles.parentId })
-        .from(roles);
-      
-      const parentMap = new Map(allRoles.map(r => [r.id, r.parentId]));
-      
-      // 预计算每个角色的所有祖先
-      const ancestorMap = {};
-      
-      const getAncestors = (roleId, visited = new Set()) => {
-        if (visited.has(roleId)) return [];
-        visited.add(roleId);
-        
-        const parentId = parentMap.get(roleId);
-        if (!parentId) return [];
-        
-        const ancestors = getAncestors(parentId, visited);
-        return [parentId, ...ancestors];
-      };
-      
-      allRoles.forEach(role => {
-        ancestorMap[role.id] = getAncestors(role.id);
-      });
-      
-      // 返回普通对象（可以被 JSON 序列化）
-      return ancestorMap;
-    });
-    
-    // 转换为 Map 返回（保持接口一致）
-    return new Map(Object.entries(cachedData).map(([k, v]) => [Number(k), v]));
-  }
-
-  /**
-   * 清除角色继承关系缓存
-   * 在角色的 parentId 变更时调用
-   */
-  async clearRoleInheritanceCache() {
-    if (this.fastify?.cache) {
-      await this.fastify.cache.invalidate(['rbac:role_inheritance_map']);
-      this.fastify.log.info('[RBAC] 已清除角色继承关系缓存');
-    }
-  }
-
-  /**
-   * 获取用户所有角色ID（包括继承的父角色）
-   * 使用缓存的继承关系映射，避免重复查询
-   * @param {number} userId - 用户 ID
-   * @returns {Promise<number[]>} 角色ID列表
-   */
-  async _getAllRoleIdsWithInheritance(userId) {
-    const userRolesList = await this.getUserRoles(userId);
-    const allRoleIds = new Set(userRolesList.map(r => r.id));
-
-    // 从缓存获取继承关系映射
-    const ancestorMap = await this._buildRoleInheritanceCache();
-
-    // 添加所有祖先角色
-    userRolesList.forEach(role => {
-      const ancestors = ancestorMap.get(role.id) || [];
-      ancestors.forEach(id => allRoleIds.add(id));
-    });
-
-    return Array.from(allRoleIds);
   }
 
   /**
@@ -299,8 +223,7 @@ class PermissionService {
         return [];
       }
 
-      // 获取所有角色ID（包括继承的父角色）
-      roleIds = await this._getAllRoleIdsWithInheritance(userId);
+      roleIds = userRolesList.map(r => r.id);
     }
 
     if (!roleIds.length) {
@@ -977,38 +900,6 @@ class PermissionService {
       .where(eq(roles.id, roleId))
       .limit(1);
     return role;
-  }
-
-  /**
-   * 检测循环继承
-   * @param {number} roleId - 要设置的角色 ID
-   * @param {number} parentId - 要设置的父角色 ID
-   * @returns {Promise<boolean>} 是否存在循环
-   */
-  async detectCircularInheritance(roleId, parentId) {
-    if (!parentId || roleId === parentId) {
-      return roleId === parentId;
-    }
-
-    const visited = new Set([roleId]);
-    let currentId = parentId;
-
-    while (currentId) {
-      if (visited.has(currentId)) {
-        return true; // 检测到循环
-      }
-      visited.add(currentId);
-
-      const [role] = await db
-        .select({ parentId: roles.parentId })
-        .from(roles)
-        .where(eq(roles.id, currentId))
-        .limit(1);
-
-      currentId = role?.parentId;
-    }
-
-    return false;
   }
 
   /**

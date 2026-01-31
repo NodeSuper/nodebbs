@@ -53,9 +53,6 @@ export class RBACSeeder extends BaseSeeder {
     const roleIdMap = {}; // slug -> id 映射
 
     for (const roleData of SYSTEM_ROLES) {
-      // 排除 parentSlug，因为它不是数据库字段
-      const { parentSlug, ...roleDataWithoutParent } = roleData;
-
       const [existing] = await db
         .select()
         .from(roles)
@@ -66,7 +63,7 @@ export class RBACSeeder extends BaseSeeder {
         if (reset) {
           await db
             .update(roles)
-            .set(roleDataWithoutParent)
+            .set(roleData)
             .where(eq(roles.slug, roleData.slug));
           result.roles.updatedCount++;
           this.logger.success(`更新角色: ${roleData.slug}`);
@@ -77,7 +74,7 @@ export class RBACSeeder extends BaseSeeder {
       } else {
         const [inserted] = await db
           .insert(roles)
-          .values(roleDataWithoutParent)
+          .values(roleData)
           .returning({ id: roles.id });
         result.roles.addedCount++;
         roleIdMap[roleData.slug] = inserted.id;
@@ -86,23 +83,6 @@ export class RBACSeeder extends BaseSeeder {
     }
     if (result.roles.skippedCount > 0) {
        this.logger.info(`跳过 ${result.roles.skippedCount} 个已存在的角色`);
-    }
-
-    // 1.5 设置角色继承关系
-    this.logger.item('设置角色继承关系...', '🔹');
-    for (const roleData of SYSTEM_ROLES) {
-      if (roleData.parentSlug) {
-        const roleId = roleIdMap[roleData.slug];
-        const parentId = roleIdMap[roleData.parentSlug];
-
-        if (roleId && parentId) {
-          await db
-            .update(roles)
-            .set({ parentId })
-            .where(eq(roles.id, roleId));
-          this.logger.success(`设置继承: ${roleData.slug} -> ${roleData.parentSlug}`);
-        }
-      }
     }
 
     // 2. 初始化权限
@@ -225,12 +205,8 @@ export class RBACSeeder extends BaseSeeder {
 
     this.logger.subHeader('System Roles:');
     SYSTEM_ROLES.forEach(role => {
-      const inheritInfo = role.parentSlug ? ` -> inherits ${role.parentSlug}` : ' (Base)';
-      this.logger.item(`${chalk.bold(role.slug)}: ${role.name} (Priority: ${role.priority})${inheritInfo}`, '👤');
+      this.logger.item(`${chalk.bold(role.slug)}: ${role.name} (Priority: ${role.priority})`, '👤');
     });
-
-    this.logger.subHeader('Inheritance:');
-    this.logger.item('admin -> user', '👑');
 
     this.logger.subHeader('System Permissions:');
     const modulePermissions = {};
@@ -252,7 +228,7 @@ export class RBACSeeder extends BaseSeeder {
     Object.entries(ROLE_PERMISSION_MAP).forEach(([role, perms]) => {
       console.log(chalk.dim(`  ${role}: ${perms.length} permissions`));
     });
-    
+
     this.logger.divider();
   }
 

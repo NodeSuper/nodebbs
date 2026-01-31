@@ -11,14 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { confirm } from '@/components/common/ConfirmPopover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Shield, Pencil, Trash2, Plus, Key, GitBranch } from 'lucide-react';
+import { Shield, Pencil, Trash2, Plus, Key } from 'lucide-react';
 import { rbacApi, categoryApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -71,14 +64,12 @@ export function RolesTab() {
     description: '',
     color: '#000000',
     icon: '',
-    parentId: null,
     isDefault: false,
     isDisplayed: true,
     priority: 0,
   });
 
   const [rolePermissions, setRolePermissions] = useState([]); // [{ permissionId, conditions }]
-  const [inheritedPermissions, setInheritedPermissions] = useState([]); // 继承的权限ID列表
 
   useEffect(() => {
     fetchData();
@@ -126,7 +117,6 @@ export function RolesTab() {
       description: '',
       color: '#000000',
       icon: '',
-      parentId: null,
       isDefault: false,
       isDisplayed: true,
       priority: 0,
@@ -143,7 +133,6 @@ export function RolesTab() {
       description: role.description || '',
       color: role.color || '#000000',
       icon: role.icon || '',
-      parentId: role.parentId || null,
       isDefault: role.isDefault,
       isDisplayed: role.isDisplayed,
       priority: role.priority,
@@ -155,25 +144,15 @@ export function RolesTab() {
     setSelectedRole(role);
     try {
       const perms = await rbacApi.admin.getRolePermissions(role.id);
-      // 分离直接权限和继承权限
-      const directPerms = perms.filter(p => !p.inherited);
-      const inheritedPerms = perms.filter(p => p.inherited);
 
       // 转换为 { permissionId, conditions } 格式
-      setRolePermissions(directPerms.map(p => ({
-        permissionId: p.id,
-        conditions: typeof p.conditions === 'string' ? JSON.parse(p.conditions) : (p.conditions || null),
-      })));
-
-      // 存储继承权限的ID列表
-      setInheritedPermissions(inheritedPerms.map(p => ({
+      setRolePermissions(perms.map(p => ({
         permissionId: p.id,
         conditions: typeof p.conditions === 'string' ? JSON.parse(p.conditions) : (p.conditions || null),
       })));
     } catch (err) {
       console.error('获取角色权限失败:', err);
       setRolePermissions([]);
-      setInheritedPermissions([]);
     }
     setShowPermissionDialog(true);
   };
@@ -270,22 +249,15 @@ export function RolesTab() {
     );
   };
 
-  // 检查权限是否已选中（直接权限）
+  // 检查权限是否已选中
   const isPermissionSelected = (permId) => {
     return rolePermissions.some(rp => rp.permissionId === permId);
   };
 
-  // 检查权限是否是继承的
-  const isPermissionInherited = (permId) => {
-    return inheritedPermissions.some(rp => rp.permissionId === permId);
-  };
-
-  // 获取权限的条件（优先直接权限，其次继承权限）
+  // 获取权限的条件
   const getPermissionConditions = (permId) => {
-    const direct = rolePermissions.find(rp => rp.permissionId === permId);
-    if (direct) return direct.conditions || null;
-    const inherited = inheritedPermissions.find(rp => rp.permissionId === permId);
-    return inherited?.conditions || null;
+    const rp = rolePermissions.find(rp => rp.permissionId === permId);
+    return rp?.conditions || null;
   };
 
   // 按模块分组权限
@@ -296,18 +268,6 @@ export function RolesTab() {
     acc[perm.module].push(perm);
     return acc;
   }, {});
-
-  // 获取父角色名称
-  const getParentRoleName = (parentId) => {
-    if (!parentId) return null;
-    const parent = roles.find(r => r.id === parentId);
-    return parent ? parent.name : null;
-  };
-
-  // 获取可选的父角色（排除自身和子角色以防止循环）
-  const getAvailableParentRoles = (currentRoleId) => {
-    return roles.filter(r => r.id !== currentRoleId);
-  };
 
   // 获取权限支持的条件类型列表
   const getPermissionConditionTypes = (permissionSlug) => {
@@ -396,20 +356,6 @@ export function RolesTab() {
                 </div>
               </div>
             ),
-          },
-          {
-            key: 'parentId',
-            label: '继承自',
-            render: (value) => {
-              const parentName = getParentRoleName(value);
-              if (!parentName) return <span className="text-muted-foreground">-</span>;
-              return (
-                <div className="flex items-center gap-1 text-sm">
-                  <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{parentName}</span>
-                </div>
-              );
-            },
           },
           {
             key: 'description',
@@ -529,29 +475,6 @@ export function RolesTab() {
               disabled={submitting}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="parentId">继承自</Label>
-            <Select
-              value={roleForm.parentId?.toString() || 'none'}
-              onValueChange={(value) => setRoleForm({ ...roleForm, parentId: value === 'none' ? null : parseInt(value) })}
-              disabled={submitting}
-            >
-              <SelectTrigger id="parentId">
-                <SelectValue placeholder="选择父角色（可选）" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">无（不继承）</SelectItem>
-                {getAvailableParentRoles(selectedRole?.id).map((role) => (
-                  <SelectItem key={role.id} value={role.id.toString()}>
-                    {role.name} ({role.slug})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              子角色会自动继承父角色的所有权限
-            </p>
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="color">颜色</Label>
@@ -606,11 +529,7 @@ export function RolesTab() {
         open={showPermissionDialog}
         onOpenChange={setShowPermissionDialog}
         title={`配置权限 - ${selectedRole?.name || ''}`}
-        description={
-          selectedRole?.parentId
-            ? '选择该角色拥有的权限。标记为"继承"的权限来自父角色，不可直接修改。'
-            : '选择该角色拥有的权限'
-        }
+        description="选择该角色拥有的权限"
         submitText="保存"
         onSubmit={handleSavePermissions}
         loading={submitting}
@@ -637,8 +556,6 @@ export function RolesTab() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 py-1">
                   {perms.map((perm) => {
                   const selected = isPermissionSelected(perm.id);
-                  const inherited = isPermissionInherited(perm.id);
-                  const isChecked = selected || inherited;
                   const conditions = getPermissionConditions(perm.id);
                   const hasConfig = conditions && Object.keys(conditions).length > 0;
                   const conditionCount = getPermissionConditionTypes(perm.slug).length;
@@ -649,36 +566,29 @@ export function RolesTab() {
                       className={cn(
                         'flex items-center gap-3 h-11 px-4 rounded-md transition-all',
                         selected && 'bg-primary/5 text-primary',
-                        inherited && !selected && 'bg-muted/40 text-muted-foreground',
-                        !isChecked && 'hover:bg-muted/60'
+                        !selected && 'hover:bg-muted/60'
                       )}
                     >
                       <Checkbox
                         id={`perm-${perm.id}`}
-                        checked={isChecked}
-                        onCheckedChange={() => !inherited && togglePermission(perm.id)}
-                        disabled={submitting || inherited}
+                        checked={selected}
+                        onCheckedChange={() => togglePermission(perm.id)}
+                        disabled={submitting}
                       />
                       <Label
                         htmlFor={`perm-${perm.id}`}
-                        className={cn(
-                          'text-sm font-medium cursor-pointer flex-1 truncate',
-                          inherited && !selected && 'cursor-default'
-                        )}
-                        title={`${perm.name} (${perm.slug})${inherited ? ' - 继承自父角色' : ''}`}
+                        className="text-sm font-medium cursor-pointer flex-1 truncate"
+                        title={`${perm.name} (${perm.slug})`}
                       >
                         {perm.name}
-                        {inherited && !selected && (
-                          <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(继承)</span>
-                        )}
                       </Label>
                       {/* 显示已配置的条件数量 */}
-                      {isChecked && hasConfig && (
+                      {selected && hasConfig && (
                         <Badge variant="outline" className="text-[11px] px-1.5 h-5 font-medium">
                           {Object.keys(conditions).length}
                         </Badge>
                       )}
-                      {/* 条件配置按钮 - 只对直接权限显示 */}
+                      {/* 条件配置按钮 */}
                       <div className="flex-shrink-0 flex justify-center">
                         {selected && conditionCount > 0 && (
                           <ConditionEditor

@@ -44,7 +44,6 @@ export const roles = pgTable(
     description: text('description'), // 角色描述
     color: varchar('color', { length: 20 }), // 角色标识颜色 (如 #ff0000)
     icon: varchar('icon', { length: 50 }), // 角色图标
-    parentId: integer('parent_id'), // 父角色ID（用于角色继承）
     isSystem: boolean('is_system').notNull().default(false), // 是否系统内置角色（不可删除）
     isDefault: boolean('is_default').notNull().default(false), // 是否默认角色（新用户自动分配）
     isDisplayed: boolean('is_displayed').notNull().default(true), // 是否在用户资料显示
@@ -56,17 +55,10 @@ export const roles = pgTable(
     index('roles_is_system_idx').on(table.isSystem),
     index('roles_is_default_idx').on(table.isDefault),
     index('roles_priority_idx').on(table.priority),
-    index('roles_parent_id_idx').on(table.parentId),
   ]
 );
 
-export const rolesRelations = relations(roles, ({ one, many }) => ({
-  parent: one(roles, {
-    fields: [roles.parentId],
-    references: [roles.id],
-    relationName: 'childRoles',
-  }),
-  childRoles: many(roles, { relationName: 'childRoles' }),
+export const rolesRelations = relations(roles, ({ many }) => ({
   rolePermissions: many(rolePermissions),
   userRoles: many(userRoles),
 }));
