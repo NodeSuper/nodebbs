@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -212,9 +213,17 @@ export function InvitationRules() {
                                 <CheckCircle2 className="w-3 h-3" /> <span className="text-xs">权限已开启</span>
                             </Badge>
                         ) : (
-                            <Badge variant="outline" className="text-amber-600 bg-amber-50 border-amber-200 gap-1 font-normal">
-                                <AlertTriangle className="w-3 h-3" /> <span className="text-xs">权限未开启</span>
-                            </Badge>
+                            <>
+                                <Badge variant="outline" className="text-amber-600 bg-amber-50 border-amber-200 gap-1 font-normal">
+                                    <AlertTriangle className="w-3 h-3" /> <span className="text-xs">权限未开启</span>
+                                </Badge>
+                                <Link 
+                                    href="/dashboard/roles" 
+                                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                                >
+                                    去开启
+                                </Link>
+                            </>
                         )}
                     </div>
                   </div>
