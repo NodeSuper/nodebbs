@@ -211,8 +211,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'create',
     isSystem: true,
-    // 场景：限制新用户发帖、限制发帖频率、限制在特定分类发帖、限制发帖时间段
-    conditions: ['categories', 'rateLimit', 'accountAge', 'timeRange'],
+    // 场景：限制新用户发帖、限制发帖频率、限制发帖时间段
+    // 分类限制继承自 topic.read
+    conditions: ['rateLimit', 'accountAge', 'timeRange'],
   },
   {
     slug: 'topic.read',
@@ -229,8 +230,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'update',
     isSystem: true,
-    // 场景：普通用户只能编辑自己的话题、版主可编辑特定分类的话题、限制编辑时间段
-    conditions: ['scope', 'categories', 'timeRange'],
+    // 场景：普通用户只能编辑自己的话题、限制编辑时间段
+    // 分类限制继承自 topic.read
+    conditions: ['scope', 'timeRange'],
   },
   {
     slug: 'topic.delete',
@@ -238,8 +240,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'delete',
     isSystem: true,
-    // 场景：普通用户只能删除自己的话题、版主可删除特定分类的话题
-    conditions: ['scope', 'categories'],
+    // 场景：普通用户只能删除自己的话题
+    // 分类限制继承自 topic.read
+    conditions: ['scope'],
   },
   {
     slug: 'topic.pin',

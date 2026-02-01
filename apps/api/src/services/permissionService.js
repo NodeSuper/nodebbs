@@ -392,14 +392,25 @@ class PermissionService {
       }
 
       // categories: [1, 2, 3] 表示只能在指定父分类（及其子分类）操作
-      if (conditions.categories && context.categoryId !== undefined) {
-        const allowedIds = await this._expandCategoryIds(conditions.categories);
-        if (!allowedIds.has(context.categoryId)) {
-          return {
-            granted: false,
-            code: 'CATEGORY_NOT_ALLOWED',
-            reason: '你没有在该分类下操作的权限',
-          };
+      // topic.create/update/delete 继承 topic.read 的分类限制
+      if (context.categoryId !== undefined) {
+        let categoryConditions = conditions.categories;
+
+        // 如果当前权限没有 categories 限制，且是 topic.create/update/delete，则继承 topic.read
+        if (!categoryConditions && ['topic.create', 'topic.update', 'topic.delete'].includes(permissionSlug)) {
+          const readPermission = userPermissions.find(p => p.slug === 'topic.read');
+          categoryConditions = readPermission?.conditions?.categories;
+        }
+
+        if (categoryConditions) {
+          const allowedIds = await this._expandCategoryIds(categoryConditions);
+          if (!allowedIds.has(context.categoryId)) {
+            return {
+              granted: false,
+              code: 'CATEGORY_NOT_ALLOWED',
+              reason: '你没有在该分类下操作的权限',
+            };
+          }
         }
       }
 
