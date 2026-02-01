@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from '@/components/common/Link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,32 +16,78 @@ import MarkdownRender from '@/components/common/MarkdownRender';
 import { RewardDialog } from '@/extensions/rewards/components/RewardDialog';
 import { RewardListDialog } from '@/extensions/rewards/components/RewardListDialog';
 import Time from '@/components/common/Time';
-import { useTopicContent } from '@/hooks/topic/useTopicContent';
+import { useTopicContext } from '@/contexts/TopicContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { postApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 /**
  * 话题内容组件（首帖展示）
- * 所有数据统一从 useTopicContent Hook 获取，确保单一数据入口
  */
 export default function TopicContent() {
   const {
-    // 来自 Context 的共享状态
     topic,
     rewardStats,
     isRewardEnabled,
     handleRewardSuccess,
-    // 来自 AuthContext
-    user,
-    isAuthenticated,
-    openLoginDialog,
-    // 首帖专用状态
-    likingPostIds,
-    likeState,
-    rewardDialogOpen,
-    setRewardDialogOpen,
-    rewardListOpen,
-    setRewardListOpen,
-    handleTogglePostLike,
-  } = useTopicContent();
+  } = useTopicContext();
+
+  const { user, isAuthenticated, openLoginDialog } = useAuth();
+
+  // 首帖点赞状态
+  const [likingPostIds, setLikingPostIds] = useState(new Set());
+  const [likeState, setLikeState] = useState({
+    isFirstPostLiked: topic.isFirstPostLiked || false,
+    firstPostLikeCount: topic.firstPostLikeCount || 0,
+  });
+
+  // topic 更新时同步点赞状态
+  useEffect(() => {
+    setLikeState({
+      isFirstPostLiked: topic.isFirstPostLiked || false,
+      firstPostLikeCount: topic.firstPostLikeCount || 0,
+    });
+  }, [topic.isFirstPostLiked, topic.firstPostLikeCount]);
+
+  // 打赏弹窗状态
+  const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
+  const [rewardListOpen, setRewardListOpen] = useState(false);
+
+  /**
+   * 切换首帖点赞状态
+   */
+  const handleTogglePostLike = async (postId, isLiked) => {
+    if (!isAuthenticated) return openLoginDialog();
+    if (likingPostIds.has(postId)) return;
+
+    setLikingPostIds((prev) => new Set(prev).add(postId));
+
+    try {
+      if (isLiked) {
+        await postApi.unlike(postId);
+      } else {
+        await postApi.like(postId);
+      }
+
+      setLikeState((prev) => ({
+        isFirstPostLiked: !isLiked,
+        firstPostLikeCount: isLiked
+          ? (prev.firstPostLikeCount || 0) - 1
+          : (prev.firstPostLikeCount || 0) + 1,
+      }));
+
+      toast.success(isLiked ? '已取消点赞' : '点赞成功');
+    } catch (err) {
+      console.error('点赞操作失败:', err);
+      toast.error(err.message || '操作失败');
+    } finally {
+      setLikingPostIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
+  };
 
   return (
     <>
@@ -113,7 +160,7 @@ export default function TopicContent() {
               <span className='opacity-50'>•</span>
               <Link
                 href={`/users/${topic.username}`}
-               
+
                 className='hover:text-foreground transition-colors'
               >
                 {topic.userName || topic.username}
@@ -230,7 +277,7 @@ export default function TopicContent() {
                   )}
                 </Button>
               )}
-              
+
               {/* 如果是作者，或者有打赏记录，且不是当前用户（因为当前用户点击打赏按钮也能看到记录入口），显示查看记录按钮 */}
               {(isRewardEnabled && user?.id === topic.userId && (rewardStats[topic.firstPostId]?.totalCount || 0) > 0) && (
                  <Button
@@ -258,7 +305,6 @@ export default function TopicContent() {
           postId={topic.firstPostId}
           postAuthor={topic.userName || topic.username}
           onSuccess={(amount) => {
-            // 局部更新打赏统计，无需重新调用批量接口
             handleRewardSuccess(topic.firstPostId, amount);
           }}
           onViewHistory={() => {

@@ -127,23 +127,23 @@ export function useTopicDetail({
    */
   const toggleTopicStatus = async () => {
     if (!isAuthenticated) return openLoginDialog();
-    
+
     setLoading('toggleStatus', true);
+    const previousState = topic.isClosed;
 
     try {
-      const newClosedState = !topic.isClosed;
       // 乐观更新
-      updateTopic({ isClosed: newClosedState });
+      updateTopic({ isClosed: !previousState });
 
       await topicApi.update(topic.id, {
-        isClosed: newClosedState,
+        isClosed: !previousState,
       });
 
-      toast.success(newClosedState ? '主题已关闭' : '主题已重新开启');
+      toast.success(!previousState ? '主题已关闭' : '主题已重新开启');
       router.refresh();
     } catch (err) {
       // 回滚
-      updateTopic({ isClosed: !topic.isClosed });
+      updateTopic({ isClosed: previousState });
       console.error('操作失败:', err);
       toast.error('操作失败：' + err.message);
     } finally {
@@ -159,21 +159,21 @@ export function useTopicDetail({
     if (!isAuthenticated) return openLoginDialog();
 
     setLoading('togglePin', true);
+    const previousState = topic.isPinned;
 
     try {
-      const newPinnedState = !topic.isPinned;
       // 乐观更新
-      updateTopic({ isPinned: newPinnedState });
+      updateTopic({ isPinned: !previousState });
 
       await topicApi.update(topic.id, {
-        isPinned: newPinnedState,
+        isPinned: !previousState,
       });
 
-      toast.success(newPinnedState ? '话题已置顶' : '已取消置顶');
+      toast.success(!previousState ? '话题已置顶' : '已取消置顶');
       router.refresh();
     } catch (err) {
       // 回滚
-      updateTopic({ isPinned: !topic.isPinned });
+      updateTopic({ isPinned: previousState });
       console.error('置顶操作失败:', err);
       toast.error('操作失败：' + err.message);
     } finally {

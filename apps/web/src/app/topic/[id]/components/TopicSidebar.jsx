@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormDialog } from '@/components/common/FormDialog';
@@ -26,7 +28,10 @@ import ReportDialog from '@/components/common/ReportDialog';
 import TopicForm from '@/components/topic/TopicForm';
 import Time from '@/components/common/Time';
 import UserCard from '@/components/user/UserCard';
-import { useTopicSidebar } from '@/hooks/topic/useTopicSidebar';
+import { useTopicContext } from '@/contexts/TopicContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { topicApi } from '@/lib/api';
+import { toast } from 'sonner';
 import { confirm } from '@/components/common/ConfirmPopover';
 
 /**
@@ -34,33 +39,33 @@ import { confirm } from '@/components/common/ConfirmPopover';
  * 显示操作按钮、作者信息、分类和统计数据
  */
 export default function TopicSidebar() {
-  // 从 Hook 获取所有数据和回调
+  const router = useRouter();
   const {
     topic,
-    user,
-    isAuthenticated,
-    isBookmarked,
-    bookmarkLoading,
-    handleToggleBookmark: onToggleBookmark,
-    isSubscribed,
-    subscribeLoading,
-    handleToggleSubscribe: onToggleSubscribe,
-    handleToggleTopicStatus: onToggleTopicStatus,
-    isPinned,
-    handleTogglePinTopic: onTogglePinTopic,
-    handleDeleteTopic: onDeleteTopic,
-    isEditDialogOpen,
-    setIsEditDialogOpen,
-    editLoading,
-    handleEditTopic: onEditTopic,
-    reportDialogOpen,
-    setReportDialogOpen,
-    canEdit,
-    canClose,
-    canPin,
-    canDelete,
-    isTopicOwner,
-  } = useTopicSidebar();
+    updateTopic,
+    toggleBookmark,
+    toggleSubscribe,
+    toggleTopicStatus,
+    togglePinTopic,
+    deleteTopic,
+    actionLoading,
+  } = useTopicContext();
+
+  const { user, isAuthenticated, openLoginDialog } = useAuth();
+
+  // 本地状态：编辑弹窗、举报弹窗
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+
+  // 权限（来自后端）
+  const canPin = topic.canPin || false;
+  const canClose = topic.canClose || false;
+  const canEdit = topic.canEdit || false;
+  const canDelete = topic.canDelete || false;
+  const isTopicOwner = user && topic.userId === user.id;
+
+  // 作者信息
   const author = {
     avatar: topic.userAvatar,
     username: topic.username,
@@ -68,29 +73,61 @@ export default function TopicSidebar() {
     avatarFrame: topic.userAvatarFrame,
     displayRole: topic.userDisplayRole,
   };
-  
+
+  // 分类信息
   const category = {
     name: topic.categoryName,
     color: topic.categoryColor,
   };
 
-  // 提交编辑
-  const handleSubmitEdit = async (formData) => {
+  // 勋章：作者本人看自己的实时勋章，其他人看话题返回的勋章
+  const displayBadges = (isTopicOwner && user?.badges) ? user.badges : (topic.userBadges || []);
+
+  /**
+   * 处理编辑话题
+   */
+  const handleEditTopic = async (formData) => {
+    if (!isAuthenticated) return openLoginDialog();
+
+    setEditLoading(true);
+
     try {
-      await onEditTopic({
+      const response = await topicApi.update(topic.id, formData);
+
+      if (topic.approvalStatus === 'rejected' && response?.approvalStatus === 'pending') {
+        toast.success('话题已重新提交审核，等待审核后将公开显示');
+      } else {
+        toast.success('话题更新成功');
+      }
+
+      setIsEditDialogOpen(false);
+
+      // 更新 Context 中的 topic 数据
+      const tagsArray = Array.isArray(formData.tags)
+        ? formData.tags.map((tagName, index) => ({
+            id: `temp-${index}`,
+            name: tagName,
+          }))
+        : [];
+
+      updateTopic({
         title: formData.title,
         content: formData.content,
         categoryId: formData.categoryId,
-        tags: formData.tags,
+        tags: tagsArray,
+        updatedAt: response?.updatedAt || new Date().toISOString(),
+        editCount: (topic.editCount || 0) + 1,
       });
+
+      router.refresh();
     } catch (err) {
-      // 错误已在父组件处理
+      console.error('更新话题失败:', err);
+      toast.error(err.message || '更新失败');
       throw err;
+    } finally {
+      setEditLoading(false);
     }
   };
-
-  // 获取要显示的勋章
-  const displayBadges = (isTopicOwner && user?.badges) ? user.badges : (topic.userBadges || []);
 
   return (
     <div className='space-y-4'>
@@ -100,36 +137,36 @@ export default function TopicSidebar() {
           variant='outline'
           size='sm'
           className={`flex-1 ${
-            isSubscribed ? 'bg-primary/10 border-primary text-primary' : ''
+            topic.isSubscribed ? 'bg-primary/10 border-primary text-primary' : ''
           }`}
-          onClick={onToggleSubscribe}
-          disabled={subscribeLoading || !isAuthenticated}
-          title={isSubscribed ? '取消订阅通知' : '订阅通知'}
+          onClick={toggleSubscribe}
+          disabled={actionLoading.subscribe || !isAuthenticated}
+          title={topic.isSubscribed ? '取消订阅通知' : '订阅通知'}
         >
-          {subscribeLoading ? (
+          {actionLoading.subscribe ? (
             <Loader2 className='h-4 w-4 animate-spin' />
           ) : (
-            <Bell className={`h-4 w-4 ${isSubscribed ? 'fill-current' : ''}`} />
+            <Bell className={`h-4 w-4 ${topic.isSubscribed ? 'fill-current' : ''}`} />
           )}
-          <span className='text-xs'>{isSubscribed ? '取消订阅' : '订阅'}</span>
+          <span className='text-xs'>{topic.isSubscribed ? '取消订阅' : '订阅'}</span>
         </Button>
 
         <Button
           variant='outline'
           size='sm'
-          className={`flex-1 ${isBookmarked ? 'text-yellow-600' : ''}`}
-          onClick={onToggleBookmark}
-          disabled={bookmarkLoading || !isAuthenticated}
-          title={isBookmarked ? '取消收藏' : '收藏话题'}
+          className={`flex-1 ${topic.isBookmarked ? 'text-yellow-600' : ''}`}
+          onClick={toggleBookmark}
+          disabled={actionLoading.bookmark || !isAuthenticated}
+          title={topic.isBookmarked ? '取消收藏' : '收藏话题'}
         >
-          {bookmarkLoading ? (
+          {actionLoading.bookmark ? (
             <Loader2 className='h-4 w-4 animate-spin' />
           ) : (
             <Bookmark
-              className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`}
+              className={`h-4 w-4 ${topic.isBookmarked ? 'fill-current' : ''}`}
             />
           )}
-          <span className='text-xs'>{isBookmarked ? '取消收藏' : '收藏'}</span>
+          <span className='text-xs'>{topic.isBookmarked ? '取消收藏' : '收藏'}</span>
         </Button>
 
         <DropdownMenu>
@@ -144,7 +181,7 @@ export default function TopicSidebar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end' className='w-48'>
-            {/* 编辑话题 - 使用后端返回的 canEdit 权限 */}
+            {/* 编辑话题 */}
             {canEdit && (
               <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                 <Edit className='h-4 w-4' />
@@ -152,23 +189,23 @@ export default function TopicSidebar() {
               </DropdownMenuItem>
             )}
 
-            {/* 置顶/取消置顶 - 使用后端返回的 canPin 权限 */}
+            {/* 置顶/取消置顶 */}
             {canPin && (
-              <DropdownMenuItem onClick={onTogglePinTopic}>
-                <Pin className={`h-4 w-4 ${isPinned ? 'fill-current' : ''}`} />
-                {isPinned ? '取消置顶' : '置顶话题'}
+              <DropdownMenuItem onClick={togglePinTopic}>
+                <Pin className={`h-4 w-4 ${topic.isPinned ? 'fill-current' : ''}`} />
+                {topic.isPinned ? '取消置顶' : '置顶话题'}
               </DropdownMenuItem>
             )}
 
-            {/* 关闭/开启话题 - 使用后端返回的 canClose 权限 */}
+            {/* 关闭/开启话题 */}
             {canClose && (
-              <DropdownMenuItem onClick={onToggleTopicStatus}>
+              <DropdownMenuItem onClick={toggleTopicStatus}>
                 <Lock className='h-4 w-4' />
                 {topic.isClosed ? '重新开启' : '关闭话题'}
               </DropdownMenuItem>
             )}
 
-            {/* 删除话题 - 使用后端返回的 canDelete 权限，需要二次确认 */}
+            {/* 删除话题 */}
             {canDelete && (
               <>
                 <DropdownMenuSeparator />
@@ -182,7 +219,7 @@ export default function TopicSidebar() {
                       variant: 'destructive',
                     });
                     if (confirmed) {
-                      onDeleteTopic();
+                      deleteTopic();
                     }
                   }}
                 >
@@ -202,7 +239,7 @@ export default function TopicSidebar() {
         </DropdownMenu>
       </div>
 
-      {/* 优化后的作者卡片 - 使用通用组件 */}
+      {/* 作者卡片 */}
       <UserCard
         user={author}
         badges={displayBadges}
@@ -218,7 +255,7 @@ export default function TopicSidebar() {
            <Link href={`/categories/${topic.categorySlug}`} className="block">
               <Badge
                 style={{
-                  backgroundColor: category?.color + '20', // 10% opacity
+                  backgroundColor: category?.color + '20',
                   color: category?.color,
                   borderColor: category?.color + '40'
                 }}
@@ -249,7 +286,7 @@ export default function TopicSidebar() {
         </div>
       )}
 
-      {/* 统计信息 - GitHub 风格 (恢复原样) */}
+      {/* 统计信息 */}
       <div className='border border-border rounded-lg bg-card p-3'>
         <div className='space-y-2 text-sm'>
           <div className='flex items-center justify-between'>
@@ -289,7 +326,7 @@ export default function TopicSidebar() {
               categoryId: topic.categoryId,
               tags: topic.tags?.map((tag) => tag.name) || [],
             }}
-            onSubmit={handleSubmitEdit}
+            onSubmit={handleEditTopic}
             onCancel={() => setIsEditDialogOpen(false)}
             isSubmitting={editLoading}
             submitButtonText='保存修改'
