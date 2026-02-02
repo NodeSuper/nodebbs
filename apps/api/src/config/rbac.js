@@ -232,8 +232,9 @@ export const SYSTEM_PERMISSIONS = [
     module: 'topic',
     action: 'close',
     isSystem: true,
-    // 场景：用户可关闭自己的话题、版主可关闭特定分类的话题
-    conditions: ['categories'],
+    // 场景：用户可关闭自己的话题（owner check 在路由层）
+    // 版主关闭话题由 dashboard.topics + categories 控制
+    conditions: [],
   },
 
   // ========== 回复权限 ==========
