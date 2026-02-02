@@ -291,24 +291,11 @@ export function RolesTab() {
     
     // 过滤条件类型
     return allTypes.filter(type => {
-      // 1. 检查 excludeRoles：完全排除某些角色
+      // 检查 excludeRoles：完全排除某些角色
       if (type.excludeRoles?.includes(selectedRole.slug)) {
         return false;
       }
-      
-      // 2. 检查 excludeRolePermissions：特定角色的特定权限排除（支持通配符）
-      if (type.excludeRolePermissions?.[selectedRole.slug]) {
-        const patterns = type.excludeRolePermissions[selectedRole.slug];
-        const isExcluded = patterns.some(pattern => {
-          // 简单的通配符匹配：将 * 替换为 .*，然后用正则匹配
-          const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-          return regex.test(permissionSlug);
-        });
-        if (isExcluded) {
-          return false;
-        }
-      }
-      
+
       return true;
     });
   };

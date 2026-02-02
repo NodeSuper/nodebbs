@@ -89,9 +89,6 @@ export const CONDITION_TYPES = {
     component: 'multiSelect',
     description: '控制能操作哪些数据（仅自己/全部），不设置则不限制',
     excludeRoles: ['guest'],  // 完全排除的角色
-    excludeRolePermissions: {  // 特定角色的特定权限排除（支持通配符 *）
-      user: ['*.read'],  // user 角色的所有读权限不显示 scope
-    },
     options: [
       { value: 'own', label: '仅自己' },
       { value: 'list', label: '全部' },
@@ -311,8 +308,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'read',
     isSystem: true,
-    // 场景：支持查询范围控制（管理员可列表查询）
-    conditions: ['scope'],
+    // 用户可见性由用户自身的隐私设置控制，无需权限条件
+    conditions: [],
   },
   {
     slug: 'user.update',
