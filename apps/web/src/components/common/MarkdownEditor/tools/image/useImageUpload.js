@@ -40,13 +40,21 @@ export function useImageUpload({
 
     // 检查条件限制
     const conditions = getPermissionConditions('upload.create');
-    // 无条件限制或无 uploadTypes 限制 -> 允许
-    if (!conditions || !conditions.uploadTypes) {
+    
+    const allowedTypes = conditions?.uploadTypes;
+
+    // 1. 无 uploadTypes 配置 -> 默认拒绝 (跟后端逻辑保持一致)
+    if (!allowedTypes) {
+      return undefined;
+    }
+
+    // 2. 通配符 -> 允许全部
+    if (allowedTypes.includes('*')) {
       return defaultUploadHandler;
     }
 
-    // 检查特定类型限制
-    if (conditions.uploadTypes.includes(uploadType)) {
+    // 3. 具体类型匹配
+    if (allowedTypes.includes(uploadType)) {
       return defaultUploadHandler;
     }
 
