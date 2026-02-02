@@ -55,11 +55,9 @@ function CategoryCard({ category }) {
       <div className='flex items-start gap-3 mb-3'>
         {/* 图标 */}
         <div
-          className='w-8 h-8 rounded shrink-0 flex items-center justify-center text-white font-bold text-sm'
+          className='w-3 h-3 rounded-full mt-1.5 shrink-0'
           style={{ backgroundColor: category.color }}
-        >
-          {category.name.charAt(0).toUpperCase()}
-        </div>
+        />
         
         <div className='flex-1 min-w-0'>
            {/* 标题 */}
@@ -88,7 +86,7 @@ function CategoryCard({ category }) {
 
       {/* 子分类 - 类似 GitHub Topics */}
       {category.subcategories && category.subcategories.length > 0 && (
-        <div className='mb-4 flex flex-wrap gap-2 pl-11'>
+        <div className='mb-4 flex flex-wrap gap-2 pl-6'>
             {category.subcategories.map((sub) => (
             <Link key={sub.id} href={`/categories/${sub.slug}`}>
                 <Badge 
@@ -103,7 +101,7 @@ function CategoryCard({ category }) {
       )}
 
       {/* 底部 - 最新动态 */}
-      <div className='mt-auto pl-11 pt-3 border-t border-border/40'>
+      <div className='mt-auto pl-6 pt-3 border-t border-border/40'>
          {category.latestTopic ? (
             <div className='flex items-center justify-between gap-4 text-xs'>
                 <Link
