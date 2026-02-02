@@ -103,12 +103,12 @@ export default async function userRoutes(fastify, options) {
     return newUser;
   });
 
-  // Get users list (admin only)
+  // Get users list (dashboard.users permission required)
   fastify.get('/', {
-    preHandler: [fastify.requireAdmin],
+    preHandler: [fastify.authenticate],
     schema: {
       tags: ['users'],
-      description: '获取用户列表（仅管理员）',
+      description: '获取用户列表（需要用户管理权限）',
       security: [{ bearerAuth: [] }],
       querystring: {
         type: 'object',
@@ -123,6 +123,9 @@ export default async function userRoutes(fastify, options) {
       }
     }
   }, async (request, reply) => {
+    // 检查用户管理权限
+    await fastify.checkPermission(request, 'dashboard.users');
+
     const { page = 1, limit = 20, search, role, isBanned, includeDeleted = true } = request.query;
     const offset = (page - 1) * limit;
 
