@@ -82,17 +82,13 @@ export const CONDITION_TYPES = {
   // ===== 通用条件 =====
   
   // ===== 操作范围 =====
-  scope: {
-    key: 'scope',
-    label: '操作范围',
-    type: 'array',
-    component: 'multiSelect',
-    description: '控制能操作哪些数据（仅自己/全部），不设置则不限制',
-    excludeRoles: ['guest'],  // 完全排除的角色
-    options: [
-      { value: 'own', label: '仅自己' },
-      { value: 'list', label: '全部' },
-    ],
+  ownOnly: {
+    key: 'ownOnly',
+    label: '仅限自己',
+    type: 'boolean',
+    component: 'switch',
+    description: '开启后只能操作自己的内容',
+    excludeRoles: ['guest'],
   },
 
   // ===== 范围限制 =====
@@ -194,9 +190,9 @@ export const CONDITION_TYPES = {
  * 包含权限基本信息和支持的条件类型
  *
  * conditions 设计原则：
- * - 内容创建类：支持 scope（操作范围）、categories（分类限制）、rateLimit（频率限制）、accountAge（账号门槛）、timeRange（时间段）
- * - 内容修改类：支持 scope（own 仅自己）、categories（分类限制）、timeRange（时间段）
- * - 内容查看类：支持 scope（查询范围）、categories（分类限制）
+ * - 内容创建类：支持 categories（分类限制）、rateLimit（频率限制）、accountAge（账号门槛）、timeRange（时间段）
+ * - 内容修改类：支持 ownOnly（仅自己）、categories（分类限制）、timeRange（时间段）
+ * - 内容查看类：支持 categories（分类限制）
  * - 管理操作类：支持 categories（分类限制，若适用）
  * - 上传类：支持完整的上传限制条件
  */
@@ -229,7 +225,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 场景：普通用户只能编辑自己的话题、限制编辑时间段
     // 分类限制继承自 topic.read
-    conditions: ['scope', 'timeRange'],
+    conditions: ['ownOnly', 'timeRange'],
   },
   {
     slug: 'topic.delete',
@@ -239,7 +235,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 场景：普通用户只能删除自己的话题
     // 分类限制继承自 topic.read
-    conditions: ['scope'],
+    conditions: ['ownOnly'],
   },
   {
     slug: 'topic.pin',
@@ -257,7 +253,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'close',
     isSystem: true,
     // 场景：用户可关闭自己的话题、版主可关闭特定分类的话题
-    conditions: ['scope', 'categories'],
+    conditions: ['ownOnly', 'categories'],
   },
 
   // ========== 回复权限 ==========
@@ -288,7 +284,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 回复依附于话题，分类限制由 topic.read 统一控制
     // 场景：普通用户只能编辑自己的回复、限制编辑时间段
-    conditions: ['scope', 'timeRange'],
+    conditions: ['ownOnly', 'timeRange'],
   },
   {
     slug: 'post.delete',
@@ -298,7 +294,7 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     // 回复依附于话题，分类限制由 topic.read 统一控制
     // 场景：普通用户只能删除自己的回复
-    conditions: ['scope'],
+    conditions: ['ownOnly'],
   },
 
   // ========== 用户权限 ==========
@@ -318,7 +314,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'update',
     isSystem: true,
     // 场景：普通用户只能编辑自己的资料
-    conditions: ['scope'],
+    conditions: ['ownOnly'],
   },
   {
     slug: 'user.delete',
@@ -326,8 +322,8 @@ export const SYSTEM_PERMISSIONS = [
     module: 'user',
     action: 'delete',
     isSystem: true,
-    // 场景：用户可注销自己的账号（scope: own）、管理员可删除任意用户
-    conditions: ['scope'],
+    // 场景：用户可注销自己的账号（ownOnly: true）、管理员可删除任意用户
+    conditions: ['ownOnly'],
   },
   {
     slug: 'user.ban',
@@ -523,14 +519,11 @@ export const SYSTEM_PERMISSIONS = [
 
 /**
  * 权限支持的条件类型映射
- * 从 SYSTEM_PERMISSIONS 自动生成，保持向后兼容
+ * 从 SYSTEM_PERMISSIONS 自动生成
  */
 export const PERMISSION_CONDITIONS = Object.fromEntries(
   SYSTEM_PERMISSIONS.map(p => [p.slug, p.conditions || []])
 );
-
-// 默认条件（当权限未定义 conditions 时使用）
-export const DEFAULT_CONDITIONS = ['own', 'categories', 'rateLimit'];
 
 // ============ 系统角色定义 ============
 
@@ -619,25 +612,25 @@ export const ROLE_PERMISSION_MAP = {
 export const ROLE_PERMISSION_CONDITIONS = {
   user: {
     // 话题权限
-    'topic.update': { scope: ['own'] },  // 只能编辑自己的话题
-    'topic.delete': { scope: ['own'] },  // 只能删除自己的话题
-    
+    'topic.update': { ownOnly: true },  // 只能编辑自己的话题
+    'topic.delete': { ownOnly: true },  // 只能删除自己的话题
+
     // 回复权限
-    'post.update': { scope: ['own'] },   // 只能编辑自己的回复
-    'post.delete': { scope: ['own'] },   // 只能删除自己的回复
-    
+    'post.update': { ownOnly: true },   // 只能编辑自己的回复
+    'post.delete': { ownOnly: true },   // 只能删除自己的回复
+
     // 用户权限
-    'user.update': { scope: ['own'] },   // 只能编辑自己的资料
-    'user.delete': { scope: ['own'] },   // 只能删除自己的账号
-    
+    'user.update': { ownOnly: true },   // 只能编辑自己的资料
+    'user.delete': { ownOnly: true },   // 只能删除自己的账号
+
     // 上传权限
-    'upload.create': { 
+    'upload.create': {
       uploadTypes: ['avatars'],
       maxFileSize: 5120, // 5MB (单位：KB)
       allowedFileTypes: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
     },
   },
-  // guest 角色不需要 scope 限制（路由层已控制）
+  // guest 角色不需要 ownOnly 限制（路由层已控制）
 };
 
 /**
@@ -666,7 +659,7 @@ export const ALLOWED_ROLES_PERMISSIONS = {
  * @returns {Array} 条件类型列表
  */
 export function getPermissionConditionTypes(permissionSlug) {
-  const conditions = PERMISSION_CONDITIONS[permissionSlug] || DEFAULT_CONDITIONS;
+  const conditions = PERMISSION_CONDITIONS[permissionSlug] || [];
   return conditions.map(key => CONDITION_TYPES[key]).filter(Boolean);
 }
 

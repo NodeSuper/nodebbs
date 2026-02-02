@@ -47,15 +47,11 @@ function mergePermissionConditions(cond1, cond2) {
     }
     
     switch (key) {
-      case 'scope':
-        // scope: 取并集（更多范围 = 更宽松）
-        if (Array.isArray(val1) && Array.isArray(val2)) {
-          merged.scope = [...new Set([...val1, ...val2])];
-        } else {
-          merged.scope = val1 || val2;
-        }
+      case 'ownOnly':
+        // ownOnly: 任一为 false 则结果为 false（更宽松）
+        merged.ownOnly = val1 && val2;
         break;
-        
+
       case 'categories':
         // categories: 取并集（更多分类 = 更宽松）
         if (Array.isArray(val1) && Array.isArray(val2)) {
@@ -367,29 +363,17 @@ class PermissionService {
     // 检查条件
     const conditions = permission.conditions || {};
 
-    // scope: ['own', 'list'] 操作范围限制
-    if (conditions.scope) {
-      const scopes = conditions.scope;
-      const { requestType, ownerId } = context;
-        
-        // 1. 列表查询：需要 'list' 权限
-        if (requestType === 'list' && !scopes.includes('list')) {
-          return {
-            granted: false,
-            code: 'SCOPE_LIST_NOT_ALLOWED',
-            reason: '你没有列表查询的权限',
-          };
-        }
-        
-        // 2. 修改/删除操作：如果包含 'own'，必须是资源所有者
-        if (scopes.includes('own') && ownerId !== undefined && ownerId !== userId) {
-          return {
-            granted: false,
-            code: 'NOT_OWNER',
-            reason: '只能操作自己的内容',
-          };
-        }
+    // ownOnly: true 表示只能操作自己的内容
+    if (conditions.ownOnly) {
+      const { ownerId } = context;
+      if (ownerId !== undefined && ownerId !== userId) {
+        return {
+          granted: false,
+          code: 'NOT_OWNER',
+          reason: '只能操作自己的内容',
+        };
       }
+    }
 
       // categories: [1, 2, 3] 表示只能在指定父分类（及其子分类）操作
       // topic.create/update/delete 继承 topic.read 的分类限制
