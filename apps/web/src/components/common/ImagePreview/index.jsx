@@ -17,6 +17,7 @@ function ImagePreview({
   initialIndex = 0,
   overlayBaseOpacity = DEFAULT_OVERLAY_OPACITY,
   onIndexChange,
+  showNavButtons = false,
 }) {
   const normalizedImages = useMemo(() => {
     if (!images || images.length === 0) return [];
@@ -131,7 +132,7 @@ function ImagePreview({
             </Button>
 
             {/* 上一张/下一张 */}
-            {total > 1 && (
+            {showNavButtons && total > 1 && (
               <>
                 <Button
                   variant="outline"
