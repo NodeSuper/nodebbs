@@ -78,7 +78,7 @@ export function ContentImage({ src, alt, ...props }) {
           onError={handleImageError}
           className="max-w-full h-auto rounded"
           style={{
-            maxWidth: `${MIN_ZOOM_SIZE}px`,
+            maxWidth: `min(100%, ${MIN_ZOOM_SIZE}px)`,
             maxHeight: `${MIN_ZOOM_SIZE}px`,
           }}
           {...props}
