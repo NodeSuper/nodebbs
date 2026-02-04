@@ -518,7 +518,7 @@ export const ALLOWED_ROLES_PERMISSIONS = {
     'user.read',
   ],
   user: SYSTEM_PERMISSIONS
-    .filter(p => !p.slug.startsWith('dashboard.') && !['topic.close'].includes(p.slug))
+    .filter(p => !p.slug.startsWith('dashboard.'))
     .map(p => p.slug),
 };
 
