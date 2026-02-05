@@ -8,8 +8,11 @@ import adsRoutes from './routes/index.js';
 async function adsPlugin(fastify, options) {
   // 注册路由
   fastify.register(adsRoutes, { prefix: '/api/ads' });
+
+  fastify.log.info('[广告] 扩展已注册');
 }
 
 export default fp(adsPlugin, {
-  name: 'ads-plugin',
+  name: 'ads',
+  dependencies: [],
 });

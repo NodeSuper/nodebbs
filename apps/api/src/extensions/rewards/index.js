@@ -4,7 +4,7 @@ import checkInRoutes from './routes/checkin.js';
 import { registerRewardListeners } from './listeners.js';
 
 /**
- * 奖励插件
+ * 奖励扩展
  * 处理奖励系统逻辑、路由和事件监听器。
  */
 async function rewardsPlugin(fastify, options) {
@@ -14,9 +14,11 @@ async function rewardsPlugin(fastify, options) {
 
   // 注册事件监听器
   await registerRewardListeners(fastify);
+
+  fastify.log.info('[奖励] 扩展已注册');
 }
 
 export default fp(rewardsPlugin, {
-  name: 'rewards-plugin',
-  dependencies: ['event-bus', 'ledger-plugin']
+  name: 'rewards',
+  dependencies: ['event-bus', 'ledger'],
 });

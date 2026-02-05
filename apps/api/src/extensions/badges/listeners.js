@@ -1,8 +1,15 @@
 import { checkBadgeConditions } from './services/badgeService.js';
 import { DEFAULT_CURRENCY_CODE } from '../ledger/constants.js';
 
-export default async function badgeListeners(fastify) {
-  if (!fastify.eventBus) return;
+/**
+ * 注册勋章系统事件监听器
+ * @param {import('fastify').FastifyInstance} fastify
+ */
+export function registerBadgeListeners(fastify) {
+  if (!fastify.eventBus) {
+    fastify.log.warn('[勋章] EventBus 未找到，跳过监听器注册');
+    return;
+  }
 
   const handleActivity = async (payload) => {
     try {
@@ -14,12 +21,12 @@ export default async function badgeListeners(fastify) {
 
       const userId = payload.userId || payload.user?.id;
       if (userId) {
-        fastify.log.info(`[勋章] 正在检查用户 ${userId} 的解锁条件`);
+        fastify.log.debug(`[勋章] 正在检查用户 ${userId} 的解锁条件`);
         const newBadges = await checkBadgeConditions(userId);
-        
+
         if (newBadges && newBadges.length > 0) {
           fastify.log.info(`[勋章] 用户 ${userId} 解锁了 ${newBadges.length} 枚新勋章`);
-          
+
           // 为每个新徽章创建通知
           for (const badge of newBadges) {
             await fastify.notification.send({
@@ -52,4 +59,6 @@ export default async function badgeListeners(fastify) {
   });
   fastify.eventBus.on('user.login', handleActivity); // 用于签到连胜或登录天数
   fastify.eventBus.on('user.checkin', handleActivity); // 监听签到事件
+
+  fastify.log.info('[勋章] 事件监听器已注册');
 }

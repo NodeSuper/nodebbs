@@ -1,20 +1,26 @@
 import fp from 'fastify-plugin';
 import badgeRoutes from './routes/index.js';
-import badgeListeners from './listeners.js';
+import { registerBadgeListeners } from './listeners.js';
 import registerBadgeEnricher from './enricher.js';
 
 /**
- * Badges Feature
- * Handles achievement badges and user honors.
+ * 勋章扩展
+ * 处理成就勋章和用户荣誉系统。
  */
-async function badgesFeature(fastify, options) {
+async function badgesPlugin(fastify, options) {
+  // 注册路由
   fastify.register(badgeRoutes, { prefix: '/api/badges' });
-  fastify.register(badgeListeners);
-  
-  // Register User Enricher
+
+  // 注册事件监听器
+  registerBadgeListeners(fastify);
+
+  // 注册用户数据增强器
   registerBadgeEnricher(fastify);
+
+  fastify.log.info('[勋章] 扩展已注册');
 }
 
-export default fp(badgesFeature, {
-  name: 'badges-feature'
+export default fp(badgesPlugin, {
+  name: 'badges',
+  dependencies: ['event-bus', 'ledger'],
 });
