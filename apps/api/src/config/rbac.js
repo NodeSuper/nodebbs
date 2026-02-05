@@ -282,14 +282,14 @@ export const SYSTEM_PERMISSIONS = [
     isSystem: true,
     conditions: ['maxFileSize', 'allowedFileTypes', 'rateLimit', 'accountAge'],
   },
-  {
-    slug: 'upload.assets',
-    name: '上传通用资源',
-    module: 'upload',
-    action: 'assets',
-    isSystem: true,
-    conditions: ['maxFileSize', 'allowedFileTypes', 'rateLimit', 'accountAge'],
-  },
+  // {
+  //   slug: 'upload.assets',
+  //   name: '上传通用资源',
+  //   module: 'upload',
+  //   action: 'assets',
+  //   isSystem: true,
+  //   conditions: ['maxFileSize', 'allowedFileTypes', 'rateLimit', 'accountAge'],
+  // },
 
   // ========== 邀请权限 ==========
   {
