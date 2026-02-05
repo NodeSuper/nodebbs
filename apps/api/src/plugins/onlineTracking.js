@@ -158,7 +158,10 @@ class OnlineTracker {
   }
 }
 
-export default fp(async function (fastify, opts) {
+/**
+ * 在线追踪插件
+ */
+async function onlineTrackingPlugin(fastify, options) {
   // 1. 强制依赖 Redis
   // 即使 `dependencies` 声明了，这里最好也检查一下，或者直接取 fastify.redis
   if (!fastify.redis) {
@@ -167,9 +170,9 @@ export default fp(async function (fastify, opts) {
 
   // 2. 初始化追踪器
   const tracker = new OnlineTracker(fastify.redis, {
-    onlineThreshold: opts.onlineThreshold,
-    cleanupInterval: opts.cleanupInterval,
-    keyPrefix: opts.keyPrefix,
+    onlineThreshold: options.onlineThreshold,
+    cleanupInterval: options.cleanupInterval,
+    keyPrefix: options.keyPrefix,
   });
 
   // 3. 启动定期清理
@@ -189,11 +192,11 @@ export default fp(async function (fastify, opts) {
       // 仅追踪 API 请求
       const url = request.raw.url || request.url;
       if (!url.startsWith('/api/')) {
-         return; 
+         return;
       }
 
       const userId = request.user?.id || null;
-      
+
       // 如果没有登录，生成 guestId
       // 注意：如果 request.user 存在，我们传 null 给 guestId
       const guestId = userId ? null : tracker.generateGuestId(request);
@@ -223,9 +226,10 @@ export default fp(async function (fastify, opts) {
     return await tracker.cleanup();
   });
 
-  fastify.log.info('[在线追踪] 插件已注册（Redis ZSET 模式）');
+  fastify.log.info('[在线追踪] 插件已注册');
+}
 
-}, {
+export default fp(onlineTrackingPlugin, {
   name: 'online-tracking',
-  dependencies: ['redis'], // 声明依赖
+  dependencies: ['redis'],
 });

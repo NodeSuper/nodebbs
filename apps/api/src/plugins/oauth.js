@@ -29,5 +29,6 @@ async function oauthPlugin(fastify, opts) {
 
 
 export default fp(oauthPlugin, {
-  name: 'oauth-plugin',
+  name: 'oauth',
+  dependencies: ['db'],
 });

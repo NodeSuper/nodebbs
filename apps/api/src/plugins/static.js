@@ -17,7 +17,11 @@ const ipx = createIPX({
 // IPX 处理函数（基于 Express 风格，但兼容 Fastify）
 const ipxHandler = createIPXNodeServer(ipx);
 
-export default fp(async function (fastify, opts) {
+/**
+ * 静态文件服务插件
+ * 支持图片处理和静态资源服务
+ */
+async function staticPlugin(fastify, options) {
   const types = ['avatars', 'topics', 'badges', 'items', 'frames', 'emojis'].join('|');
   // 为每种上传类型注册 IPX 图片处理路由
   fastify.get(
@@ -45,4 +49,9 @@ export default fp(async function (fastify, opts) {
     root: path.join(__dirname, '..', '..', 'uploads'),
     prefix: '/uploads/',
   });
+}
+
+export default fp(staticPlugin, {
+  name: 'static',
+  dependencies: [],
 });

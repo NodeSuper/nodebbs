@@ -7,7 +7,7 @@ import { lt } from 'drizzle-orm';
  * 数据清理插件
  * 负责定期清理过期的临时数据
  */
-export default fp(async function (fastify, opts) {
+async function cleanupPlugin(fastify, options) {
   const tasks = new Map();
 
   /**
@@ -41,7 +41,7 @@ export default fp(async function (fastify, opts) {
         fastify.log.error(`[清理] 任务 [${name}] 执行出错:`, err);
       }
     }
-    
+
     return totalCleaned;
   }
 
@@ -73,7 +73,10 @@ export default fp(async function (fastify, opts) {
     clearInterval(interval);
   });
 
-  fastify.log.info('[清理] 插件已注册到任务调度器');
-}, {
-  name: 'cleanup-plugin'
+  fastify.log.info('[清理] 插件已注册');
+}
+
+export default fp(cleanupPlugin, {
+  name: 'cleanup',
+  dependencies: ['db'],
 });

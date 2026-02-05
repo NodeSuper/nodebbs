@@ -2,7 +2,11 @@ import fp from 'fastify-plugin'
 import fastifyRedis from '@fastify/redis'
 import env from '../config/env.js'
 
-export const redisPlugin = async (fastify) => {
+/**
+ * Redis 缓存插件
+ * 提供 Redis 连接和缓存工具方法
+ */
+async function redisPlugin(fastify, options) {
   fastify.register(fastifyRedis, {
     url: env.redis.url,
     // 可选：配置 ioredis 原生选项
@@ -68,5 +72,6 @@ export const redisPlugin = async (fastify) => {
 }
 
 export default fp(redisPlugin, {
-  name: 'redis'
+  name: 'redis',
+  dependencies: [],
 })

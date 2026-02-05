@@ -9,4 +9,7 @@ async function formBodyPlugin(fastify) {
   await fastify.register(formBody);
 }
 
-export default fp(formBodyPlugin);
+export default fp(formBodyPlugin, {
+  name: 'formbody',
+  dependencies: [],
+});

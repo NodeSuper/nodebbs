@@ -106,7 +106,8 @@ async function messagePlugin(fastify, opts) {
 }
 
 export default fp(messagePlugin, {
-  name: 'message-plugin',
+  name: 'message',
+  dependencies: [],
 });
 
 // 导出配置和工具函数

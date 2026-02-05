@@ -52,4 +52,7 @@ async function securityPlugin(fastify, opts) {
   });
 }
 
-export default fp(securityPlugin);
+export default fp(securityPlugin, {
+  name: 'security',
+  dependencies: [],
+});

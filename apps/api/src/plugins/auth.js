@@ -274,4 +274,7 @@ async function authPlugin(fastify) {
   });
 }
 
-export default fp(authPlugin);
+export default fp(authPlugin, {
+  name: 'auth',
+  dependencies: ['redis'],
+});

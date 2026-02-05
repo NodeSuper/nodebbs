@@ -66,4 +66,7 @@ async function rateLimitPlugin(fastify, opts) {
   });
 }
 
-export default fp(rateLimitPlugin);
+export default fp(rateLimitPlugin, {
+  name: 'rate-limit',
+  dependencies: ['settings', 'auth'],
+});

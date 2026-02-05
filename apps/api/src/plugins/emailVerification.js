@@ -30,6 +30,11 @@ export async function requireEmailVerification(request, reply) {
 /**
  * Fastify 插件：注册邮箱验证中间件
  */
-export default fp(async function (fastify, opts) {
+async function emailVerificationPlugin(fastify, options) {
   fastify.decorate('requireEmailVerification', requireEmailVerification);
+}
+
+export default fp(emailVerificationPlugin, {
+  name: 'email-verification',
+  dependencies: ['settings'],
 });
