@@ -9,11 +9,13 @@ import { ActionMenu } from '@/components/common/ActionMenu';
 import { PageHeader } from '@/components/common/PageHeader';
 import UserAvatar from '@/components/user/UserAvatar';
 import { confirm } from '@/components/common/ConfirmPopover';
+import ImagePreview from '@/components/common/ImagePreview';
 import { Trash2, ExternalLink, Image, FileText, Film, Music } from 'lucide-react';
 import { filesApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Time from '@/components/common/Time';
 import { usePermission } from '@/hooks/usePermission';
+import { getImageUrl } from '@/lib/utils';
 
 // 文件大小格式化
 function formatFileSize(bytes) {
@@ -53,6 +55,8 @@ export default function FilesManagement() {
   const debouncedSearch = useDebounce(search, 500);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [submitting, setSubmitting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   const limit = 20;
 
@@ -123,10 +127,17 @@ export default function FilesManagement() {
       render: (_, file) => {
         const isImage = file.mimetype?.startsWith('image/');
         if (isImage) {
+          const fullUrl = getImageUrl(file.url);
           return (
-            <div className="w-12 h-12 rounded border overflow-hidden bg-muted">
+            <div
+              className="w-24 h-24 rounded border overflow-hidden bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => {
+                setPreviewUrl(fullUrl);
+                setPreviewOpen(true);
+              }}
+            >
               <img
-                src={file.url}
+                src={getImageUrl(file.url, 'embed,f_webp,s_200x200')}
                 alt={file.originalName || file.filename}
                 className="w-full h-full object-cover"
               />
@@ -259,6 +270,12 @@ export default function FilesManagement() {
         }}
         pagination={{ page, total, limit, onPageChange: setPage }}
         emptyMessage="暂无文件"
+      />
+
+      <ImagePreview
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        images={[previewUrl]}
       />
     </div>
   );
