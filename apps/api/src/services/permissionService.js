@@ -641,7 +641,7 @@ class PermissionService {
         color: displayRole.color,
         icon: displayRole.icon,
       } : null,
-      // 向后兼容的权限检查
+      // 基于 RBAC 的管理员判断（不依赖旧 role 字段，确保撤销 RBAC 角色后权限立即失效）
       isAdmin: userRolesList.some(r => r.slug === 'admin'),
     };
   }
@@ -650,46 +650,58 @@ class PermissionService {
 
   /**
    * 为新用户分配默认角色
+   * - 第一个注册的用户自动分配 admin 角色
+   * - 其他用户分配 isDefault 标记的角色，找不到则 fallback 到 slug='user' 的角色
    * @param {number} userId - 用户 ID
    * @param {Object} options - 选项
+   * @param {boolean} options.isFirstUser - 是否是系统中第一个注册的用户
    * @param {number} options.assignedBy - 分配者 ID（可选）
    * @returns {Promise<Object|null>} 分配的角色信息
    */
   async assignDefaultRoleToUser(userId, options = {}) {
-    const { assignedBy } = options;
+    const { isFirstUser, assignedBy } = options;
 
-    // 查找默认角色（isDefault = true）或 slug = 'user'
-    let [defaultRole] = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.isDefault, true))
-      .limit(1);
+    let targetRole;
 
-    // 如果没有设置默认角色，尝试查找 slug = 'user' 的角色
-    if (!defaultRole) {
-      [defaultRole] = await db
+    if (isFirstUser) {
+      // 第一个用户：分配 admin 角色（需确保种子数据中已创建 admin 角色）
+      [targetRole] = await db
         .select()
         .from(roles)
-        .where(eq(roles.slug, 'user'))
+        .where(eq(roles.slug, 'admin'))
         .limit(1);
+    } else {
+      // 普通用户：优先使用 isDefault=true 的角色
+      [targetRole] = await db
+        .select()
+        .from(roles)
+        .where(eq(roles.isDefault, true))
+        .limit(1);
+
+      // fallback：未设置默认角色时使用 slug='user' 的角色
+      if (!targetRole) {
+        [targetRole] = await db
+          .select()
+          .from(roles)
+          .where(eq(roles.slug, 'user'))
+          .limit(1);
+      }
     }
 
-    if (!defaultRole) {
-      // 没有找到默认角色，记录警告但不阻断流程
-      if (this.fastify?.log) {
-        this.fastify.log.warn(`[RBAC] 未找到默认角色，用户 ${userId} 未分配角色`);
-      }
+    if (!targetRole) {
+      this.fastify?.log?.warn(
+        `[RBAC] 未找到可分配的角色（isFirstUser=${!!isFirstUser}），请检查角色种子数据`
+      );
       return null;
     }
 
-    // 分配角色
     await db.insert(userRoles).values({
       userId,
-      roleId: defaultRole.id,
+      roleId: targetRole.id,
       assignedBy,
-    }).onConflictDoNothing(); // 如果已存在则忽略
+    }).onConflictDoNothing();
 
-    return defaultRole;
+    return targetRole;
   }
 
   /**
@@ -929,6 +941,10 @@ class PermissionService {
    * const maxSize = conditions?.maxFileSize;
    */
   async check(request, permissionSlug, context = {}, options = {}) {
+    // 兼容 user.role
+    if (request.user?.isAdmin) {
+      return { granted: true, conditions: ADMIN_DEFAULT_CONDITIONS };
+    }
     const { userId, ctx } = this._prepareFromRequest(request, context);
     const result = await this._checkCore(userId, permissionSlug, ctx, options.any);
 

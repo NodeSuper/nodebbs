@@ -83,12 +83,10 @@ export const request = async (endpoint, options = {}) => {
 function enhanceUser(user) {
   if (!user) return null;
 
-  const ROLE_ADMIN = 'admin';
-
   const enhanced = {
     ...user,
-    // 基于 RBAC 的 isAdmin 属性
-    isAdmin: user.userRoles?.some(r => r.slug === 'admin') || user.role === ROLE_ADMIN,
+    // 基于 RBAC 的 isAdmin 属性（不依赖旧 role 字段）
+    isAdmin: user.userRoles?.some(r => r.slug === 'admin') ?? false,
   };
 
   return enhanced;
@@ -105,6 +103,11 @@ export const getCurrentUser = async () => {
     return null;
   }
 
-  const user = await request('/auth/me');
-  return enhanceUser(user);
+  try {
+    const user = await request('/auth/me');
+    return enhanceUser(user);
+  } catch (error) {
+    // token 过期/无效等情况，静默返回 null（视为未登录）
+    return null;
+  }
 };

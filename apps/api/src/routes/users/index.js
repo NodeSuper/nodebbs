@@ -57,7 +57,7 @@ export default async function userRoutes(fastify, options) {
       }
     }
   }, async (request, reply) => {
-    const { username, email, password, name, role = 'user', isEmailVerified = false } = request.body;
+    let { username, email, password, name, role = 'user', isEmailVerified = false } = request.body;
 
     // 规范化并验证用户名格式
     // 规范化邮箱
@@ -94,8 +94,15 @@ export default async function userRoutes(fastify, options) {
       isEmailVerified
     }).returning();
 
-    // 分配默认角色（用户-角色关联）
-    await permission.assignDefaultRoleToUser(newUser.id, { assignedBy: request.user.id });
+    // 分配 RBAC 角色（与 users.role 字段保持一致）
+    if (role === 'admin') {
+      const adminRole = await permission.getRoleBySlug('admin');
+      if (adminRole) {
+        await permission.assignRoleToUser(newUser.id, adminRole.id, { assignedBy: request.user.id });
+      }
+    } else {
+      await permission.assignDefaultRoleToUser(newUser.id, { assignedBy: request.user.id });
+    }
 
     // 移除敏感数据
     delete newUser.passwordHash;

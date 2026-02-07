@@ -4,7 +4,6 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { authApi } from '@/lib/api';
 import LoginDialog from '@/components/auth/LoginDialog';
 import { useSettings } from '@/contexts/SettingsContext';
-import { ROLE_ADMIN } from '@/constants/roles';
 
 const AuthContext = createContext(null);
 
@@ -15,8 +14,8 @@ function enhanceUser(user) {
 
   const enhanced = {
     ...user,
-    // 基于 RBAC 的 isAdmin 属性
-    isAdmin: user.userRoles?.some(r => r.slug === 'admin') || user.role === ROLE_ADMIN,
+    // 基于 RBAC 的 isAdmin 属性（不依赖旧 role 字段）
+    isAdmin: user.userRoles?.some(r => r.slug === 'admin') ?? false,
   };
 
   return enhanced;

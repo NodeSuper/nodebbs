@@ -1,7 +1,7 @@
 import { userEnricher } from '../../services/userEnricher.js';
 import db from '../../db/index.js';
 import { users } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { validateInvitationCode, markInvitationCodeAsUsed } from '../../services/invitationService.js';
 import { validateUsername } from '../../utils/validateUsername.js';
 import { normalizeEmail, normalizeUsername } from '../../utils/normalization.js';
@@ -82,28 +82,34 @@ export default async function registerRoute(fastify, options) {
         return reply.code(400).send({ error: usernameValidation.error });
       }
 
-      // 检查注册模式
-      const registrationMode = await fastify.settings.get('registration_mode', 'open');
+      // 检查是否是第一个用户（需在注册模式检查之前，第一个用户绕过模式限制以避免系统无法初始化）
+      const userCount = await db.select({ count: count() }).from(users);
+      const isFirstUser = userCount[0].count === 0;
 
-      // 如果注册已关闭
-      if (registrationMode === 'closed') {
-        return reply.code(403).send({ error: '注册功能已关闭' });
-      }
+      // 检查注册模式（第一个用户绕过，否则 closed/invitation 模式下无法创建首个管理员）
+      let registrationMode = 'open';
+      let isInvitationMode = false;
 
-      // 如果是邀请码模式，验证邀请码
-      const isInvitationMode = registrationMode === 'invitation';
-      if (isInvitationMode) {
-        if (!invitationCode) {
-          return reply
-            .code(400)
-            .send({ error: '邀请码注册模式下必须提供邀请码' });
+      if (!isFirstUser) {
+        registrationMode = await fastify.settings.get('registration_mode', 'open');
+
+        if (registrationMode === 'closed') {
+          return reply.code(403).send({ error: '注册功能已关闭' });
         }
 
-        // 验证邀请码
-        const validation = await validateInvitationCode(invitationCode.trim());
+        isInvitationMode = registrationMode === 'invitation';
+        if (isInvitationMode) {
+          if (!invitationCode) {
+            return reply
+              .code(400)
+              .send({ error: '邀请码注册模式下必须提供邀请码' });
+          }
 
-        if (!validation.valid) {
-          return reply.code(400).send({ error: validation.message });
+          const validation = await validateInvitationCode(invitationCode.trim());
+
+          if (!validation.valid) {
+            return reply.code(400).send({ error: validation.message });
+          }
         }
       }
 
@@ -192,10 +198,6 @@ export default async function registerRoute(fastify, options) {
       // 密码哈希加密
       const passwordHash = await fastify.hashPassword(password);
 
-      // 检查是否是第一个用户
-      const userCount = await db.select({ count: users.id }).from(users);
-      const isFirstUser = userCount.length === 0;
-
       // 创建用户
       const [newUser] = await db
         .insert(users)
@@ -210,45 +212,43 @@ export default async function registerRoute(fastify, options) {
         .returning();
 
       // 分配默认角色（用户-角色关联）
-      await fastify.permission.assignDefaultRoleToUser(newUser.id);
+      await fastify.permission.assignDefaultRoleToUser(newUser.id, { isFirstUser });
 
       // 注册成功后，不再发送邮件
       fastify.log.info(`[注册] 用户 ${email} 注册成功，等待邮箱验证`);
 
-      // 如果使用了邀请码，标记为已使用并处理奖励
-      if (registrationMode === 'invitation' && invitationCode) {
-        const usedInvitation = await markInvitationCodeAsUsed(invitationCode.trim(), newUser.id);
-        
-        if (usedInvitation && usedInvitation.createdBy) {
-          try {
-            // 检查奖励功能是否开启
+      // 如果使用了邀请码，标记为已使用并处理奖励（不阻断注册流程）
+      if (isInvitationMode && invitationCode) {
+        try {
+          const usedInvitation = await markInvitationCodeAsUsed(invitationCode.trim(), newUser.id);
+
+          if (usedInvitation && usedInvitation.createdBy) {
             const isRewardsActive = await fastify.ledger.isCurrencyActive(DEFAULT_CURRENCY_CODE);
 
             if (isRewardsActive) {
-                const inviteAmount = await fastify.ledger.getCurrencyConfig(DEFAULT_CURRENCY_CODE, 'invite_user_amount', 10);
+              const inviteAmount = await fastify.ledger.getCurrencyConfig(DEFAULT_CURRENCY_CODE, 'invite_user_amount', 10);
 
-                if (inviteAmount > 0) {
-                     await fastify.ledger.grant({
-                        userId: usedInvitation.createdBy,
-                        amount: inviteAmount,
-                        currencyCode: DEFAULT_CURRENCY_CODE,
-                        type: 'invite_user',
-                        referenceType: 'invite_user',
-                        referenceId: `${usedInvitation.createdBy}_invite_${newUser.id}`,
-                        description: `邀请新用户注册：${newUser.username}`,
-                        metadata: { 
-                            invitedUserId: newUser.id, 
-                            invitedUsername: newUser.username,
-                            source: 'rewards-extension' 
-                        }
-                    });
-                    fastify.log.info(`[奖励系统] 已给邀请人 ${usedInvitation.createdBy} 发放邀请奖励`);
-                }
+              if (inviteAmount > 0) {
+                await fastify.ledger.grant({
+                  userId: usedInvitation.createdBy,
+                  amount: inviteAmount,
+                  currencyCode: DEFAULT_CURRENCY_CODE,
+                  type: 'invite_user',
+                  referenceType: 'invite_user',
+                  referenceId: `${usedInvitation.createdBy}_invite_${newUser.id}`,
+                  description: `邀请新用户注册：${newUser.username}`,
+                  metadata: {
+                    invitedUserId: newUser.id,
+                    invitedUsername: newUser.username,
+                    source: 'rewards-extension'
+                  }
+                });
+                fastify.log.info(`[奖励系统] 已给邀请人 ${usedInvitation.createdBy} 发放邀请奖励`);
+              }
             }
-          } catch (creditError) {
-             fastify.log.error(creditError, `[积分系统] 邀请奖励发放失败: Inviter=${usedInvitation.createdBy}, NewUser=${newUser.id}`);
-             // 不阻断注册流程
           }
+        } catch (error) {
+          fastify.log.error(error, `[注册] 邀请码后处理失败: code=${invitationCode}, userId=${newUser.id}`);
         }
       }
 

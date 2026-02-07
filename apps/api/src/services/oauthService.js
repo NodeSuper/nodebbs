@@ -6,7 +6,7 @@
  */
 import db from '../db/index.js';
 import { users, accounts } from '../db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import crypto from 'crypto';
 import { normalizeEmail } from '../utils/normalization.js';
 import { getSetting } from './settingsService.js';
@@ -164,8 +164,8 @@ export async function createOAuthUser(profile, provider) {
   username = await generateUniqueUsername(username);
 
   // 检查是否是第一个用户
-  const userCount = await db.select({ count: users.id }).from(users);
-  const isFirstUser = userCount.length === 0;
+  const userCount = await db.select({ count: count() }).from(users);
+  const isFirstUser = userCount[0].count === 0;
 
   const [newUser] = await db
     .insert(users)
@@ -182,7 +182,7 @@ export async function createOAuthUser(profile, provider) {
 
   // 分配默认角色（用户-角色关联）
   const permissionService = getPermissionService();
-  await permissionService.assignDefaultRoleToUser(newUser.id);
+  await permissionService.assignDefaultRoleToUser(newUser.id, { isFirstUser });
 
   return newUser;
 }
