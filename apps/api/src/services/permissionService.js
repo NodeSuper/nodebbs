@@ -235,10 +235,22 @@ class PermissionService {
     } else {
       const userRolesList = await this.getUserRoles(userId);
       if (!userRolesList.length) {
-        return [];
-      }
+        // 已登录用户无角色时，兜底使用 guest 角色的权限
+        // 避免已登录用户权限反而不如未登录访客
+        this.fastify?.log?.warn(`[RBAC] 用户 ${userId} 无任何角色，将使用 guest 角色权限兜底`);
+        const guestRole = await db
+          .select({ id: roles.id })
+          .from(roles)
+          .where(eq(roles.slug, 'guest'))
+          .limit(1);
 
-      roleIds = userRolesList.map(r => r.id);
+        if (!guestRole.length) {
+          return [];
+        }
+        roleIds = [guestRole[0].id];
+      } else {
+        roleIds = userRolesList.map(r => r.id);
+      }
     }
 
     if (!roleIds.length) {
