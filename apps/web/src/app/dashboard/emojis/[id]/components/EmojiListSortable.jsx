@@ -56,8 +56,8 @@ function SortableEmojiItem({ emoji, onDelete }) {
          />
       </div>
       
-      <div className="w-full text-[10px] text-muted-foreground font-mono text-center break-all leading-tight px-1 pb-1">
-        :{emoji.code}:
+      <div className="w-full text-[10px] text-muted-foreground font-mono text-center break-all leading-tight px-1 pb-1 truncate">
+        {emoji.code}
       </div>
 
       {/* 删除按钮（悬停时显示） */}
@@ -67,7 +67,7 @@ function SortableEmojiItem({ emoji, onDelete }) {
            onDelete(emoji);
         }}
         // 使用 pointer-events-auto 确保点击事件能被捕获
-        className="absolute top-1 right-1 p-1.5 bg-destructive/10 text-destructive rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground pointer-events-auto"
+        className="absolute top-1 right-1 p-1.5 bg-destructive/10 text-destructive rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-background pointer-events-auto"
         title="删除表情"
         // 阻止 DndKit 将此元素作为拖拽句柄
         data-no-dnd="true"

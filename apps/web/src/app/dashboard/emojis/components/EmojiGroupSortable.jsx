@@ -75,7 +75,7 @@ function SortableItem({ group, onEdit, onDelete }) {
          {/* Manage Emojis Link */}
          <Button variant="outline" size="sm" asChild>
             <Link href={`/dashboard/emojis/${group.id}`}>
-               <LayoutGrid className="h-4 w-4 mr-2" />
+               <LayoutGrid className="h-4 w-4" />
                表情管理
             </Link>
          </Button>

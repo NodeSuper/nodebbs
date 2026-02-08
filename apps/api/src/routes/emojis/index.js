@@ -293,8 +293,7 @@ export default async function emojiRoutes(fastify, options) {
     const { groupId, url } = request.body;
     let { code } = request.body;
 
-    // 标准化 code
-    code = slugify(code);
+    code = code.trim();
 
     // 检查 code 在分组内唯一性
     const [existing] = await fastify.db.select().from(emojis)

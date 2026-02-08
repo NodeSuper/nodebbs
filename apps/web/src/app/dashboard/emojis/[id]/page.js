@@ -118,7 +118,7 @@ export default function EmojiDetailPage() {
 
       <div className="flex flex-col gap-8">
         {/* 上传区域 */}
-        <div className="bg-card border rounded-lg p-6">
+        <div className="">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Upload className="h-5 w-5" />
             上传表情
