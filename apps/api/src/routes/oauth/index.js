@@ -4,11 +4,10 @@
  * 目录结构：
  * - index.js          # 主入口，注册子路由和管理 API
  * - helpers.js        # 通用辅助函数
- * - providers/
- *   - github.js       # GitHub OAuth
- *   - google.js       # Google OAuth
- *   - apple.js        # Apple OAuth
- *   - wechat.js       # 微信 OAuth（开放平台/公众号/小程序）
+ * - github.js         # GitHub OAuth
+ * - google.js         # Google OAuth
+ * - apple.js          # Apple OAuth
+ * - wechat.js         # 微信 OAuth（开放平台/公众号/小程序）
  */
 import db from '../../db/index.js';
 import { oauthProviders } from '../../db/schema.js';
@@ -19,10 +18,10 @@ import {
 } from '../../services/oauthService.js';
 
 // 导入各 provider 路由
-import githubRoutes from './providers/github.js';
-import googleRoutes from './providers/google.js';
-import appleRoutes from './providers/apple.js';
-import wechatRoutes from './providers/wechat.js';
+import githubRoutes from './github.js';
+import googleRoutes from './google.js';
+import appleRoutes from './apple.js';
+import wechatRoutes from './wechat.js';
 
 /**
  * OAuth 认证路由

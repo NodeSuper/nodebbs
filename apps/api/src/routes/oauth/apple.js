@@ -5,8 +5,8 @@ import {
   normalizeOAuthProfile, 
   generateRandomState, 
   handleOAuthLogin 
-} from '../../../services/oauthService.js';
-import { getFrontendOrigin } from '../../../utils/http-helpers.js';
+} from '../../services/oauthService.js';
+import { getFrontendOrigin } from '../../utils/http-helpers.js';
 import jwt from 'jsonwebtoken';
 
 /**

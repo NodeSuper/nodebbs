@@ -5,8 +5,8 @@ import {
   normalizeOAuthProfile, 
   generateRandomState, 
   handleOAuthLogin 
-} from '../../../services/oauthService.js';
-import { isProd } from '../../../config/env.js';
+} from '../../services/oauthService.js';
+import { isProd } from '../../config/env.js';
 
 /**
  * 注册微信 OAuth 路由

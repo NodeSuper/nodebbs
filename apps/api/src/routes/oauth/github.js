@@ -5,8 +5,8 @@ import {
   normalizeOAuthProfile, 
   generateRandomState, 
   handleOAuthLogin 
-} from '../../../services/oauthService.js';
-import { isProd } from '../../../config/env.js';
+} from '../../services/oauthService.js';
+import { isProd } from '../../config/env.js';
 
 /**
  * 注册 GitHub OAuth 路由
