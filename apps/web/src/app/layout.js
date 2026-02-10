@@ -35,7 +35,7 @@ async function AppLayout({ children, settings, apiInfo }) {
     <div className='min-h-screen bg-background flex flex-col'>
       <Header />
       <EmailVerificationBanner />
-      <div className='flex-1'>{children}</div>
+      <div className='flex-1 flex flex-col'>{children}</div>
       <Footer version={apiInfo?.version} />
     </div>
   );

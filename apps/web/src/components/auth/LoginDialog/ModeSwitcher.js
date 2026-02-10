@@ -1,25 +1,48 @@
 import { Button } from '@/components/ui/button';
+import { useSettings } from '@/contexts/SettingsContext';
 
-export function ModeSwitcher({
-  mode,
-  registrationMode,
-  isLoading,
-  loadingSettings,
-  onModeChange
-}) {
-  if (loadingSettings) return null;
+export function ModeSwitcher({ mode, onModeChange }) {
+  const { settings, loading } = useSettings();
 
+  if (loading) return null;
+
+  const registrationMode = settings?.registration_mode?.value || 'open';
   const isLogin = mode === 'login';
-  const isForgotPassword = mode === 'forgot-password';
 
-  if (isForgotPassword) {
+  // 登录模式 + 注册关闭：仅显示提示
+  if (isLogin && registrationMode === 'closed') {
+    return (
+      <div className="text-center text-sm space-y-2 mt-2">
+        <p className="text-muted-foreground text-xs">
+          系统当前已关闭用户注册
+        </p>
+      </div>
+    );
+  }
+
+  // 登录模式：显示注册入口
+  if (isLogin) {
+    return (
+      <div className="text-center text-sm space-y-2 mt-2">
+        <Button
+          variant="link"
+          className="p-0 h-auto font-normal"
+          onClick={() => onModeChange('register')}
+        >
+          还没有账户？立即注册
+        </Button>
+      </div>
+    );
+  }
+
+  // 非登录模式（找回密码 / 注册关闭）：返回登录
+  if (mode === 'forgot-password' || registrationMode === 'closed') {
     return (
       <div className="text-center text-sm space-y-2 mt-2">
         <Button
           variant="link"
           className="p-0 h-auto font-normal"
           onClick={() => onModeChange('login')}
-          disabled={isLoading}
         >
           返回登录
         </Button>
@@ -27,42 +50,17 @@ export function ModeSwitcher({
     );
   }
 
-  if (registrationMode === 'closed') {
-    if (isLogin) {
-      return (
-        <div className="text-center text-sm space-y-2 mt-2">
-          <p className="text-muted-foreground text-xs">
-            系统当前已关闭用户注册
-          </p>
-        </div>
-      );
-    } else {
-      return (
-        <div className="text-center text-sm space-y-2 mt-2">
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal"
-            onClick={() => onModeChange('login')}
-            disabled={isLoading}
-          >
-            返回登录
-          </Button>
-        </div>
-      );
-    }
-  }
-
+  // 注册模式：显示登录入口
   return (
     <div className="text-center text-sm space-y-2 mt-2">
       <Button
         variant="link"
         className="p-0 h-auto font-normal"
-        onClick={() => onModeChange(isLogin ? 'register' : 'login')}
-        disabled={isLoading}
+        onClick={() => onModeChange('login')}
       >
-        {isLogin ? '还没有账户？立即注册' : '已有账户？立即登录'}
+        已有账户？立即登录
       </Button>
-      {!isLogin && registrationMode === 'invitation' && (
+      {registrationMode === 'invitation' && (
         <p className="text-muted-foreground text-xs">
           需要邀请码才能注册
         </p>

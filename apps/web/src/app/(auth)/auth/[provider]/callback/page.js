@@ -161,8 +161,7 @@ export default function OAuthCallback() {
   }, []); // 只在组件挂载时执行一次
 
   return (
-    <div className='flex items-center justify-center mt-40'>
-      <div className='text-center space-y-4 max-w-md px-4'>
+    <div className='text-center space-y-4 max-w-md px-4'>
         {status === 'processing' && (
           <Loading text={`正在通过 ${getProviderName(provider)} 登录...`} />
         )}
@@ -212,7 +211,6 @@ export default function OAuthCallback() {
             <p className='text-xs text-muted-foreground'>正在返回首页...</p>
           </>
         )}
-      </div>
     </div>
   );
 }
