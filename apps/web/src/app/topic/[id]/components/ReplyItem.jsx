@@ -138,46 +138,41 @@ export default function ReplyItem({ reply, topicId, onDeleted, onReplyAdded, isR
               </Link>
 
               <div className='flex flex-col gap-0.5 min-w-0'>
-                {/* 第一行：用户名 */}
-                <div className='flex items-center gap-2 text-sm'>
+                {/* 第一行：用户名 + 角色标识 */}
+                <div className='flex items-center gap-1.5 text-sm'>
                   <Link
                     href={`/users/${localReply.username}`}
-                   
+
                     className='font-medium text-foreground hover:underline decoration-primary/50 underline-offset-4 truncate'
                   >
                     {localReply.userName || localReply.userUsername}
                   </Link>
+
+                  {localReply.userDisplayRole && (
+                    <Badge
+                      variant="secondary"
+                      className="px-1.5 h-4 text-[10px] font-normal bg-primary/10 text-primary border-0 rounded shrink-0"
+                    >
+                      {localReply.userDisplayRole.name}
+                    </Badge>
+                  )}
+
+                  {localReply.topicUserId === localReply.userId && (
+                    <Badge variant="secondary" className="px-1.5 h-4 text-[10px] font-normal bg-primary/5 text-primary/70 border-0 rounded shrink-0">
+                      楼主
+                    </Badge>
+                  )}
                 </div>
 
-                {/* 第二行：时间与徽章 */}
+                {/* 第二行：时间与状态 */}
                 <div className='flex items-center gap-2 text-xs text-muted-foreground/70 flex-wrap leading-none'>
                   <Time date={localReply.createdAt} fromNow />
-                  
+
                   {/* 已编辑标记 */}
                   {localReply.editedAt && (
                     <span className="text-muted-foreground/50" title={`已编辑 ${localReply.editCount || 1} 次`}>
                       (已编辑)
                     </span>
-                  )}
-                  
-                  {/* 角色标识 */}
-                  {localReply.topicUserId === localReply.userId && (
-                    <Badge variant="secondary" className="px-1.5 h-4 text-[10px] font-normal bg-primary/10 text-primary hover:bg-primary/20 border-0 rounded">
-                      楼主
-                    </Badge>
-                  )}
-
-                  {localReply.userDisplayRole && (
-                     <Badge
-                       variant="secondary"
-                       className="px-1.5 h-4 text-[10px] font-normal border-0 rounded"
-                       style={{
-                         backgroundColor: localReply.userDisplayRole.color ? localReply.userDisplayRole.color + '15' : undefined,
-                         color: localReply.userDisplayRole.color || undefined,
-                       }}
-                     >
-                      {localReply.userDisplayRole.name}
-                    </Badge>
                   )}
 
                   {/* 状态标识 */}

@@ -85,13 +85,8 @@ export default function UserCard({
           </h4>
           {user.displayRole && (
             <Badge
-              variant="outline"
-              className='mt-1 text-xs font-normal'
-              style={{
-                backgroundColor: user.displayRole.color + '15',
-                borderColor: user.displayRole.color + '40',
-                color: user.displayRole.color,
-              }}
+              variant="secondary"
+              className='mt-1 bg-primary/10 text-primary'
             >
               {user.displayRole.name}
             </Badge>
