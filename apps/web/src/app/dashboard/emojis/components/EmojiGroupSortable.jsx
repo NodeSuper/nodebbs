@@ -19,7 +19,7 @@ import {
 import { GripVertical, Edit, Trash2, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import Link from '@/components/common/Link';
 
 function SortableItem({ group, onEdit, onDelete }) {
   const {

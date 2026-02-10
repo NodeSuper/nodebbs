@@ -19,7 +19,6 @@ import { toast } from 'sonner';
 import CategorySelector from '@/components/topic/CategorySelector';
 import { Loading } from '@/components/common/Loading';
 import FeaturedCategorySortable from './components/FeaturedCategorySortable';
-import Link from 'next/link';
 
 export default function CategoriesManagement() {
   const [categories, setCategories] = useState([]);
