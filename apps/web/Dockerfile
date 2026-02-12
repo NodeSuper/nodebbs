@@ -8,7 +8,7 @@
 # 4. 支持 Next.js 构建时环境变量注入
 # ============================================
 FROM node:22-slim AS base
-RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
 
 # ============================================
 # 阶段 1: 使用 turbo prune 提取依赖
