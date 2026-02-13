@@ -3,7 +3,7 @@
  * RBAC 权限检查服务
  */
 
-import { eq, and, isNull, gt, or } from 'drizzle-orm';
+import { eq, and, isNull, gt, or, desc } from 'drizzle-orm';
 import db from '../db/index.js';
 import {
   roles,
@@ -776,7 +776,7 @@ class PermissionService {
    * 获取所有角色
    */
   async getAllRoles() {
-    return db.select().from(roles).orderBy(roles.priority);
+    return db.select().from(roles).orderBy(desc(roles.priority));
   }
 
   /**

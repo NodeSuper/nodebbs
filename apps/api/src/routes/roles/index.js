@@ -3,7 +3,7 @@
  * 仅管理员可访问
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import db from '../../db/index.js';
 import { roles, permissions, rolePermissions, userRoles, users, invitationRules } from '../../db/schema.js';
 import { getRbacConfig } from '../../config/rbac.js';
@@ -111,7 +111,7 @@ export default async function rolesRoutes(fastify, options) {
         })
         .from(roles)
         .where(eq(roles.isDisplayed, true))
-        .orderBy(roles.priority);
+        .orderBy(desc(roles.priority));
       return publicRoles;
     }
   );

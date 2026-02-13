@@ -1434,7 +1434,7 @@ export default async function userRoutes(fastify, options) {
       .from(userRoles)
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
       .where(eq(userRoles.userId, userId))
-      .orderBy(roles.priority);
+      .orderBy(desc(roles.priority));
 
     // 清除用户缓存
     await fastify.clearUserCache(userId);
