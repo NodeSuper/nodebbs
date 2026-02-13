@@ -36,7 +36,6 @@ export default function CategoriesManagement() {
     slug: '',
     description: '',
     color: '#3B82F6',
-    icon: '',
     parentId: null,
     position: 0,
     isPrivate: false,
@@ -139,7 +138,6 @@ export default function CategoriesManagement() {
       slug: category.slug,
       description: category.description || '',
       color: category.color || '#3B82F6',
-      icon: category.icon || '',
       parentId: category.parentId || null,
       position: category.position !== undefined ? category.position : 0,
       isPrivate: category.isPrivate || false,
@@ -156,7 +154,6 @@ export default function CategoriesManagement() {
       slug: '',
       description: '',
       color: '#3B82F6',
-      icon: '',
       parentId: null,
       position: 0,
       isPrivate: false,
@@ -300,9 +297,6 @@ export default function CategoriesManagement() {
                       >
                         └─
                       </span>
-                    )}
-                    {category.icon && (
-                      <span className='text-lg'>{category.icon}</span>
                     )}
                     <span className='font-medium text-sm'>{category.name}</span>
                     {category.isFeatured && (
@@ -473,18 +467,6 @@ export default function CategoriesManagement() {
                   onChange={(e) =>
                     setFormData({ ...formData, color: e.target.value })
                   }
-                />
-              </div>
-              <div  className='space-y-2'>
-                <Label htmlFor='icon'>图标（Emoji）</Label>
-                <Input
-                  id='icon'
-                  value={formData.icon}
-                  onChange={(e) =>
-                    setFormData({ ...formData, icon: e.target.value })
-                  }
-                  placeholder='📁'
-                  maxLength={2}
                 />
               </div>
             </div>

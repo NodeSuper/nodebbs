@@ -66,10 +66,6 @@ function SortableItem({ category }) {
         style={{ backgroundColor: category.color || '#3B82F6' }}
       />
 
-      {/* 分类图标 */}
-      {category.icon && (
-        <span className="text-lg shrink-0">{category.icon}</span>
-      )}
 
       {/* 分类名称和私有标识 */}
       <div className="flex items-center gap-1.5 flex-1 min-w-0">

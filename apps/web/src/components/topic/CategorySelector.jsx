@@ -133,9 +133,6 @@ export default function CategorySelector({
               style={{ backgroundColor: option.color }}
             />
           )}
-          {option.icon && (
-            <span className="text-base shrink-0">{option.icon}</span>
-          )}
           <span>{option.label}</span>
         </>
       )}
@@ -147,9 +144,6 @@ export default function CategorySelector({
                className="h-3 w-3 rounded-sm shrink-0"
                style={{ backgroundColor: option.color }}
              />
-           )}
-           {option.icon && (
-             <span className="text-base shrink-0">{option.icon}</span>
            )}
            <span className="truncate">{option.label}</span>
          </div>
