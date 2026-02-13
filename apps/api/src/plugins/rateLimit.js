@@ -16,29 +16,42 @@ async function rateLimitPlugin(fastify, opts) {
   await fastify.register(rateLimit, {
     global: true,
     allowList: async (request) => {
-      const enabled = await fastify.settings.get('rate_limit_enabled', true);
-      if (!enabled) {
-        return true;
-      }
+      try {
+        const enabled = await fastify.settings.get('rate_limit_enabled', true);
+        if (!enabled) {
+          return true;
+        }
 
-      if (!request.user?.id || !fastify.permission?.hasRole) return false;
-      return await fastify.permission.hasRole(request.user.id, 'admin');
+        if (!request.user?.id || !fastify.permission?.hasRole) return false;
+        return await fastify.permission.hasRole(request.user.id, 'admin');
+      } catch {
+        // 数据库未初始化时使用默认行为：应用限速
+        return false;
+      }
     },
     max: async (request, key) => {
-      // 获取基础限制
-      const maxRequests = await fastify.settings.get('rate_limit_max_requests', 100);
+      try {
+        // 获取基础限制
+        const maxRequests = await fastify.settings.get('rate_limit_max_requests', 100);
 
-      // 如果是已登录用户，应用倍数
-      if (request.user?.id) {
-        const multiplier = await fastify.settings.get('rate_limit_auth_multiplier', 2);
-        return Math.floor(maxRequests * multiplier);
+        // 如果是已登录用户，应用倍数
+        if (request.user?.id) {
+          const multiplier = await fastify.settings.get('rate_limit_auth_multiplier', 2);
+          return Math.floor(maxRequests * multiplier);
+        }
+
+        return maxRequests;
+      } catch {
+        return 100;
       }
-      
-      return maxRequests;
     },
     timeWindow: async (request, key) => {
-      const windowMs = await fastify.settings.get('rate_limit_window_ms', 60000);
-      return windowMs;
+      try {
+        const windowMs = await fastify.settings.get('rate_limit_window_ms', 60000);
+        return windowMs;
+      } catch {
+        return 60000;
+      }
     },
     keyGenerator: (request) => {
       // 使用用户 ID 或 IP 作为限速键

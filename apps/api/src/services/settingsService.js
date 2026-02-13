@@ -45,6 +45,10 @@ export async function getSetting(key, defaultValue = null) {
 
     return value;
   } catch (error) {
+    // 表不存在时（数据库未初始化），静默返回默认值
+    if (error?.cause?.code === '42P01') {
+      return defaultValue;
+    }
     console.error('[设置] 获取配置项失败:', error);
     return defaultValue;
   }
