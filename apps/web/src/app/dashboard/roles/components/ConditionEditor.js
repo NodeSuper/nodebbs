@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Settings2, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MultiSelectCombobox } from './MultiSelectCombobox';
+import MultiSelect from '@/components/common/MultiSelect';
 
 /**
  * 条件字段容器组件
@@ -178,7 +178,7 @@ export function ConditionEditor({
           hasValue={Array.isArray(value) && value.length > 0}
           onClear={() => clearCondition(key)}
         >
-          <MultiSelectCombobox
+          <MultiSelect
             value={value || []}
             onChange={(val) => updateCondition(key, val.length > 0 ? val : undefined)}
             options={selectOptions}
