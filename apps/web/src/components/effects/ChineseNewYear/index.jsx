@@ -30,7 +30,7 @@ export const ChineseNewYear = () => {
         duration={5}
       />
        <Lantern 
-        className="absolute left-16 top-4 md:left-24 md:top-12" 
+        className="absolute left-16 top-10 md:left-24 md:top-12" 
         size={isMobile ? 50 : 80} 
         swing={8} 
         duration={6}
@@ -46,7 +46,7 @@ export const ChineseNewYear = () => {
         delay={0.5}
       />
       <Lantern 
-        className="absolute right-16 top-4 md:right-24 md:top-12" 
+        className="absolute right-16 top-10 md:right-24 md:top-12" 
         size={isMobile ? 50 : 80} 
         swing={-8} 
         duration={6}
