@@ -96,6 +96,11 @@ export default async function loginRoute(fastify, options) {
         return reply.code(403).send({ error: fastify.getBanMessage(banStatus) });
       }
 
+      // 检查用户是否设置了密码 (第三方登录用户可能没有密码)
+      if (!user.passwordHash) {
+        return reply.code(401).send({ error: '该账号未设置密码，请使用第三方登录或找回密码' });
+      }
+
       // 验证密码
       const isValidPassword = await fastify.verifyPassword(
         password,
