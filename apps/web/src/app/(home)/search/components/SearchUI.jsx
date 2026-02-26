@@ -1,15 +1,12 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, X } from 'lucide-react';
-import Link from '@/components/common/Link';
+import { Search } from 'lucide-react';
 import { SearchTopicsTab } from './SearchTopicsTab';
 import { SearchPostsTab } from './SearchPostsTab';
 import { SearchUsersTab } from './SearchUsersTab';
 
 /**
  * 搜索页面主 UI 组件
- * 简洁设计：无标题头部、无计数、懒加载 Tab
+ * 简洁设计：无标题头部、懒加载 Tab
  */
 export function SearchUI({
   searchQuery,
@@ -36,50 +33,40 @@ export function SearchUI({
 
   return (
     <div className='space-y-3'>
-      {/* 搜索关键词 */}
-      <div className='flex items-center space-x-2 px-3 sm:px-0'>
-        <span className='text-muted-foreground'>搜索关键词:</span>
-        <Badge variant='secondary' className='text-base px-3 py-1'>
-          {searchQuery}
-        </Badge>
-        <Link href='/search'>
-          <Button variant='ghost' size='sm' className='h-7'>
-            <X className='h-4 w-4' />
-          </Button>
-        </Link>
-      </div>
+      <Tabs value={searchType} onValueChange={onSearchTypeChange} className='gap-3'>
+        <TabsList className='mx-3 sm:mx-0'>
+          <TabsTrigger value='topics'>话题</TabsTrigger>
+          <TabsTrigger value='posts'>回复</TabsTrigger>
+          <TabsTrigger value='users'>用户</TabsTrigger>
+        </TabsList>
 
-    <Tabs value={searchType} onValueChange={onSearchTypeChange} className='gap-3'>
-      <TabsList className='mx-3 sm:mx-0'>
-        <TabsTrigger value='topics'>话题</TabsTrigger>
-        <TabsTrigger value='posts'>回复</TabsTrigger>
-        <TabsTrigger value='users'>用户</TabsTrigger>
-      </TabsList>
+        <TabsContent value='topics'>
+          <SearchTopicsTab
+            loading={loading}
+            results={searchResults}
+            onLoadPage={onLoadPage}
+            searchQuery={searchQuery}
+          />
+        </TabsContent>
 
-      <TabsContent value='topics'>
-        <SearchTopicsTab
-          loading={loading}
-          results={searchResults}
-          onLoadPage={onLoadPage}
-        />
-      </TabsContent>
+        <TabsContent value='posts'>
+          <SearchPostsTab
+            loading={loading}
+            results={searchResults}
+            onLoadPage={onLoadPage}
+            searchQuery={searchQuery}
+          />
+        </TabsContent>
 
-      <TabsContent value='posts'>
-        <SearchPostsTab
-          loading={loading}
-          results={searchResults}
-          onLoadPage={onLoadPage}
-        />
-      </TabsContent>
-
-      <TabsContent value='users'>
-        <SearchUsersTab
-          loading={loading}
-          results={searchResults}
-          onLoadPage={onLoadPage}
-        />
-      </TabsContent>
-    </Tabs>
+        <TabsContent value='users'>
+          <SearchUsersTab
+            loading={loading}
+            results={searchResults}
+            onLoadPage={onLoadPage}
+            searchQuery={searchQuery}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

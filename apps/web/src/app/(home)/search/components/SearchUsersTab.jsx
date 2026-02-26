@@ -1,15 +1,15 @@
 import Link from '@/components/common/Link';
-import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
 import UserAvatar from '@/components/user/UserAvatar';
 import { Loading } from '@/components/common/Loading';
+import { Pager } from '@/components/common/Pagination';
+import { HighlightText } from './HighlightText';
 
 /**
  * 用户搜索结果 Tab 组件
  */
-export function SearchUsersTab({ loading, results, onLoadPage }) {
+export function SearchUsersTab({ loading, results, onLoadPage, searchQuery }) {
   const { items, total, page, limit } = results;
-  const totalPages = Math.ceil(total / limit);
 
   if (loading) {
     return (
@@ -35,8 +35,13 @@ export function SearchUsersTab({ loading, results, onLoadPage }) {
 
   return (
     <div className='space-y-3'>
+      {/* 结果计数 */}
+      <div className='text-sm text-muted-foreground px-3 sm:px-0'>
+        搜索 <span className='font-medium text-foreground'>{searchQuery}</span> 共 {total} 条结果
+      </div>
+
       {/* 用户网格 */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className='mx-3 sm:mx-0 grid grid-cols-1 md:grid-cols-2 gap-4'>
         {items.map((user) => (
           <Link
             key={user.id}
@@ -51,7 +56,10 @@ export function SearchUsersTab({ loading, results, onLoadPage }) {
               />
               <div className='flex-1 min-w-0'>
                 <div className='font-medium text-card-foreground truncate'>
-                  {user.name || user.username}
+                  <HighlightText
+                    text={user.name || user.username}
+                    keyword={searchQuery}
+                  />
                 </div>
                 <div className='text-sm text-muted-foreground truncate'>
                   @{user.username}
@@ -67,32 +75,15 @@ export function SearchUsersTab({ loading, results, onLoadPage }) {
         ))}
       </div>
 
-      {/* 分页 */}
+      {/* 统一分页组件 */}
       {total > limit && (
-        <div className='flex justify-center mt-6'>
-          <div className='flex items-center gap-1'>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={page === 1}
-              onClick={() => onLoadPage('users', page - 1)}
-              className='text-sm'
-            >
-              上一页
-            </Button>
-            <span className='text-sm text-muted-foreground px-4'>
-              第 {page} 页 / 共 {totalPages} 页
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={page >= totalPages}
-              onClick={() => onLoadPage('users', page + 1)}
-              className='text-sm'
-            >
-              下一页
-            </Button>
-          </div>
+        <div className='mx-3 sm:mx-0'>
+          <Pager
+            total={total}
+            page={page}
+            pageSize={limit}
+            onPageChange={(p) => onLoadPage('users', p)}
+          />
         </div>
       )}
     </div>

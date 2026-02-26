@@ -1,14 +1,15 @@
 import Link from '@/components/common/Link';
-import { Button } from '@/components/ui/button';
 import { Hash } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
+import { Pager } from '@/components/common/Pagination';
+import Time from '@/components/common/Time';
+import { HighlightText } from './HighlightText';
 
 /**
  * 回复搜索结果 Tab 组件
  */
-export function SearchPostsTab({ loading, results, onLoadPage }) {
+export function SearchPostsTab({ loading, results, onLoadPage, searchQuery }) {
   const { items, total, page, limit } = results;
-  const totalPages = Math.ceil(total / limit);
 
   if (loading) {
     return (
@@ -34,8 +35,13 @@ export function SearchPostsTab({ loading, results, onLoadPage }) {
 
   return (
     <div className='space-y-3'>
+      {/* 结果计数 */}
+      <div className='text-sm text-muted-foreground px-3 sm:px-0'>
+        搜索 <span className='font-medium text-foreground'>{searchQuery}</span> 共 {total} 条结果
+      </div>
+
       {/* 回复列表 */}
-      <div className='space-y-3'>
+      <div className='mx-3 sm:mx-0 space-y-3'>
         {items.map((post) => (
           <Link
             key={post.id}
@@ -43,10 +49,10 @@ export function SearchPostsTab({ loading, results, onLoadPage }) {
             className='block bg-card border border-border rounded-lg p-4 hover:bg-accent/50 transition-colors'
           >
             <div className='text-sm font-medium text-muted-foreground mb-2'>
-              {post.topicTitle}
+              <HighlightText text={post.topicTitle} keyword={searchQuery} />
             </div>
             <div className='text-card-foreground line-clamp-3 mb-3'>
-              {post.content}
+              <HighlightText text={post.content} keyword={searchQuery} />
             </div>
             <div className='flex items-center text-xs text-muted-foreground'>
               <span className='font-medium'>{post.username}</span>
@@ -54,39 +60,22 @@ export function SearchPostsTab({ loading, results, onLoadPage }) {
               <span>#{post.postNumber}</span>
               <span className='mx-2'>·</span>
               <span>
-                {new Date(post.createdAt).toLocaleDateString()}
+                <Time date={post.createdAt} fromNow />
               </span>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* 分页 */}
+      {/* 统一分页组件 */}
       {total > limit && (
-        <div className='flex justify-center mt-6'>
-          <div className='flex items-center gap-1'>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={page === 1}
-              onClick={() => onLoadPage('posts', page - 1)}
-              className='text-sm'
-            >
-              上一页
-            </Button>
-            <span className='text-sm text-muted-foreground px-4'>
-              第 {page} 页 / 共 {totalPages} 页
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={page >= totalPages}
-              onClick={() => onLoadPage('posts', page + 1)}
-              className='text-sm'
-            >
-              下一页
-            </Button>
-          </div>
+        <div className='mx-3 sm:mx-0'>
+          <Pager
+            total={total}
+            page={page}
+            pageSize={limit}
+            onPageChange={(p) => onLoadPage('posts', p)}
+          />
         </div>
       )}
     </div>
