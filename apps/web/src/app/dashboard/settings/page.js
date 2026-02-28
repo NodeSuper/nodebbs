@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -82,10 +83,20 @@ const navigationGroups = [
 // 提取所有 items 为一维数组方便查找
 const flatNavigationItems = navigationGroups.flatMap(group => group.items);
 
-export default function SystemSettingsPage() {
+function SystemSettingsContent() {
   const { settings, loading, updateSetting } = useSettings();
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
+  
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'general';
+
+  const setActiveTab = (tabId) => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('tab', tabId);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const handleSave = async (key, value) => {
     setSaving(true);
@@ -259,5 +270,13 @@ export default function SystemSettingsPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function SystemSettingsPage() {
+  return (
+    <Suspense fallback={<Loading text='加载中...' className='min-h-[400px]' />}>
+      <SystemSettingsContent />
+    </Suspense>
   );
 }
