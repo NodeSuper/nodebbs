@@ -49,7 +49,7 @@ export function SmsSettings() {
   };
 
   if (loading) {
-    return <Loading text='加载中...' className='min-h-[200px]' />;
+    return <Loading text='加载中...' className='min-h-50' />;
   }
 
   if (providers.length === 0) {

@@ -66,7 +66,7 @@ export function GeneralSettings({
               defaultValue={settings.site_description.value}
               onBlur={(e) => handleStringChange('site_description', e.target.value)}
               disabled={saving}
-              className='w-full max-w-xl min-h-[80px] resize-y'
+              className='w-full max-w-xl min-h-20 resize-y'
             />
           </SettingItem>
         )}
@@ -99,7 +99,7 @@ export function GeneralSettings({
               defaultValue={settings.site_keywords.value}
               onBlur={(e) => handleStringChange('site_keywords', e.target.value)}
               disabled={saving}
-              className='w-full max-w-xl min-h-[80px] resize-y'
+              className='w-full max-w-xl min-h-20 resize-y'
               placeholder='论坛,社区,讨论'
             />
           </SettingItem>
@@ -155,7 +155,7 @@ export function GeneralSettings({
               defaultValue={settings.site_analytics_scripts.value}
               onBlur={(e) => handleStringChange('site_analytics_scripts', e.target.value)}
               disabled={saving}
-              className='w-full min-h-[140px] font-mono text-xs resize-y'
+              className='w-full min-h-35 font-mono text-xs resize-y'
               placeholder='<script>...</script>'
             />
           </SettingItem>
@@ -172,7 +172,7 @@ export function GeneralSettings({
               defaultValue={settings.site_footer_html.value}
               onBlur={(e) => handleStringChange('site_footer_html', e.target.value)}
               disabled={saving}
-              className='w-full min-h-[140px] font-mono text-xs resize-y'
+              className='w-full min-h-35 font-mono text-xs resize-y'
               placeholder='<span>...</span>'
             />
           </SettingItem>

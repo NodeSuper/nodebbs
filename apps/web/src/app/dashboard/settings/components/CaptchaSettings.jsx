@@ -67,7 +67,7 @@ export function CaptchaSettings() {
   };
 
   if (loading) {
-    return <Loading text="加载中..." className="min-h-[200px]" />;
+    return <Loading text="加载中..." className="min-h-50" />;
   }
 
   return (
@@ -275,7 +275,7 @@ function CaptchaProviderCard({
               value={formData.config.mode || 'managed'}
               onValueChange={(v) => updateConfig('mode', v)}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -136,7 +136,7 @@ function SystemSettingsContent() {
   };
 
   if (loading) {
-    return <Loading text='加载中...' className='min-h-[400px]' />;
+    return <Loading text='加载中...' className='min-h-100' />;
   }
 
   const activeItem = flatNavigationItems.find(item => item.id === activeTab);
@@ -171,7 +171,7 @@ function SystemSettingsContent() {
   };
 
   return (
-    <div className='space-y-6 max-w-[1400px] mx-auto pb-10'>
+    <div className='space-y-6'>
 
       {/* 移动端选择器 */}
       <div className='lg:hidden'>
@@ -197,7 +197,7 @@ function SystemSettingsContent() {
                   return (
                     <SelectItem key={item.id} value={item.id}>
                       <div className='flex items-center gap-3 py-1'>
-                        <Icon className='h-[18px] w-[18px] opacity-70' />
+                        <Icon className='h-4.5 w-4.5 opacity-70' />
                         <div>
                           <div className='font-medium'>{item.label}</div>
                         </div>
@@ -222,7 +222,7 @@ function SystemSettingsContent() {
                 <h4 className="px-2 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
                   {group.group}
                 </h4>
-                <div className="space-y-[2px]">
+                <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeTab === item.id;
@@ -239,7 +239,7 @@ function SystemSettingsContent() {
                         )}
                       >
                         {isActive && (
-                          <div className="absolute left-0 -ml-2 h-full w-[3px] rounded-r-full bg-primary" />
+                          <div className="absolute left-0 -ml-2 h-full w-0.75 rounded-r-full bg-primary" />
                         )}
                         <Icon className={cn(
                           'h-4 w-4 shrink-0 transition-colors',
@@ -275,7 +275,7 @@ function SystemSettingsContent() {
 
 export default function SystemSettingsPage() {
   return (
-    <Suspense fallback={<Loading text='加载中...' className='min-h-[400px]' />}>
+    <Suspense fallback={<Loading text='加载中...' className='min-h-100' />}>
       <SystemSettingsContent />
     </Suspense>
   );
