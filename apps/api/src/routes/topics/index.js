@@ -545,11 +545,6 @@ export default async function topicRoutes(fastify, options) {
         return reply.code(404).send({ error: '话题不存在' });
       }
 
-      // 检查已删除话题的访问权限：只有版主可以查看
-      if (topic.isDeleted && !canManageTopics) {
-        return reply.code(404).send({ error: '话题不存在' });
-      }
-
       // 异步增加浏览量（不阻塞响应）
       db.update(topics)
         .set({ 
@@ -574,11 +569,11 @@ export default async function topicRoutes(fastify, options) {
           and(
             eq(posts.topicId, id),
             eq(posts.postNumber, 1),
-            eq(posts.isDeleted, false)
+            ...(canManageTopics ? [] : [eq(posts.isDeleted, false)])
           )
         )
         .limit(1),
-        
+
         // 获取最后一条回复以确定最大楼层号
         db.select({
           postNumber: posts.postNumber,
@@ -599,11 +594,12 @@ export default async function topicRoutes(fastify, options) {
       const [
         topicTagsList,
         // eslint-disable-next-line no-unused-vars
-        _enrichResult, 
+        _enrichResult,
         likeResult,
         bookmarkResult,
         subscriptionResult,
-        blockResult
+        blockResult,
+        topicPermissions
       ] = await Promise.all([
         // 0. 获取标签
         db.select({
@@ -644,7 +640,14 @@ export default async function topicRoutes(fastify, options) {
                 )
               )
               .limit(1)
-          : Promise.resolve([])
+          : Promise.resolve([]),
+
+        // 6. 操作权限
+        getTopicPermissions({
+          permission: fastify.permission,
+          user: request.user,
+          topic,
+        })
       ]);
 
       const isFirstPostLiked = likeResult.length > 0;
@@ -652,20 +655,16 @@ export default async function topicRoutes(fastify, options) {
       const isSubscribed = subscriptionResult.length > 0;
       const isBlockedUser = blockResult.length > 0;
 
-      // 计算用户对该话题的操作权限
-      const topicPermissions = await getTopicPermissions({
-        permission: fastify.permission,
-        user: request.user,
-        topic,
-      });
+      // 排除内部字段，避免泄露给客户端
+      const { categoryIsPrivate, userIsBanned, ...safeTopicData } = topic;
 
       return {
-        ...topic,
+        ...safeTopicData,
         content: firstPost?.content || '',
         firstPostId: firstPost?.id,
         firstPostLikeCount: firstPost?.likeCount || 0,
         // 如果被封禁则覆盖头像
-        userAvatar: shouldHideUserInfo({ isBanned: topic.userIsBanned }, canManageTopics) ? null : topic.userAvatar,
+        userAvatar: shouldHideUserInfo({ isBanned: userIsBanned }, canManageTopics) ? null : safeTopicData.userAvatar,
 
         isFirstPostLiked,
         editCount: firstPost?.editCount || 0,
@@ -674,7 +673,6 @@ export default async function topicRoutes(fastify, options) {
         tags: topicTagsList,
         isBookmarked,
         isSubscribed,
-        viewCount: topic.viewCount + 1, // Return incremented count
         userAvatarFrame: authorInfo.avatarFrame || null,
         userBadges: authorInfo.badges || [],
         userDisplayRole: authorInfo.displayRole || null,
