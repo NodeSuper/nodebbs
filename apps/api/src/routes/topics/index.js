@@ -610,7 +610,6 @@ export default async function topicRoutes(fastify, options) {
           id: tags.id,
           name: tags.name,
           slug: tags.slug,
-          color: tags.color,
         })
         .from(topicTags)
         .innerJoin(tags, eq(topicTags.tagId, tags.id))
