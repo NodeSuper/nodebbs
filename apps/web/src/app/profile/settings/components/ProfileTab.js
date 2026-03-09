@@ -90,20 +90,24 @@ export function ProfileTab() {
                   disabled
                   className='bg-muted flex-1'
                 />
-                {settings.allow_username_change?.value && (
+                {(settings.allow_username_change?.value || user.needsUsernameSetup) && (
                   <Button
                     type='button'
                     variant='outline'
                     size='sm'
                     onClick={usernameChange.openDialog}
-                    disabled={!usernameChange.usernameInfo?.canChange}
+                    disabled={!user.needsUsernameSetup && !usernameChange.usernameInfo?.canChange}
                   >
                     <Edit className='h-4 w-4' />
-                    修改
+                    {user.needsUsernameSetup ? '设置用户名' : '修改'}
                   </Button>
                 )}
               </div>
-              {settings.allow_username_change?.value ? (
+              {user.needsUsernameSetup ? (
+                <p className='text-xs text-muted-foreground mt-1'>
+                  系统为你生成了临时用户名，请设置你的专属用户名
+                </p>
+              ) : settings.allow_username_change?.value ? (
                 <p className='text-xs text-muted-foreground mt-1'>
                   {usernameChange.usernameInfo?.canChange ? (
                     <>
@@ -126,16 +130,16 @@ export function ProfileTab() {
               )}
             </div>
 
-            {/* 姓名 */}
+            {/* 昵称 */}
             <div>
               <Label className='text-sm font-medium text-card-foreground block mb-2'>
-                姓名 *
+                昵称 *
               </Label>
               <Input
                 type='text'
                 value={formData.name}
                 onChange={(e) => updateField('name', e.target.value)}
-                placeholder='请输入姓名'
+                placeholder='请输入昵称'
                 required
               />
             </div>

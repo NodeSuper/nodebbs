@@ -75,7 +75,9 @@ export function usePhoneLoginForm({ onSuccess } = {}) {
       const result = await loginByPhone(phone.trim(), code.trim());
 
       if (result.success) {
-        if (result.needSetPassword) {
+        if (result.isNewUser) {
+          toast.success('登录成功！建议前往「个人设置」设置你的用户名和密码');
+        } else if (result.needSetPassword) {
           toast.success('登录成功！建议前往设置页面设置登录密码');
         } else {
           toast.success('登录成功！');

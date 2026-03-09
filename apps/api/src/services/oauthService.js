@@ -9,6 +9,7 @@ import { users, accounts } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import crypto from 'crypto';
 import { normalizeEmail } from '../utils/normalization.js';
+import { generateAutoUsername, generateUniqueUsername } from './usernameService.js';
 import { getSetting } from './settingsService.js';
 import { getPermissionService } from './permissionService.js';
 
@@ -166,11 +167,16 @@ export async function findUserByEmail(email) {
  */
 export async function createOAuthUser(profile, provider, { ip } = {}) {
   const { email, name, avatar } = profile;
-  
-  // 生成唯一用户名
-  let username = profile.username || email?.split('@')[0] || `${provider}_user`;
-  username = await generateUniqueUsername(username);
 
+  // 生成唯一用户名
+  // 有身份信息时保留原始用户名，无身份信息时生成 ~{provider}_ 前缀的自动用户名
+  const baseUsername = profile.username || email?.split('@')[0];
+  let username;
+  if (baseUsername) {
+    username = await generateUniqueUsername(baseUsername);
+  } else {
+    username = await generateAutoUsername(provider);
+  }
   // 检查是否是第一个用户
   const userCount = await db.select({ count: count() }).from(users);
   const isFirstUser = userCount[0].count === 0;
@@ -181,7 +187,7 @@ export async function createOAuthUser(profile, provider, { ip } = {}) {
       username,
       email: email || `${provider}_${profile.id}@oauth.local`, // 如果没有邮箱，生成虚拟邮箱
       passwordHash: null, // OAuth 用户没有密码
-      name: name || username,
+      name: name || (username.startsWith('~') ? provider.charAt(0).toUpperCase() + provider.slice(1) : username),
       avatar: avatar || null,
       role: isFirstUser ? 'admin' : 'user',
       isEmailVerified: !!email, // 如果有邮箱，认为已验证
@@ -302,54 +308,5 @@ export async function getUserAccounts(userId) {
     .where(eq(accounts.userId, userId));
 
   return userAccounts;
-}
-
-/**
- * 生成唯一用户名
- */
-async function generateUniqueUsername(baseUsername) {
-  // 清理用户名，只保留字母数字和下划线
-  let username = baseUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-  
-  // 确保用户名长度在 3-50 之间
-  if (username.length < 3) {
-    username = username + '_user';
-  }
-  if (username.length > 50) {
-    username = username.substring(0, 50);
-  }
-
-  // 检查用户名是否已存在
-  const [existingUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, username))
-    .limit(1);
-
-  if (!existingUser) {
-    return username;
-  }
-
-  // 如果已存在，添加随机后缀
-  let attempts = 0;
-  while (attempts < 10) {
-    const suffix = crypto.randomBytes(2).toString('hex');
-    const newUsername = `${username}_${suffix}`;
-    
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, newUsername))
-      .limit(1);
-
-    if (!user) {
-      return newUsername;
-    }
-    
-    attempts++;
-  }
-
-  // 最后使用时间戳
-  return `${username}_${Date.now()}`;
 }
 

@@ -7,26 +7,7 @@ import {
   verifyCode,
   deleteVerificationCode,
 } from '../../plugins/message/utils/verificationCode.js';
-
-/**
- * 生成唯一用户名
- * 格式: phone_{后4位}_{随机4位}
- */
-async function generateUniqueUsername(phone) {
-  const last4 = phone.slice(-4);
-  for (let i = 0; i < 10; i++) {
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    const username = `phone_${last4}_${rand}`;
-    const [existing] = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, username))
-      .limit(1);
-    if (!existing) return username;
-  }
-  // 极端情况：使用时间戳
-  return `phone_${last4}_${Date.now().toString(36)}`;
-}
+import { generateAutoUsername } from '../../services/usernameService.js';
 
 export default async function phoneLoginRoute(fastify) {
   // 手机号验证码登录（用户不存在则自动注册）
@@ -88,7 +69,7 @@ export default async function phoneLoginRoute(fastify) {
         isNewUser = true;
         needSetPassword = true;
 
-        const username = await generateUniqueUsername(phone);
+        const username = await generateAutoUsername('phone');
 
         const [newUser] = await db
           .insert(users)

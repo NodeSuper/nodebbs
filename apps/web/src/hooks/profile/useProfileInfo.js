@@ -85,7 +85,7 @@ export function useProfileInfo() {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      toast.error('姓名不能为空');
+      toast.error('昵称不能为空');
       return;
     }
 

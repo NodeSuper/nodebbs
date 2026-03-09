@@ -54,7 +54,9 @@ export function useUsernameChange() {
       return;
     }
 
-    if (settings.username_change_requires_password?.value && !formData.password) {
+    const isInitialSetup = user?.needsUsernameSetup;
+
+    if (!isInitialSetup && settings.username_change_requires_password?.value && !formData.password) {
       toast.error('请输入当前密码');
       return;
     }

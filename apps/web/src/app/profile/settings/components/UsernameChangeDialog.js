@@ -24,20 +24,26 @@ export function UsernameChangeDialog({
     usernameInfo,
   } = usernameChange;
 
+  const isInitialSetup = user?.needsUsernameSetup;
+
   return (
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="修改用户名"
+      title={isInitialSetup ? '设置用户名' : '修改用户名'}
       description={
-        <span>
+        isInitialSetup ? (
+          <span>为你的账号设置一个专属用户名</span>
+        ) : (
+          <span>
             {usernameInfo?.cooldownDays > 0 &&
               `修改后需等待 ${usernameInfo.cooldownDays} 天才能再次修改`}
             {usernameInfo?.remainingChanges >= 0 &&
               ` · 剩余修改次数：${usernameInfo.remainingChanges}次`}
-        </span>
+          </span>
+        )
       }
-      submitText={loading ? '修改中...' : '确认修改'}
+      submitText={loading ? (isInitialSetup ? '设置中...' : '修改中...') : (isInitialSetup ? '确认设置' : '确认修改')}
       onSubmit={handleSubmit}
       loading={loading}
       onCancel={() => {
@@ -66,7 +72,7 @@ export function UsernameChangeDialog({
               disabled={loading}
             />
           </div>
-          {settings.username_change_requires_password?.value && (
+          {!isInitialSetup && settings.username_change_requires_password?.value && (
             <div>
               <Label className='text-sm font-medium text-card-foreground block mb-2'>
                 当前密码 *
