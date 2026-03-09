@@ -8,7 +8,7 @@ import { Dialog, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import ImageViewer from './ImageViewer';
 
-const DEFAULT_OVERLAY_OPACITY = 0.5;
+const DEFAULT_OVERLAY_OPACITY = 0.9;
 
 function ImagePreview({
   open,
@@ -66,11 +66,9 @@ function ImagePreview({
   }, [open, initialIndex, total]);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
       setOverlayOpacity(overlayBaseOpacity);
-      return;
     }
-    setOverlayOpacity(overlayBaseOpacity);
   }, [open, activeIndex, overlayBaseOpacity]);
 
   useEffect(() => {
@@ -99,61 +97,57 @@ function ImagePreview({
         <DialogOverlay style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }} />
         <DialogPrimitive.Content
           data-slot="dialog-content"
-          className="fixed top-1/2 left-1/2 z-50 h-[95vh] w-[95vw] max-h-[95vh]! max-w-[95vw]! -translate-x-1/2 -translate-y-1/2 bg-transparent p-0 shadow-none border-0 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200"
+          className="fixed top-1/2 left-1/2 z-50 h-dvh w-screen max-h-dvh! max-w-[100vw]! -translate-x-1/2 -translate-y-1/2 bg-transparent p-0 shadow-none border-0 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200"
         >
-          <div className="relative w-full h-full flex items-center justify-center">
-            {/* 关闭按钮 */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onOpenChange?.(false)}
-              className="absolute top-4 right-4 z-50 rounded-full bg-background/80 backdrop-blur-md"
-              aria-label="关闭"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+          <div className="relative w-full h-full flex items-center justify-center group">
+            {/* 顶部按钮区域 */}
+            <div className="absolute top-0 left-0 right-0 p-3 flex justify-end items-start z-50 pointer-events-none">
+              {/* 操作区：右上角组合 */}
+              <div className="flex items-center gap-3">
+                {/* 新窗口打开 */}
+                <a
+                  href={currentImage.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors pointer-events-auto"
+                  aria-label="在新窗口打开"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </a>
 
-            {/* 新窗口打开按钮 */}
-            <Button
-              variant="outline"
-              size="icon"
-              asChild
-              className="absolute top-4 right-16 z-50 rounded-full bg-background/80 backdrop-blur-md"
-            >
-              <a
-                href={currentImage.src}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="在新窗口打开"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ExternalLink className="w-5 h-5" />
-              </a>
-            </Button>
+                {/* 关闭按钮 */}
+                <button
+                  onClick={() => onOpenChange?.(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors pointer-events-auto"
+                  aria-label="关闭"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
             {/* 上一张/下一张 */}
             {showNavButtons && total > 1 && (
               <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePrev}
-                  disabled={!canPrev}
-                  className="absolute left-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-background/80 backdrop-blur-md disabled:bg-background/30 disabled:backdrop-blur-none disabled:border-border/50"
-                  aria-label="上一张"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNext}
-                  disabled={!canNext}
-                  className="absolute right-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-background/80 backdrop-blur-md disabled:bg-background/30 disabled:backdrop-blur-none disabled:border-border/50"
-                  aria-label="下一张"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
+                {canPrev && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                    className="absolute left-4 top-1/2 z-50 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-all sm:opacity-0 sm:group-hover:opacity-100 pointer-events-auto"
+                    aria-label="上一张"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                )}
+                {canNext && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                    className="absolute right-4 top-1/2 z-50 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-all sm:opacity-0 sm:group-hover:opacity-100 pointer-events-auto"
+                    aria-label="下一张"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                )}
               </>
             )}
 

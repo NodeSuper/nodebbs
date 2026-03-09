@@ -142,12 +142,16 @@ function ImageViewer({ src, alt, onClose, overlayBaseOpacity = 0.5, onOverlayOpa
 
   const endCloseDrag = () => {
     const rawDeltaY = closeDragRef.current.rawDeltaY;
-    resetCloseDrag();
 
     if (Math.abs(rawDeltaY) > CLOSE_SWIPE_THRESHOLD) {
+      // 达到阈值准备关闭时，不重置状态，以免动画跳变/闪烁
+      closeDragRef.current.active = false;
+      closeDragRef.current.candidate = false;
       onClose?.();
       return;
     }
+
+    resetCloseDrag();
   };
 
   const handlePointerDown = (e) => {
