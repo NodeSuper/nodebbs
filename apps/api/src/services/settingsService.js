@@ -1,10 +1,9 @@
 import db from '../db/index.js';
 import { systemSettings } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
 
-// 缓存系统配置 - 使用 Map 存储每个 key 的独立缓存
-// Map 结构: key -> { value: any, timestamp: number }
-const settingsCache = new Map();
+// 全量缓存 - 一次查询加载所有设置，避免逐 key 查询
+let allCache = null; // { [key]: value }
+let cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 1分钟缓存
 
 /**
@@ -28,6 +27,40 @@ function parseSettingValue(settingValue, valueType, key) {
   return value;
 }
 
+// 防止并发请求重复加载
+let loadingPromise = null;
+
+/**
+ * 加载全部设置到缓存
+ */
+async function loadAllSettings() {
+  const now = Date.now();
+  if (allCache && now - cacheTimestamp < CACHE_TTL) {
+    return allCache;
+  }
+
+  // 避免缓存失效瞬间多个并发请求同时查库
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  loadingPromise = (async () => {
+    const settings = await db.select().from(systemSettings);
+    allCache = settings.reduce((acc, setting) => {
+      acc[setting.key] = parseSettingValue(setting.value, setting.valueType, setting.key);
+      return acc;
+    }, {});
+    cacheTimestamp = Date.now();
+    return allCache;
+  })();
+
+  try {
+    return await loadingPromise;
+  } finally {
+    loadingPromise = null;
+  }
+}
+
 /**
  * 获取系统配置值
  * @param {string} key - 配置键名
@@ -35,31 +68,9 @@ function parseSettingValue(settingValue, valueType, key) {
  * @returns {Promise<any>} 配置值
  */
 export async function getSetting(key, defaultValue = null) {
-  // 检查缓存
-  const now = Date.now();
-  const cached = settingsCache.get(key);
-
-  if (cached && now - cached.timestamp < CACHE_TTL) {
-    return cached.value;
-  }
-
   try {
-    const [setting] = await db
-      .select()
-      .from(systemSettings)
-      .where(eq(systemSettings.key, key))
-      .limit(1);
-
-    if (!setting) {
-      return defaultValue;
-    }
-
-    const value = parseSettingValue(setting.value, setting.valueType, key);
-
-    // 更新缓存 - 每个 key 有独立的时间戳
-    settingsCache.set(key, { value, timestamp: now });
-
-    return value;
+    const all = await loadAllSettings();
+    return key in all ? all[key] : defaultValue;
   } catch (error) {
     // 表不存在时（数据库未初始化），静默返回默认值
     if (error?.cause?.code === '42P01') {
@@ -74,7 +85,8 @@ export async function getSetting(key, defaultValue = null) {
  * 清除配置缓存
  */
 export function clearSettingsCache() {
-  settingsCache.clear();
+  allCache = null;
+  cacheTimestamp = 0;
 }
 
 /**
@@ -88,14 +100,7 @@ export const getSettingValue = getSetting;
  */
 export async function getAllSettings() {
   try {
-    const settings = await db.select().from(systemSettings);
-
-    const formattedSettings = settings.reduce((acc, setting) => {
-      acc[setting.key] = parseSettingValue(setting.value, setting.valueType, setting.key);
-      return acc;
-    }, {});
-
-    return formattedSettings;
+    return await loadAllSettings();
   } catch (error) {
     console.error('[设置] 获取所有配置项失败:', error);
     return {};
