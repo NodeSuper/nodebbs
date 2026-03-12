@@ -1179,5 +1179,13 @@ export { emojiApi } from '../extensions/emojis/api';
 // ============= 广告系统 API =============
 export { adsApi } from '../extensions/ads/api';
 
+// ============= Webhook 配置 API =============
+export const webhookConfigApi = {
+  // 测试 Webhook 连接
+  async testWebhook(url, secret) {
+    return apiClient.post('/settings/webhook/test', { url, secret });
+  },
+};
+
 // 导出 API 客户端实例
 export default apiClient;

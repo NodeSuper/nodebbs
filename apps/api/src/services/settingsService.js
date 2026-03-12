@@ -8,6 +8,27 @@ const settingsCache = new Map();
 const CACHE_TTL = 60000; // 1分钟缓存
 
 /**
+ * 将数据库中的字符串形式值根据 valueType 转换为真实的 JS 类型
+ */
+function parseSettingValue(settingValue, valueType, key) {
+  let value = settingValue;
+
+  if (valueType === 'boolean') {
+    value = settingValue === 'true';
+  } else if (valueType === 'number') {
+    value = parseFloat(settingValue);
+  } else if (valueType === 'json') {
+    try {
+      value = JSON.parse(settingValue);
+    } catch (e) {
+      console.error(`[设置] JSON 格式解析失败 (key: ${key}):`, e);
+    }
+  }
+
+  return value;
+}
+
+/**
  * 获取系统配置值
  * @param {string} key - 配置键名
  * @param {any} defaultValue - 默认值
@@ -33,12 +54,7 @@ export async function getSetting(key, defaultValue = null) {
       return defaultValue;
     }
 
-    let value = setting.value;
-    if (setting.valueType === 'boolean') {
-      value = setting.value === 'true';
-    } else if (setting.valueType === 'number') {
-      value = parseFloat(setting.value);
-    }
+    const value = parseSettingValue(setting.value, setting.valueType, key);
 
     // 更新缓存 - 每个 key 有独立的时间戳
     settingsCache.set(key, { value, timestamp: now });
@@ -75,13 +91,7 @@ export async function getAllSettings() {
     const settings = await db.select().from(systemSettings);
 
     const formattedSettings = settings.reduce((acc, setting) => {
-      let value = setting.value;
-      if (setting.valueType === 'boolean') {
-        value = setting.value === 'true';
-      } else if (setting.valueType === 'number') {
-        value = parseFloat(setting.value);
-      }
-      acc[setting.key] = value;
+      acc[setting.key] = parseSettingValue(setting.value, setting.valueType, setting.key);
       return acc;
     }, {});
 

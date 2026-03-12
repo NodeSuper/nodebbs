@@ -23,7 +23,8 @@ import {
   Gauge,
   Unplug,
   Send,
-  HardDrive
+  HardDrive,
+  Webhook
 } from 'lucide-react';
 import { Loading } from '@/components/common/Loading';
 
@@ -39,6 +40,7 @@ import { CaptchaSettings } from './components/CaptchaSettings';
 import { OAuthSettings } from './components/OAuthProviderCard';
 import { MessageSettings } from './components/MessageSettings';
 import { StorageSettings } from './components/StorageProviderCard';
+import { WebhookSettings } from './components/WebhookSettings';
 
 // 扁平化的全局导航菜单
 const navigationGroups = [
@@ -76,6 +78,7 @@ const navigationGroups = [
     items: [
       { id: 'message', label: '消息服务', icon: Send, description: '邮件(SMTP/Resend)与短信通道' },
       { id: 'storage', label: '存储服务', icon: HardDrive, description: '本地存储与 S3 兼容对象网关' },
+      { id: 'webhook', label: 'Webhook 集成', icon: Webhook, description: '事件通知与外部系统集成' },
     ]
   }
 ];
@@ -165,6 +168,8 @@ function SystemSettingsContent() {
         return <MessageSettings />;
       case 'storage':
         return <StorageSettings />;
+      case 'webhook':
+        return <WebhookSettings />;
       default:
         return null;
     }

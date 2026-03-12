@@ -6,6 +6,7 @@ import {
   SETTING_KEYS,
   SETTINGS_MAP,
 } from '../../config/systemSettings.js';
+import { sendWebhookRequest } from '../../utils/webhook.js';
 
 /**
  * 检查用户是否有权限访问某个设置
@@ -272,6 +273,49 @@ export default async function settingsRoutes(fastify) {
       } catch (error) {
         fastify.log.error('Error updating setting:', error);
         return reply.code(500).send({ error: '更新配置失败' });
+      }
+    }
+  );
+
+  // 测试 Webhook 连接
+  fastify.post(
+    '/webhook/test',
+    {
+      preHandler: [fastify.requirePermission('dashboard.settings')],
+      schema: {
+        tags: ['settings'],
+        description: '测试 Webhook 连接',
+        body: {
+          type: 'object',
+          properties: {
+            url: { type: 'string' },
+            secret: { type: 'string' },
+          },
+          required: ['url'],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { url, secret } = request.body;
+
+      try {
+        const testData = { message: 'This is a test webhook from NodeBBS' };
+        const response = await sendWebhookRequest(url, 'webhook.test', testData, { secret, timeout: 5000 });
+
+        if (!response.ok) {
+          return reply.code(400).send({
+            success: false,
+            message: `Webhook 响应错误: ${response.status}`,
+          });
+        }
+
+        return { success: true, message: 'Webhook 测试成功' };
+      } catch (error) {
+        fastify.log.error('Webhook 测试失败:', error);
+        return reply.code(400).send({
+          success: false,
+          message: error.message || 'Webhook 测试失败',
+        });
       }
     }
   );

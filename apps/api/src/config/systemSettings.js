@@ -20,6 +20,7 @@ export const CATEGORY_NAMES = {
   user_settings: '用户设置',
   spam_protection: '垃圾注册拦截',
   rate_limit: '访问限速',
+  webhook: 'Webhook 集成',
   other: '其他设置',
 };
 
@@ -300,6 +301,16 @@ export const SETTING_KEYS = {
     valueType: 'number',
     description: '已登录用户的限速倍数',
     category: 'rate_limit',
+    accessLevel: ACCESS_LEVEL.ADMIN,
+  },
+
+  // ============ Webhook 设置 ============
+  WEBHOOK_CONFIG: {
+    key: 'webhook_config',
+    defaultValue: '{"enabled":false,"url":"","secret":"","events":[],"retryCount":3,"timeout":5000}',
+    valueType: 'json',
+    description: 'Webhook 综合配置',
+    category: 'webhook',
     accessLevel: ACCESS_LEVEL.ADMIN,
   },
 };
