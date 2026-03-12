@@ -1,7 +1,7 @@
 import db from '../../db/index.js';
 import { categories, topics } from '../../db/schema.js';
 import { eq, sql, desc, isNull, like, and, or, count, inArray } from 'drizzle-orm';
-import slugify from 'slug';
+import { generateSlug } from '../../utils/slug.js';
 
 export default async function categoryRoutes(fastify, options) {
   // 批量更新分类排序（仅管理员）
@@ -276,9 +276,9 @@ export default async function categoryRoutes(fastify, options) {
     const { name, description, color, icon, parentId, position, isPrivate, isFeatured } = request.body;
     let { slug } = request.body;
 
-    // 未提供标识时自动生成
+    // 未提供标识时自动生成，并限制长度
     if (!slug) {
-      slug = slugify(name);
+      slug = generateSlug(name, { maxLength: 100 });
     }
 
     // 检查标识是否已存在

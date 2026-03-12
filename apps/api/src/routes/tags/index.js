@@ -1,7 +1,7 @@
 import db from '../../db/index.js';
 import { tags, topicTags, topics } from '../../db/schema.js';
 import { eq, sql, desc, like, count } from 'drizzle-orm';
-import slugify from 'slug';
+import { generateSlug } from '../../utils/slug.js';
 
 export default async function tagRoutes(fastify, options) {
   // 获取所有标签
@@ -158,9 +158,9 @@ export default async function tagRoutes(fastify, options) {
     const { name, description, color } = request.body;
     let { slug } = request.body;
 
-    // 未提供标识时自动生成
+    // 未提供标识时自动生成，并限制长度
     if (!slug) {
-      slug = slugify(name);
+      slug = generateSlug(name, { maxLength: 50 });
     }
 
     // 检查标签是否已存在

@@ -1,5 +1,6 @@
 import { eq, sql, desc, and, or, like, inArray, not, count, lt } from 'drizzle-orm';
-import slugify from 'slug';
+import { generateSlug } from '../../utils/slug.js';
+import { nanoid } from 'nanoid';
 
 import db from '../../db/index.js';
 import { EVENTS } from '../../constants/events.js';
@@ -801,8 +802,8 @@ export default async function topicRoutes(fastify, options) {
       );
       const approvalStatus = contentModerationEnabled ? 'pending' : 'approved';
 
-      // 生成 slug
-      const slug = slugify(title) + '-' + Date.now();
+      // 生成 slug，使用 5 位随机字符作为后缀，并限制总长度不超过 100
+      const slug = generateSlug(title, { suffix: nanoid(5).toLowerCase(), maxLength: 100 });
 
       // 创建话题
       const [newTopic] = await db
@@ -837,7 +838,7 @@ export default async function topicRoutes(fastify, options) {
         if (canUseTags) {
           const canCreateTags = await fastify.permission.can(request, 'tag.create');
           for (const tagName of tagNames) {
-            const tagSlug = slugify(tagName);
+            const tagSlug = generateSlug(tagName);
 
             // 获取或创建标签
             let [tag] = await db
@@ -980,9 +981,9 @@ export default async function topicRoutes(fastify, options) {
       const { content, tags: tagNames, ...topicUpdates } = request.body;
       const updates = { ...topicUpdates };
 
-      // 如果标题变更，更新 slug
+      // 如果标题变更，更新 slug，并限制总长度不超过 100
       if (request.body.title) {
-        updates.slug = slugify(request.body.title) + '-' + topic.id;
+        updates.slug = generateSlug(request.body.title, { suffix: topic.id, maxLength: 100 });
       }
 
       // 审核状态变更跟踪
@@ -1091,7 +1092,7 @@ export default async function topicRoutes(fastify, options) {
           if (tagNames.length > 0) {
             const canCreateTags = await fastify.permission.can(request, 'tag.create');
             for (const tagName of tagNames) {
-              const tagSlug = slugify(tagName);
+              const tagSlug = generateSlug(tagName);
 
               // 获取或创建标签
               let [tag] = await db
