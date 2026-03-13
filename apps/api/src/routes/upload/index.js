@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { dirname } from '../../utils/index.js';
 import { MAX_UPLOAD_SIZE_DEFAULT_KB, DEFAULT_ALLOWED_EXTENSIONS, EXT_MIME_MAP } from '../../constants/upload.js';
 import { files } from '../../db/schema.js';
+import { getSetting } from '../../services/settingsService.js';
 
 export default async function uploadRoutes(fastify) {
   fastify.post('/', {
@@ -137,7 +138,26 @@ export default async function uploadRoutes(fastify) {
       return reply.code(500).send({ error: '文件上传失败' });
     }
 
-    // 8. 提取图片元数据（宽高）
+    // 8. EXIF 处理：自动旋转并剥离元数据（排除 SVG、GIF）
+    const processableImage = data.mimetype.startsWith('image/')
+      && !['image/svg+xml', 'image/gif'].includes(data.mimetype);
+    if (processableImage) {
+      try {
+        const stripExif = await getSetting('upload_strip_exif', 'true');
+        if (stripExif === 'true' || stripExif === true) {
+          const processedPath = tmpPath + '.processed';
+          await sharp(tmpPath).rotate().toFile(processedPath);
+          await fs.promises.rename(processedPath, tmpPath);
+          const stat = await fs.promises.stat(tmpPath);
+          byteCount = stat.size;
+        }
+      } catch (err) {
+        fastify.log.warn('EXIF strip failed, keeping original:', err.message);
+        try { await fs.promises.unlink(tmpPath + '.processed'); } catch {}
+      }
+    }
+
+    // 9. 提取图片元数据（宽高）
     let width = null;
     let height = null;
     if (data.mimetype.startsWith('image/') && !['image/svg+xml'].includes(data.mimetype)) {
@@ -150,7 +170,7 @@ export default async function uploadRoutes(fastify) {
       }
     }
 
-    // 9. 通过 storage 插件上传文件到目标存储
+    // 10. 通过 storage 插件上传文件到目标存储
     let storageResult;
     try {
       storageResult = await fastify.storage.uploadFromFile(tmpPath, storageKey, {
@@ -169,7 +189,7 @@ export default async function uploadRoutes(fastify) {
       }
     }
 
-    // 10. 保存文件记录到数据库
+    // 11. 保存文件记录到数据库
     const url = storageResult.url;
     const provider = storageResult.provider;
     const [file] = await fastify.db.insert(files).values({
@@ -185,7 +205,7 @@ export default async function uploadRoutes(fastify) {
       provider,
     }).returning();
 
-    // 11. 返回访问 URL 和文件元数据
+    // 12. 返回访问 URL 和文件元数据
     return {
       id: file.id,
       url,
