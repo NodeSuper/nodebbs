@@ -93,9 +93,8 @@ export default async function invitationsRoutes(fastify) {
           }
 
           // 扣除积分
-          await fastify.ledger.transfer({
-               fromUserId: request.user.id,
-               toUserId: null, // Burn
+          await fastify.ledger.deduct({
+               userId: request.user.id,
                currencyCode: DEFAULT_CURRENCY_CODE,
                amount: totalCost,
                type: 'invite_create',
