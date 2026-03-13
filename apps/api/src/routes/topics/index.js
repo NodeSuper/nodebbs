@@ -750,7 +750,6 @@ export default async function topicRoutes(fastify, options) {
     {
       preHandler: [
         fastify.authenticate,
-        fastify.checkBanned,
         fastify.requireEmailVerification
       ],
       schema: {

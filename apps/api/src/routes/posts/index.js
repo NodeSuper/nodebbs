@@ -683,7 +683,6 @@ export default async function postRoutes(fastify, options) {
   fastify.post('/', {
     preHandler: [
       fastify.authenticate,
-      fastify.checkBanned,
       fastify.requireEmailVerification
     ],
     schema: {
@@ -1180,7 +1179,7 @@ export default async function postRoutes(fastify, options) {
 
   // 点赞帖子
   fastify.post('/:id/like', {
-    preHandler: [fastify.authenticate, fastify.checkBanned],
+    preHandler: [fastify.authenticate],
     schema: {
       tags: ['posts'],
       description: '点赞帖子',

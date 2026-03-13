@@ -206,30 +206,14 @@ async function authPlugin(fastify) {
 
   /**
    * 基础认证：验证 JWT 并注入用户信息到 request.user
-   * 注意：不检查封禁状态，被封禁用户仍可通过认证（可查看内容）
-   * 写操作需配合 checkBanned 使用：preHandler: [fastify.authenticate, fastify.checkBanned]
+   * 写操作（POST/PUT/PATCH/DELETE）自动检查封禁状态，GET 请求不受影响。
+   * 如需跳过写操作的封禁检查，可在路由 config 中设置 skipBanCheck: true
    */
   fastify.decorate('authenticate', async function(request, reply) {
-    await resolveUser(request, reply);
-  });
-
-  /**
-   * 封禁检查：需在 authenticate 之后使用
-   * 用于写操作（发帖、回复等），阻止被封禁用户执行
-   * 支持临时封禁自动解除
-   */
-  fastify.decorate('checkBanned', async function(request, reply) {
-    if (!request.user || !request.user.id) {
-      return reply.code(401).send({ error: '未授权', message: '请先登录' });
-    }
-
-    const banStatus = await checkUserBanStatus(request.user);
-    if (banStatus.isBanned) {
-      return reply.code(403).send({
-        error: '访问被拒绝',
-        message: getBanMessage(banStatus),
-      });
-    }
+    const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+    const skipBanCheck = request.routeOptions?.config?.skipBanCheck === true;
+    const checkBan = isWriteMethod && !skipBanCheck;
+    await resolveUser(request, reply, { checkBan });
   });
 
   /**
