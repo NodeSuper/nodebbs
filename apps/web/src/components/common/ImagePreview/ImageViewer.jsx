@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Loading } from '@/components/common/Loading';
 
 /**
  * 独立的图片查看器组件，处理缩放和拖拽逻辑
@@ -8,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 function ImageViewer({ src, alt, onClose, overlayBaseOpacity = 0.5, onOverlayOpacityChange }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isClosingGesture, setIsClosingGesture] = useState(false);
   const [closeOffsetY, setCloseOffsetY] = useState(0);
@@ -367,17 +369,22 @@ function ImageViewer({ src, alt, onClose, overlayBaseOpacity = 0.5, onOverlayOpa
       onDoubleClick={handleDoubleClick}
       onClick={handleContainerClick}
     >
+      {!isLoaded && (
+        <Loading size="lg" className="absolute text-white/70" />
+      )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={src}
         alt={alt || ''}
+        onLoad={() => setIsLoaded(true)}
         style={{
           transform: `translateY(${closeOffsetY}px) scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
           transformOrigin: 'center center',
           transition: (isDragging || isPinching || isClosingGesture) ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)',
           cursor: scale > 1 ? 'grab' : 'zoom-in',
           willChange: isDragging || isPinching || isClosingGesture ? 'transform' : undefined,
+          opacity: isLoaded ? 1 : 0,
         }}
         // 使用 max-w/h-full 确保默认状态下适应屏幕
         className="max-w-full max-h-full object-contain select-none"
