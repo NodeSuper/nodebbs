@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { SettingSection, SettingItem } from '@/components/common/SettingLayout';
 
-export function RegistrationSettings({ settings, handleStringChange, saving }) {
+export function RegistrationSettings({ settings, handleChange, saving }) {
   if (!settings.registration_mode) return null;
 
   return (
@@ -22,7 +22,7 @@ export function RegistrationSettings({ settings, handleStringChange, saving }) {
         >
           <Select
             value={settings.registration_mode.value}
-            onValueChange={(value) => handleStringChange('registration_mode', value)}
+            onValueChange={(value) => handleChange('registration_mode', value)}
             disabled={saving}
           >
             <SelectTrigger className='w-full sm:w-48'>

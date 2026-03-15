@@ -4,21 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { SettingSection, SettingItem } from '@/components/common/SettingLayout';
 
-export function UserManagementSettings({ settings, handleBooleanChange, handleNumberChange, saving }) {
-  // blur 时保存
-  const handleBlur = (key, e, originalValue) => {
-    const value = e.target.value.trim();
-    if (value === '') {
-      // 恢复原值
-      e.target.value = originalValue;
-      return;
-    }
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue !== originalValue) {
-      handleNumberChange(key, value);
-    }
-  };
-
+export function UserManagementSettings({ settings, handleChange, handleInputBlur, saving }) {
   return (
     <div className='space-y-6'>
       <SettingSection title="用户名修改" description="控制用户修改其唯一用户名的频率和权限">
@@ -31,7 +17,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='allow_username_change'
               checked={settings.allow_username_change.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('allow_username_change', checked)
+                handleChange('allow_username_change', checked)
               }
               disabled={saving}
             />
@@ -50,13 +36,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               min='0'
               className='w-32'
               defaultValue={settings.username_change_cooldown_days.value}
-              onBlur={(e) =>
-                handleBlur(
-                  'username_change_cooldown_days',
-                  e,
-                  settings.username_change_cooldown_days.value
-                )
-              }
+              onBlur={(e) => handleInputBlur('username_change_cooldown_days', e)}
               disabled={saving}
             />
           </SettingItem>
@@ -74,13 +54,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               min='0'
               className='w-32'
               defaultValue={settings.username_change_limit.value}
-              onBlur={(e) =>
-                handleBlur(
-                  'username_change_limit',
-                  e,
-                  settings.username_change_limit.value
-                )
-              }
+              onBlur={(e) => handleInputBlur('username_change_limit', e)}
               disabled={saving}
             />
           </SettingItem>
@@ -95,7 +69,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='username_change_requires_password'
               checked={settings.username_change_requires_password.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('username_change_requires_password', checked)
+                handleChange('username_change_requires_password', checked)
               }
               disabled={saving}
             />
@@ -113,7 +87,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='allow_email_change'
               checked={settings.allow_email_change.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('allow_email_change', checked)
+                handleChange('allow_email_change', checked)
               }
               disabled={saving}
             />
@@ -129,7 +103,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='email_change_requires_password'
               checked={settings.email_change_requires_password.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('email_change_requires_password', checked)
+                handleChange('email_change_requires_password', checked)
               }
               disabled={saving}
             />
@@ -147,7 +121,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='allow_phone_change'
               checked={settings.allow_phone_change.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('allow_phone_change', checked)
+                handleChange('allow_phone_change', checked)
               }
               disabled={saving}
             />
@@ -163,7 +137,7 @@ export function UserManagementSettings({ settings, handleBooleanChange, handleNu
               id='phone_change_requires_password'
               checked={settings.phone_change_requires_password.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('phone_change_requires_password', checked)
+                handleChange('phone_change_requires_password', checked)
               }
               disabled={saving}
             />

@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon } from 'lucide-react';
 import { SettingSection, SettingItem } from '@/components/common/SettingLayout';
 
-export function SpamProtectionSettings({ settings, handleBooleanChange, handleStringChange, saving }) {
+export function SpamProtectionSettings({ settings, handleChange, handleInputBlur, saving }) {
   if (!settings.spam_protection_enabled) return null;
 
   return (
@@ -21,7 +21,7 @@ export function SpamProtectionSettings({ settings, handleBooleanChange, handleSt
               id='spam_protection_enabled'
               checked={settings.spam_protection_enabled.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('spam_protection_enabled', checked)
+                handleChange('spam_protection_enabled', checked)
               }
               disabled={saving}
             />
@@ -48,7 +48,7 @@ export function SpamProtectionSettings({ settings, handleBooleanChange, handleSt
                   type='text'
                   placeholder='留空使用默认限制'
                   defaultValue={settings.spam_protection_api_key.value}
-                  onBlur={(e) => handleStringChange('spam_protection_api_key', e.target.value)}
+                  onBlur={(e) => handleInputBlur('spam_protection_api_key', e)}
                   disabled={saving}
                   className='w-64 font-mono text-sm'
                 />
@@ -64,7 +64,7 @@ export function SpamProtectionSettings({ settings, handleBooleanChange, handleSt
                   id='spam_protection_check_ip'
                   checked={settings.spam_protection_check_ip.value}
                   onCheckedChange={(checked) =>
-                    handleBooleanChange('spam_protection_check_ip', checked)
+                    handleChange('spam_protection_check_ip', checked)
                   }
                   disabled={saving}
                 />
@@ -80,7 +80,7 @@ export function SpamProtectionSettings({ settings, handleBooleanChange, handleSt
                   id='spam_protection_check_email'
                   checked={settings.spam_protection_check_email.value}
                   onCheckedChange={(checked) =>
-                    handleBooleanChange('spam_protection_check_email', checked)
+                    handleChange('spam_protection_check_email', checked)
                   }
                   disabled={saving}
                 />
@@ -96,7 +96,7 @@ export function SpamProtectionSettings({ settings, handleBooleanChange, handleSt
                   id='spam_protection_check_username'
                   checked={settings.spam_protection_check_username.value}
                   onCheckedChange={(checked) =>
-                    handleBooleanChange('spam_protection_check_username', checked)
+                    handleChange('spam_protection_check_username', checked)
                   }
                   disabled={saving}
                 />

@@ -118,24 +118,37 @@ function SystemSettingsContent() {
     }
   };
 
-  const handleBooleanChange = (key, checked) => {
-    if (settings[key] && settings[key].value !== checked) {
-      handleSave(key, checked);
+  const handleChange = (key, rawValue) => {
+    const setting = settings[key];
+    if (!setting) return;
+
+    let value = rawValue;
+    if (setting.valueType === 'number') {
+      value = parseFloat(rawValue);
+      if (isNaN(value)) return;
+    } else if (setting.valueType === 'boolean') {
+      value = Boolean(rawValue);
+    } else {
+      value = String(rawValue).trim();
+    }
+
+    if (setting.value !== value) {
+      handleSave(key, value);
     }
   };
 
-  const handleNumberChange = (key, value) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && settings[key] && settings[key].value !== numValue) {
-      handleSave(key, numValue);
-    }
-  };
+  // 通用 onBlur 处理：数字输入空值恢复，其余直接保存
+  const handleInputBlur = (key, e) => {
+    const raw = e.target.value.trim();
+    const setting = settings[key];
+    if (!setting) return;
 
-  const handleStringChange = (key, value) => {
-    const trimmedValue = value.trim();
-    if (settings[key] && settings[key].value !== trimmedValue) {
-      handleSave(key, trimmedValue);
+    if (setting.valueType === 'number' && raw === '') {
+      e.target.value = setting.value ?? '';
+      return;
     }
+
+    handleChange(key, raw);
   };
 
   if (loading) {
@@ -147,21 +160,21 @@ function SystemSettingsContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'general':
-        return <GeneralSettings settings={settings} handleStringChange={handleStringChange} handleBooleanChange={handleBooleanChange} handleNumberChange={handleNumberChange} saving={saving} />;
+        return <GeneralSettings settings={settings} handleChange={handleChange} handleInputBlur={handleInputBlur} saving={saving} />;
       case 'registration':
-        return <RegistrationSettings settings={settings} handleStringChange={handleStringChange} saving={saving} />;
+        return <RegistrationSettings settings={settings} handleChange={handleChange} saving={saving} />;
       case 'user-management':
-        return <UserManagementSettings settings={settings} handleBooleanChange={handleBooleanChange} handleNumberChange={handleNumberChange} saving={saving} />;
+        return <UserManagementSettings settings={settings} handleChange={handleChange} handleInputBlur={handleInputBlur} saving={saving} />;
       case 'security':
-        return <SecuritySettings settings={settings} handleBooleanChange={handleBooleanChange} handleNumberChange={handleNumberChange} saving={saving} />;
+        return <SecuritySettings settings={settings} handleChange={handleChange} handleInputBlur={handleInputBlur} saving={saving} />;
       case 'spam-protection':
-        return <SpamProtectionSettings settings={settings} handleBooleanChange={handleBooleanChange} handleStringChange={handleStringChange} saving={saving} />;
+        return <SpamProtectionSettings settings={settings} handleChange={handleChange} handleInputBlur={handleInputBlur} saving={saving} />;
       case 'rate-limit':
-        return <RateLimitSettings settings={settings} handleBooleanChange={handleBooleanChange} handleNumberChange={handleNumberChange} saving={saving} />;
+        return <RateLimitSettings settings={settings} handleChange={handleChange} handleInputBlur={handleInputBlur} saving={saving} />;
       case 'captcha':
         return <CaptchaSettings />;
       case 'authentication':
-        return <AuthenticationSettings settings={settings} handleBooleanChange={handleBooleanChange} handleNumberChange={handleNumberChange} saving={saving} />;
+        return <AuthenticationSettings settings={settings} handleChange={handleChange} saving={saving} />;
       case 'oauth':
         return <OAuthSettings />;
       case 'message':

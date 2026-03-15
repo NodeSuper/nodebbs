@@ -10,9 +10,8 @@ import { SettingSection, SettingItem } from '@/components/common/SettingLayout';
 
 export function GeneralSettings({
   settings,
-  handleStringChange,
-  handleNumberChange,
-  handleBooleanChange,
+  handleChange,
+  handleInputBlur,
   saving,
 }) {
   return (
@@ -28,7 +27,7 @@ export function GeneralSettings({
               <Input
                 id='site_name'
                 defaultValue={settings.site_name.value}
-                onBlur={(e) => handleStringChange('site_name', e.target.value)}
+                onBlur={(e) => handleInputBlur('site_name', e)}
                 disabled={saving}
                 className='w-full max-w-xl'
               />
@@ -44,7 +43,7 @@ export function GeneralSettings({
                     id='show_logo_text'
                     checked={settings.show_logo_text.value === true}
                     onCheckedChange={(checked) =>
-                      handleBooleanChange('show_logo_text', checked)
+                      handleChange('show_logo_text', checked)
                     }
                     disabled={saving}
                     className="scale-90"
@@ -64,7 +63,7 @@ export function GeneralSettings({
             <Textarea
               id='site_description'
               defaultValue={settings.site_description.value}
-              onBlur={(e) => handleStringChange('site_description', e.target.value)}
+              onBlur={(e) => handleInputBlur('site_description', e)}
               disabled={saving}
               className='w-full max-w-xl min-h-20 resize-y'
             />
@@ -80,7 +79,7 @@ export function GeneralSettings({
             <Input
               id='site_url'
               defaultValue={settings.site_url.value}
-              onBlur={(e) => handleStringChange('site_url', e.target.value)}
+              onBlur={(e) => handleInputBlur('site_url', e)}
               disabled={saving}
               className='w-full max-w-xl'
               placeholder='https://example.com'
@@ -97,7 +96,7 @@ export function GeneralSettings({
             <Textarea
               id='site_keywords'
               defaultValue={settings.site_keywords.value}
-              onBlur={(e) => handleStringChange('site_keywords', e.target.value)}
+              onBlur={(e) => handleInputBlur('site_keywords', e)}
               disabled={saving}
               className='w-full max-w-xl min-h-20 resize-y'
               placeholder='论坛,社区,讨论'
@@ -112,7 +111,7 @@ export function GeneralSettings({
             <Label className='text-sm font-medium'>Logo</Label>
             <IconUpload
               value={settings.site_logo?.value || ''}
-              onChange={(url) => handleStringChange('site_logo', url)}
+              onChange={(url) => handleChange('site_logo', url)}
               placeholder='/logo.svg'
               accept='image/svg+xml,image/png,image/jpeg,image/webp'
               hint='SVG/PNG, 建议 128x128'
@@ -123,7 +122,7 @@ export function GeneralSettings({
             <Label className='text-sm font-medium'>Favicon</Label>
             <IconUpload
               value={settings.site_favicon?.value || ''}
-              onChange={(url) => handleStringChange('site_favicon', url)}
+              onChange={(url) => handleChange('site_favicon', url)}
               placeholder='/favicon.ico'
               accept='image/x-icon,image/png,image/vnd.microsoft.icon'
               hint='ICO/PNG, 建议 48x48+'
@@ -134,7 +133,7 @@ export function GeneralSettings({
             <Label className='text-sm font-medium'>Apple Touch Icon</Label>
             <IconUpload
               value={settings.site_apple_touch_icon?.value || ''}
-              onChange={(url) => handleStringChange('site_apple_touch_icon', url)}
+              onChange={(url) => handleChange('site_apple_touch_icon', url)}
               placeholder='/apple-touch-icon.png'
               accept='image/png'
               hint='PNG, 建议 180x180'
@@ -153,7 +152,7 @@ export function GeneralSettings({
             <Textarea
               id='site_analytics_scripts'
               defaultValue={settings.site_analytics_scripts.value}
-              onBlur={(e) => handleStringChange('site_analytics_scripts', e.target.value)}
+              onBlur={(e) => handleInputBlur('site_analytics_scripts', e)}
               disabled={saving}
               className='w-full min-h-35 font-mono text-xs resize-y'
               placeholder='<script>...</script>'
@@ -170,7 +169,7 @@ export function GeneralSettings({
             <Textarea
               id='site_footer_html'
               defaultValue={settings.site_footer_html.value}
-              onBlur={(e) => handleStringChange('site_footer_html', e.target.value)}
+              onBlur={(e) => handleInputBlur('site_footer_html', e)}
               disabled={saving}
               className='w-full min-h-35 font-mono text-xs resize-y'
               placeholder='<span>...</span>'
@@ -181,4 +180,3 @@ export function GeneralSettings({
     </div>
   );
 }
-

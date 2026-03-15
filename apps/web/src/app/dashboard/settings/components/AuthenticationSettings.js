@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { SettingSection, SettingItem } from '@/components/common/SettingLayout';
 
-export function AuthenticationSettings({ settings, handleBooleanChange, handleNumberChange, saving }) {
+export function AuthenticationSettings({ settings, handleChange, saving }) {
   return (
     <div className='space-y-6'>
       <SettingSection title="认证方式" description="配置用户登录和认证相关功能">
@@ -18,7 +18,7 @@ export function AuthenticationSettings({ settings, handleBooleanChange, handleNu
                 id='qr_login_enabled'
                 checked={settings.qr_login_enabled.value}
                 onCheckedChange={(checked) =>
-                  handleBooleanChange('qr_login_enabled', checked)
+                  handleChange('qr_login_enabled', checked)
                 }
                 disabled={saving}
               />
@@ -38,7 +38,7 @@ export function AuthenticationSettings({ settings, handleBooleanChange, handleNu
                   className='w-24'
                   value={settings.qr_login_timeout.value}
                   onChange={(e) =>
-                    handleNumberChange('qr_login_timeout', e.target.value)
+                    handleChange('qr_login_timeout', e.target.value)
                   }
                   disabled={saving}
                 />
@@ -56,7 +56,7 @@ export function AuthenticationSettings({ settings, handleBooleanChange, handleNu
               id='phone_login_enabled'
               checked={settings.phone_login_enabled.value}
               onCheckedChange={(checked) =>
-                handleBooleanChange('phone_login_enabled', checked)
+                handleChange('phone_login_enabled', checked)
               }
               disabled={saving}
             />
