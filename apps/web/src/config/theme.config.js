@@ -7,8 +7,7 @@ export const THEMES = [
   { value: 'default', label: '默认', class: '', color: 'oklch(0.208 0.042 265.755)' },
   { value: 'sunrise', label: '晨曦', class: 'sunrise', color: 'oklch(0.62 0.24 12)' },
   { value: 'iceblue', label: '冰蓝', class: 'iceblue', color: 'oklch(0.56 0.18 250)' },
-  { value: 'nord', label: 'Nord', class: 'nord', color: '#5E81AC' },
-  // { value: 'cny', label: '新春', class: 'cny', color: '#DE2910' },
+  { value: 'nord', label: 'Nord', class: 'nord', color: 'oklch(0.594 0.077 254.03)' },
 ];
 
 export const FONT_SIZES = [
