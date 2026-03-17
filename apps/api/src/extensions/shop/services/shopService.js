@@ -290,8 +290,8 @@ export async function buyItem(userId, itemId, quantity = 1) {
         if (badgeId) {
            try {
              await grantBadge(userId, badgeId, 'shop_buy');
-           } catch (err) {
-             console.error('[商城] 授予勋章失败:', err);
+           } catch (error) {
+             console.error('[商城] 授予勋章失败:', error);
              throw new Error('勋章授予失败，交易取消');
            }
         } else {
@@ -788,8 +788,8 @@ export async function giftItem(senderId, receiverId, itemId, message, quantity =
         if (badgeId) {
            try {
              await grantBadge(receiverId, badgeId, 'shop_gift');
-           } catch (err) {
-             console.error('[商城] 赠送勋章虽然商品已发放但勋章授予失败:', err);
+           } catch (error) {
+             console.error('[商城] 赠送勋章虽然商品已发放但勋章授予失败:', error);
            }
         }
       }

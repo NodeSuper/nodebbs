@@ -99,12 +99,12 @@ export async function checkIn(fastify, userId) {
           checkInStreak: 1
         });
       result = { status: 'updated', newStreak: 1 };
-    } catch (err) {
+    } catch (error) {
       // 唯一键冲突意味着并发请求刚刚插入了记录，今天已签到
-      if (err.code === '23505') {
+      if (error.code === '23505') {
         return { message: 'done' };
       }
-      throw err;
+      throw error;
     }
   }
 

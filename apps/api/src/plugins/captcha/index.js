@@ -39,15 +39,15 @@ async function captchaPlugin(fastify, options) {
 
     try {
       config = provider.config ? JSON.parse(provider.config) : {};
-    } catch (e) {
-      fastify.log.error('[CAPTCHA] 解析 config 失败:', e);
+    } catch (error) {
+      fastify.log.error(error, '[CAPTCHA] 解析 config 失败');
     }
 
     try {
       const parsed = provider.enabledScenes ? JSON.parse(provider.enabledScenes) : {};
       enabledScenes = { ...DEFAULT_SCENES, ...parsed };
-    } catch (e) {
-      fastify.log.error('[CAPTCHA] 解析 enabledScenes 失败:', e);
+    } catch (error) {
+      fastify.log.error(error, '[CAPTCHA] 解析 enabledScenes 失败');
       enabledScenes = { ...DEFAULT_SCENES };
     }
 
@@ -142,8 +142,8 @@ async function captchaPlugin(fastify, options) {
     let provider;
     try {
       provider = await getProvider(config.provider);
-    } catch (err) {
-      fastify.log.error(`[CAPTCHA] 加载提供商失败: ${config.provider}`, err);
+    } catch (error) {
+      fastify.log.error(error, `[CAPTCHA] 加载提供商失败: ${config.provider}`);
       return {
         success: false,
         reason: 'unknown_provider',

@@ -102,8 +102,8 @@ export class BaseStorageProvider {
       await this.upload(testData, testKey, { mimetype: 'text/plain' });
       await this.delete(testKey);
       return { success: true, message: '连接测试成功' };
-    } catch (err) {
-      return { success: false, message: `连接测试失败: ${err.message}` };
+    } catch (error) {
+      return { success: false, message: `连接测试失败: ${error.message}` };
     }
   }
 }

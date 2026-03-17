@@ -6,7 +6,7 @@ async function rateLimitPlugin(fastify, opts) {
   fastify.addHook('onRequest', async (request, reply) => {
     try {
       await request.jwtVerify();
-    } catch (err) {
+    } catch (error) {
       // 忽略错误，用户未登录
       request.user = null;
     }

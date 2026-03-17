@@ -620,7 +620,7 @@ export default async function topicRoutes(fastify, options) {
           updatedAt: sql`${topics.updatedAt}`
         })
         .where(eq(topics.id, id))
-        .catch(err => fastify.log.error('更新浏览量失败:', err));
+        .catch(error => fastify.log.error(error, '更新浏览量失败'));
 
       // 并行获取首贴和最后回复
       const [firstPostResult, lastPostResult] = await Promise.all([

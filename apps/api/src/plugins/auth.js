@@ -173,7 +173,7 @@ async function authPlugin(fastify) {
   async function resolveUser(request, reply, { checkBan = false } = {}) {
     try {
       await request.jwtVerify();
-    } catch (err) {
+    } catch (error) {
       reply.code(401).send({ error: '未授权', message: '令牌无效或已过期' });
       return null;
     }
@@ -239,11 +239,11 @@ async function authPlugin(fastify) {
 
       try {
         await fastify.permission.check(request, permissionSlugs, {}, { any });
-      } catch (err) {
-        if (err.statusCode === 403 || err.code === 'NO_PERMISSION') {
-          return reply.code(403).send({ error: '禁止访问', message: err.message, code: err.code });
+      } catch (error) {
+        if (error.statusCode === 403 || error.code === 'NO_PERMISSION') {
+          return reply.code(403).send({ error: '禁止访问', message: error.message, code: error.code });
         }
-        throw err;
+        throw error;
       }
     };
   });
@@ -262,7 +262,7 @@ async function authPlugin(fastify) {
       } else {
         request.user = null;
       }
-    } catch (err) {
+    } catch (error) {
       request.user = null;
     }
   });

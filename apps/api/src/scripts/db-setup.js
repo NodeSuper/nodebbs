@@ -49,8 +49,8 @@ async function main() {
       await pool.query(sql);
       console.log(`  ✅ ${name}`);
       success++;
-    } catch (err) {
-      console.error(`  ❌ ${name}: ${err.message}`);
+    } catch (error) {
+      console.error(`  ❌ ${name}: ${error.message}`);
       failed++;
     }
   }

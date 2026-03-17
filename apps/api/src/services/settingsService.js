@@ -19,8 +19,8 @@ function parseSettingValue(settingValue, valueType, key) {
   } else if (valueType === 'json') {
     try {
       value = JSON.parse(settingValue);
-    } catch (e) {
-      console.error(`[设置] JSON 格式解析失败 (key: ${key}):`, e);
+    } catch (error) {
+      console.error(`[设置] JSON 格式解析失败 (key: ${key}):`, error);
     }
   }
 

@@ -60,8 +60,8 @@ export class BaseChannel {
         ...provider,
         config: provider.config ? JSON.parse(provider.config) : {},
       };
-    } catch (e) {
-      this.fastify.log.error(`解析提供商配置失败: ${e.message}`);
+    } catch (error) {
+      this.fastify.log.error(error, '解析提供商配置失败');
       return { ...provider, config: {} };
     }
   }

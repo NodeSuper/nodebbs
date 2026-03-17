@@ -264,8 +264,8 @@ export async function checkBadgeConditions(userId) {
            newBadges.push(badge);
         }
       }
-    } catch (e) {
-      console.error(`[勋章] 解析勋章 ${badge.id} 的解锁条件失败:`, e);
+    } catch (error) {
+      console.error(`[勋章] 解析勋章 ${badge.id} 的解锁条件失败:`, error);
     }
   }
 
@@ -289,17 +289,17 @@ export async function deleteBadge(id) {
       if (!item.metadata) continue;
       let meta = item.metadata;
       if (typeof meta === 'string') {
-        try { meta = JSON.parse(meta); } catch (e) { /* ignore */ }
+        try { meta = JSON.parse(meta); } catch (error) { /* ignore */ }
       }
       // 以防万一，验证双重编码
       if (typeof meta === 'string') {
-        try { meta = JSON.parse(meta); } catch (e) { /* ignore */ }
+        try { meta = JSON.parse(meta); } catch (error) { /* ignore */ }
       }
 
       if (meta && (meta.badgeId === id || meta.badgeId === Number(id))) {
         itemsToDisable.push(item.id);
       }
-    } catch (e) {
+    } catch (error) {
       // ignore parse error
     }
   }
@@ -361,8 +361,8 @@ export async function getPassiveEffects(userId) {
             effects.replyCostReductionPercent += Number(badgeEffects.replyCostReductionPercent) || 0;
           }
         }
-      } catch (e) {
-        console.warn(`[勋章] 勋章 ${badge.id} 元数据解析错误:`, e);
+      } catch (error) {
+        console.warn(`[勋章] 勋章 ${badge.id} 元数据解析错误:`, error);
       }
     }
 

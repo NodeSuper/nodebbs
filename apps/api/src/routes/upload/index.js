@@ -51,8 +51,8 @@ export default async function uploadRoutes(fastify) {
     try {
       const result = await fastify.permission.check(request, `upload.${category}`);
       conditions = result.conditions || {};
-    } catch (err) {
-      return reply.code(403).send({ error: err.message });
+    } catch (error) {
+      return reply.code(403).send({ error: error.message });
     }
 
     // 2. 获取具体限制数值（从 RBAC 条件中读取或使用合理的后备默认值）
@@ -116,24 +116,24 @@ export default async function uploadRoutes(fastify) {
       });
 
       await pipeline(data.file, monitor, writeStream);
-    } catch (err) {
+    } catch (error) {
       // 捕获异常并清理临时文件
       try {
         await fs.promises.unlink(tmpPath);
-      } catch (e) {
+      } catch {
         // Ignore if file doesn't exist
       }
 
-      if (err.code === 'FILE_TOO_LARGE') {
+      if (error.code === 'FILE_TOO_LARGE') {
         const readableLimit = maxFileSizeKB >= 1024 ? (maxFileSizeKB / 1024).toFixed(1) + 'MB' : maxFileSizeKB + 'KB';
         return reply.code(400).send({ error: `文件大小超过限制，当前等级最大允许 ${readableLimit}` });
       }
 
-      if (err.code === 'FST_PART_FILE_SIZE_EXCEEDED' || err.code === 'FST_REQ_FILE_TOO_LARGE') {
+      if (error.code === 'FST_PART_FILE_SIZE_EXCEEDED' || error.code === 'FST_REQ_FILE_TOO_LARGE') {
         return reply.code(400).send({ error: '文件大小超过服务器全局限制' });
       }
 
-      fastify.log.error('File upload error:', err);
+      fastify.log.error(error, 'File upload error');
       return reply.code(500).send({ error: '文件上传失败' });
     }
 
@@ -150,8 +150,8 @@ export default async function uploadRoutes(fastify) {
           const stat = await fs.promises.stat(tmpPath);
           byteCount = stat.size;
         }
-      } catch (err) {
-        fastify.log.warn('EXIF strip failed, keeping original:', err.message);
+      } catch (error) {
+        fastify.log.warn({ err: error }, 'EXIF strip failed, keeping original');
         try { await fs.promises.unlink(tmpPath + '.processed'); } catch {}
       }
     }
@@ -164,8 +164,8 @@ export default async function uploadRoutes(fastify) {
         const imageMetadata = await sharp(tmpPath).metadata();
         width = imageMetadata.width || null;
         height = imageMetadata.height || null;
-      } catch (err) {
-        fastify.log.warn('Failed to extract image metadata:', err.message);
+      } catch (error) {
+        fastify.log.warn({ err: error }, 'Failed to extract image metadata');
       }
     }
 
@@ -177,14 +177,14 @@ export default async function uploadRoutes(fastify) {
         size: byteCount,
         providerSlug: activeSlug,
       });
-    } catch (err) {
-      fastify.log.error('Storage upload error:', err);
+    } catch (error) {
+      fastify.log.error(error, 'Storage upload error');
       return reply.code(500).send({ error: '文件上传失败' });
     } finally {
       // 清理临时文件（本地存储已 rename，unlink 会静默失败）
       try {
         await fs.promises.unlink(tmpPath);
-      } catch (e) {
+      } catch {
         // Ignore
       }
     }
@@ -250,8 +250,8 @@ export default async function uploadRoutes(fastify) {
     try {
       const result = await fastify.permission.check(request, `upload.${category}`);
       conditions = result.conditions || {};
-    } catch (err) {
-      return reply.code(403).send({ error: err.message });
+    } catch (error) {
+      return reply.code(403).send({ error: error.message });
     }
 
     // 2. 验证文件大小
@@ -299,8 +299,8 @@ export default async function uploadRoutes(fastify) {
         filename: newFilename,
         provider: presignResult.provider,
       };
-    } catch (err) {
-      fastify.log.error('Presign error:', err);
+    } catch (error) {
+      fastify.log.error(error, 'Presign error');
       return { mode: 'server' };
     }
   });
@@ -342,8 +342,8 @@ export default async function uploadRoutes(fastify) {
       if (!exists) {
         return reply.code(400).send({ error: '文件未找到，请重新上传' });
       }
-    } catch (err) {
-      fastify.log.error('Confirm exists check error:', err);
+    } catch (error) {
+      fastify.log.error(error, 'Confirm exists check error');
       return reply.code(500).send({ error: '验证文件失败' });
     }
 

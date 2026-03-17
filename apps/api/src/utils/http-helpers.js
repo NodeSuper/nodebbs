@@ -20,7 +20,7 @@ export function getFrontendOrigin(request) {
     try {
       const url = new URL(request.headers.referer);
       origin = url.origin;
-    } catch (e) {
+    } catch (error) {
       // 忽略无效引荐来源
     }
   }

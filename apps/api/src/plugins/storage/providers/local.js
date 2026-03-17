@@ -75,11 +75,11 @@ export class LocalStorageProvider extends BaseStorageProvider {
     const filepath = this._safePath(key);
     try {
       await fs.promises.unlink(filepath);
-    } catch (err) {
-      if (err.code !== 'ENOENT') {
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
         throw new StorageError(
           StorageErrorCode.DELETE_FAILED,
-          `删除文件失败: ${err.message}`
+          `删除文件失败: ${error.message}`
         );
       }
     }

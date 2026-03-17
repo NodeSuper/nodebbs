@@ -777,16 +777,16 @@ export default async function postRoutes(fastify, options) {
               });
            }
         }
-      } catch (err) {
+      } catch (error) {
         // 如果是余额不足，返回 400
-        if (err.message.includes('余额不足') || err.message.includes('Insufficient funds')) {
+        if (error.message.includes('余额不足') || error.message.includes('Insufficient funds')) {
            const currencyName = await fastify.ledger.getCurrencyName(DEFAULT_CURRENCY_CODE).catch(() => DEFAULT_CURRENCY_CODE);
            const cost = Math.abs(await fastify.ledger.getCurrencyConfig(DEFAULT_CURRENCY_CODE, 'post_reply_amount', 0));
            return reply.code(400).send({ error: `${currencyName}余额不足，发表回复需要 ${cost} ${currencyName}` });
         }
         // 其他积分系统错误（如未启用），记录日志但允许发帖（或者也可以选择拦截）
         // 这里选择允许发帖，避免积分系统故障影响核心功能，除非是余额不足这种明确的业务限制
-        console.error('[奖励] 回复积分扣除失败:', err);
+        console.error('[奖励] 回复积分扣除失败:', error);
       }
     }
     // ===============================================

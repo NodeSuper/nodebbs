@@ -37,8 +37,8 @@ export default function registerShopEnricher(fastify) {
         .limit(1);
 
       user.avatarFrame = foundAvatarFrame || null;
-    } catch (err) {
-      console.error('[商城增强] 补充用户头像框数据失败:', err);
+    } catch (error) {
+      console.error('[商城增强] 补充用户头像框数据失败:', error);
     }
   });
 
@@ -85,8 +85,8 @@ export default function registerShopEnricher(fastify) {
           u.avatarFrame = { itemMetadata: frameMap.get(u.id).itemMetadata };
         }
       });
-    } catch (err) {
-      console.error('[商城增强] 批量补充用户头像框数据失败:', err);
+    } catch (error) {
+      console.error('[商城增强] 批量补充用户头像框数据失败:', error);
     }
   });
 }

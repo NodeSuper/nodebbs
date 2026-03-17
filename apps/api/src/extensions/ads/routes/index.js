@@ -62,7 +62,7 @@ export default async function adsRoutes(fastify, options) {
 
       return result;
     } catch (error) {
-      fastify.log.error('[广告] 批量获取广告失败:', error);
+      fastify.log.error(error, '[广告] 批量获取广告失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -92,7 +92,7 @@ export default async function adsRoutes(fastify, options) {
 
       return result;
     } catch (error) {
-      fastify.log.error('[广告] 获取广告位广告失败:', error);
+      fastify.log.error(error, '[广告] 获取广告位广告失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -116,7 +116,7 @@ export default async function adsRoutes(fastify, options) {
       await recordImpression(adId);
       return { success: true };
     } catch (error) {
-      fastify.log.error('[广告] 记录展示失败:', error);
+      fastify.log.error(error, '[广告] 记录展示失败');
       return reply.code(500).send({ error: '记录失败' });
     }
   });
@@ -140,7 +140,7 @@ export default async function adsRoutes(fastify, options) {
       await recordClick(adId);
       return { success: true };
     } catch (error) {
-      fastify.log.error('[广告] 记录点击失败:', error);
+      fastify.log.error(error, '[广告] 记录点击失败');
       return reply.code(500).send({ error: '记录失败' });
     }
   });
@@ -169,7 +169,7 @@ export default async function adsRoutes(fastify, options) {
       const slots = await getAdSlots({ includeInactive });
       return slots;
     } catch (error) {
-      fastify.log.error('[广告] 获取广告位列表失败:', error);
+      fastify.log.error(error, '[广告] 获取广告位列表失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -199,7 +199,7 @@ export default async function adsRoutes(fastify, options) {
 
       return slot;
     } catch (error) {
-      fastify.log.error('[广告] 获取广告位失败:', error);
+      fastify.log.error(error, '[广告] 获取广告位失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -236,7 +236,7 @@ export default async function adsRoutes(fastify, options) {
       const slot = await createAdSlot(request.body);
       return slot;
     } catch (error) {
-      fastify.log.error('[广告] 创建广告位失败:', error);
+      fastify.log.error(error, '[广告] 创建广告位失败');
       return reply.code(500).send({ error: '创建失败' });
     }
   });
@@ -286,7 +286,7 @@ export default async function adsRoutes(fastify, options) {
       }
       return slot;
     } catch (error) {
-      fastify.log.error('[广告] 更新广告位失败:', error);
+      fastify.log.error(error, '[广告] 更新广告位失败');
       return reply.code(500).send({ error: '更新失败' });
     }
   });
@@ -312,7 +312,7 @@ export default async function adsRoutes(fastify, options) {
       await deleteAdSlot(id);
       return { success: true };
     } catch (error) {
-      fastify.log.error('[广告] 删除广告位失败:', error);
+      fastify.log.error(error, '[广告] 删除广告位失败');
       return reply.code(500).send({ error: '删除失败' });
     }
   });
@@ -355,7 +355,7 @@ export default async function adsRoutes(fastify, options) {
       const result = await getAds(queryParams);
       return result;
     } catch (error) {
-      fastify.log.error('[广告] 获取广告列表失败:', error);
+      fastify.log.error(error, '[广告] 获取广告列表失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -385,7 +385,7 @@ export default async function adsRoutes(fastify, options) {
 
       return ad;
     } catch (error) {
-      fastify.log.error('[广告] 获取广告失败:', error);
+      fastify.log.error(error, '[广告] 获取广告失败');
       return reply.code(500).send({ error: '获取失败' });
     }
   });
@@ -426,7 +426,7 @@ export default async function adsRoutes(fastify, options) {
       const ad = await createAd(request.body);
       return ad;
     } catch (error) {
-      fastify.log.error('[广告] 创建广告失败:', error);
+      fastify.log.error(error, '[广告] 创建广告失败');
       return reply.code(500).send({ error: '创建失败' });
     }
   });
@@ -480,7 +480,7 @@ export default async function adsRoutes(fastify, options) {
       }
       return ad;
     } catch (error) {
-      fastify.log.error('[广告] 更新广告失败:', error);
+      fastify.log.error(error, '[广告] 更新广告失败');
       return reply.code(500).send({ error: '更新失败' });
     }
   });
@@ -506,7 +506,7 @@ export default async function adsRoutes(fastify, options) {
       await deleteAd(id);
       return { success: true };
     } catch (error) {
-      fastify.log.error('[广告] 删除广告失败:', error);
+      fastify.log.error(error, '[广告] 删除广告失败');
       return reply.code(500).send({ error: '删除失败' });
     }
   });

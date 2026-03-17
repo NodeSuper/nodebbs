@@ -58,7 +58,7 @@ function parseSettingValue(value, valueType) {
   if (valueType === 'json') {
     try {
       return JSON.parse(value);
-    } catch (e) {
+    } catch (error) {
       return value;
     }
   }
@@ -106,7 +106,7 @@ export default async function settingsRoutes(fastify) {
 
         return filteredSettings;
       } catch (error) {
-        fastify.log.error('Error fetching settings:', error);
+        fastify.log.error(error, 'Error fetching settings');
         return reply.code(500).send({ error: '获取系统配置失败' });
       }
     }
@@ -164,7 +164,7 @@ export default async function settingsRoutes(fastify) {
           description: setting.description,
         };
       } catch (error) {
-        fastify.log.error('Error fetching setting:', error);
+        fastify.log.error(error, 'Error fetching setting');
         return reply.code(500).send({ error: '获取配置失败' });
       }
     }
@@ -271,7 +271,7 @@ export default async function settingsRoutes(fastify) {
           updatedAt: updated.updatedAt,
         };
       } catch (error) {
-        fastify.log.error('Error updating setting:', error);
+        fastify.log.error(error, 'Error updating setting');
         return reply.code(500).send({ error: '更新配置失败' });
       }
     }
@@ -311,7 +311,7 @@ export default async function settingsRoutes(fastify) {
 
         return { success: true, message: 'Webhook 测试成功' };
       } catch (error) {
-        fastify.log.error('Webhook 测试失败:', error);
+        fastify.log.error(error, 'Webhook 测试失败');
         return reply.code(400).send({
           success: false,
           message: error.message || 'Webhook 测试失败',

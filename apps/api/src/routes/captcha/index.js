@@ -80,11 +80,11 @@ export default async function captchaRoutes(fastify, options) {
 
         try {
           config = provider.config ? JSON.parse(provider.config) : {};
-        } catch (e) {}
+        } catch (error) {}
 
         try {
           enabledScenes = provider.enabledScenes ? JSON.parse(provider.enabledScenes) : {};
-        } catch (e) {}
+        } catch (error) {}
 
         return {
           ...provider,

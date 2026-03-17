@@ -40,9 +40,9 @@ export class LedgerService {
           totalEarned: 0,
           totalSpent: 0
         }).returning();
-      } catch (err) {
+      } catch (error) {
         // 如果唯一约束失败，处理竞态条件
-        if (err.code === '23505') { // unique_violation
+        if (error.code === '23505') { // unique_violation
           [account] = await tx
             .select()
             .from(sysAccounts)
@@ -52,7 +52,7 @@ export class LedgerService {
             ))
             .limit(1);
         } else {
-          throw err;
+          throw error;
         }
       }
     }

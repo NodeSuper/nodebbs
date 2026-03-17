@@ -163,7 +163,7 @@ class OnlineTracker {
           }
         })
         .catch(error => {
-          logger.error('[在线追踪] 清理过期数据时出错:', error);
+          logger.error(error, '[在线追踪] 清理过期数据时出错');
         });
     }, this.cleanupInterval);
   }
@@ -221,14 +221,14 @@ async function onlineTrackingPlugin(fastify, options) {
       const guestId = userId ? null : tracker.generateGuestId(request);
 
       // 异步执行（onResponse 在响应发送后调用，此处仅触发不阻塞）
-      tracker.track(userId, guestId).catch(err => {
-        request.log.warn({ err }, '[在线追踪] 记录在线用户失败');
+      tracker.track(userId, guestId).catch(error => {
+        request.log.warn({ err: error }, '[在线追踪] 记录在线用户失败');
       });
 
       // 低频同步 lastSeenAt 到数据库
       if (userId) {
-        tracker.syncLastSeen(userId).catch(err => {
-          request.log.warn({ err }, '[在线追踪] 同步 lastSeenAt 失败');
+        tracker.syncLastSeen(userId).catch(error => {
+          request.log.warn({ err: error }, '[在线追踪] 同步 lastSeenAt 失败');
         });
       }
 
@@ -242,7 +242,7 @@ async function onlineTrackingPlugin(fastify, options) {
     try {
       return await tracker.getStats();
     } catch (error) {
-      fastify.log.error('[在线追踪] 获取统计数据失败:', error);
+      fastify.log.error(error, '[在线追踪] 获取统计数据失败');
       return { members: 0, guests: 0, total: 0 };
     }
   });

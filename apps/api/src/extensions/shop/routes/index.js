@@ -48,7 +48,7 @@ export default async function shopRoutes(fastify, options) {
       const result = await getShopItems({ page, limit, type, includeInactive, userId });
       return result;
     } catch (error) {
-      fastify.log.error('[商城] 获取商品列表失败:', error);
+      fastify.log.error(error, '[商城] 获取商品列表失败');
       return reply.code(500).send({ error: '查询失败' });
     }
   });
@@ -75,7 +75,7 @@ export default async function shopRoutes(fastify, options) {
       }
       return item;
     } catch (error) {
-      fastify.log.error('[商城] 获取商品详情失败:', error);
+      fastify.log.error(error, '[商城] 获取商品详情失败');
       return reply.code(500).send({ error: '查询失败' });
     }
   });
@@ -111,7 +111,7 @@ export default async function shopRoutes(fastify, options) {
       const item = await createShopItem(request.body);
       return item;
     } catch (error) {
-      fastify.log.error('[商城管理] 创建商品失败:', error);
+      fastify.log.error(error, '[商城管理] 创建商品失败');
       return reply.code(500).send({ error: '创建失败' });
     }
   });
@@ -154,7 +154,7 @@ export default async function shopRoutes(fastify, options) {
       const item = await updateShopItem(itemId, request.body);
       return item;
     } catch (error) {
-      fastify.log.error('[商城管理] 更新商品失败:', error);
+      fastify.log.error(error, '[商城管理] 更新商品失败');
       return reply.code(500).send({ error: '更新失败' });
     }
   });
@@ -192,7 +192,7 @@ export default async function shopRoutes(fastify, options) {
       const result = await deleteShopItem(itemId);
       return result;
     } catch (error) {
-      fastify.log.error('[商城管理] 删除商品失败:', error);
+      fastify.log.error(error, '[商城管理] 删除商品失败');
       return reply.code(500).send({ error: '删除失败' });
     }
   });
@@ -228,7 +228,7 @@ export default async function shopRoutes(fastify, options) {
       if (error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足') || error.message.includes('持有上限') || error.message.includes('最多还能') || error.message.includes('非消耗品')) {
         return reply.code(400).send({ error: error.message });
       }
-      fastify.log.error('[商城] 购买失败:', error);
+      fastify.log.error(error, '[商城] 购买失败');
       return reply.code(500).send({ error: '购买失败' });
     }
 
@@ -268,7 +268,7 @@ export default async function shopRoutes(fastify, options) {
       if (error.message.includes('余额不足') || error.message.includes('已经拥有') || error.message.includes('库存不足') || error.message.includes('不能赠送') || error.message.includes('用户不存在') || error.message.includes('持有上限') || error.message.includes('最多还能') || error.message.includes('非消耗品')) {
         return reply.code(400).send({ error: error.message });
       }
-      fastify.log.error('[商城] 赠送失败:', error);
+      fastify.log.error(error, '[商城] 赠送失败');
       return reply.code(500).send({ error: '赠送失败' });
     }
   });
@@ -296,7 +296,7 @@ export default async function shopRoutes(fastify, options) {
       const result = await getUserItems(request.user.id, { page, limit, type });
       return result;
     } catch (error) {
-      fastify.log.error('[商城] 获取我的商品失败:', error);
+      fastify.log.error(error, '[商城] 获取我的商品失败');
       return reply.code(500).send({ error: '查询失败' });
     }
   });
@@ -329,7 +329,7 @@ export default async function shopRoutes(fastify, options) {
       if (error.message.includes('未找到')) {
         return reply.code(404).send({ error: error.message });
       }
-      fastify.log.error('[商城] 装备失败:', error);
+      fastify.log.error(error, '[商城] 装备失败');
       return reply.code(500).send({ error: '装备失败' });
     }
   });
@@ -363,7 +363,7 @@ export default async function shopRoutes(fastify, options) {
       if (error.message.includes('未找到')) {
         return reply.code(404).send({ error: error.message });
       }
-      fastify.log.error('[商城] 卸下失败:', error);
+      fastify.log.error(error, '[商城] 卸下失败');
       return reply.code(500).send({ error: '卸下失败' });
     }
   });
@@ -401,7 +401,7 @@ export default async function shopRoutes(fastify, options) {
       if (error.message.includes('未找到') || error.message.includes('不是消耗品') || error.message.includes('数量不足')) {
         return reply.code(400).send({ error: error.message });
       }
-      fastify.log.error('[商城] 使用道具失败:', error);
+      fastify.log.error(error, '[商城] 使用道具失败');
       return reply.code(500).send({ error: '使用失败' });
     }
   });

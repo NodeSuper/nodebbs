@@ -29,7 +29,7 @@ export default async function checkInRoutes(fastify, options) {
         // 静默处理：如果系统未启用，不返回错误，前端也不会提示
         return { message: '积分系统未启用' };
       }
-      fastify.log.error('[签到] 失败:', error);
+      fastify.log.error(error, '[签到] 失败');
       // 静默处理：其它错误也不中断前端体验
       return { message: error.message || 'ok' };
     }

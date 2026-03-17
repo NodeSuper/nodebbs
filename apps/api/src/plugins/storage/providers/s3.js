@@ -67,10 +67,10 @@ export class S3Provider extends BaseStorageProvider {
         url: this.getUrl(key),
         key,
       };
-    } catch (err) {
+    } catch (error) {
       throw new StorageError(
         StorageErrorCode.UPLOAD_FAILED,
-        `S3 上传失败: ${err.message}`
+        `S3 上传失败: ${error.message}`
       );
     }
   }
@@ -84,10 +84,10 @@ export class S3Provider extends BaseStorageProvider {
         Bucket: this.config.bucket,
         Key: key,
       }));
-    } catch (err) {
+    } catch (error) {
       throw new StorageError(
         StorageErrorCode.DELETE_FAILED,
-        `S3 删除失败: ${err.message}`
+        `S3 删除失败: ${error.message}`
       );
     }
   }
@@ -102,11 +102,11 @@ export class S3Provider extends BaseStorageProvider {
         Key: key,
       }));
       return true;
-    } catch (err) {
-      if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
+    } catch (error) {
+      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
         return false;
       }
-      throw err;
+      throw error;
     }
   }
 
@@ -143,10 +143,10 @@ export class S3Provider extends BaseStorageProvider {
         url,
         headers: { 'Content-Type': options.mimetype || 'application/octet-stream' },
       };
-    } catch (err) {
+    } catch (error) {
       throw new StorageError(
         StorageErrorCode.UPLOAD_FAILED,
-        `S3 生成预签名 URL 失败: ${err.message}`
+        `S3 生成预签名 URL 失败: ${error.message}`
       );
     }
   }

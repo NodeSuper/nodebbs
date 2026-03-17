@@ -127,7 +127,7 @@ export default async function invitationsRoutes(fastify) {
           count: invitations.length,
         };
       } catch (error) {
-        fastify.log.error('生成邀请码时出错:', error);
+        fastify.log.error(error, '生成邀请码时出错');
         return reply.code(400).send({ error: error.message });
       }
     }
@@ -225,7 +225,7 @@ export default async function invitationsRoutes(fastify) {
           total,
         };
       } catch (error) {
-        fastify.log.error('获取邀请码列表时出错:', error);
+        fastify.log.error(error, '获取邀请码列表时出错');
         return reply.code(500).send({ error: '获取邀请码列表失败' });
       }
     }
@@ -274,7 +274,7 @@ export default async function invitationsRoutes(fastify) {
           message: result.message,
         };
       } catch (error) {
-        fastify.log.error('验证邀请码时出错:', error);
+        fastify.log.error(error, '验证邀请码时出错');
         return reply.code(500).send({ error: '验证邀请码失败' });
       }
     }
@@ -499,7 +499,7 @@ export default async function invitationsRoutes(fastify) {
           total,
         };
       } catch (error) {
-        fastify.log.error('获取邀请码列表时出错:', error);
+        fastify.log.error(error, '获取邀请码列表时出错');
         return reply.code(500).send({ error: '获取邀请码列表失败' });
       }
     }
@@ -549,7 +549,7 @@ export default async function invitationsRoutes(fastify) {
           createdAt: invitation.createdAt,
         };
       } catch (error) {
-        fastify.log.error('生成邀请码时出错:', error);
+        fastify.log.error(error, '生成邀请码时出错');
         return reply.code(400).send({ error: error.message });
       }
     }
@@ -585,7 +585,7 @@ export default async function invitationsRoutes(fastify) {
           status: updated.status,
         };
       } catch (error) {
-        fastify.log.error('禁用邀请码时出错:', error);
+        fastify.log.error(error, '禁用邀请码时出错');
         return reply.code(400).send({ error: error.message });
       }
     }
@@ -632,7 +632,7 @@ export default async function invitationsRoutes(fastify) {
 
         return updated;
       } catch (error) {
-        fastify.log.error('启用邀请码时出错:', error);
+        fastify.log.error(error, '启用邀请码时出错');
         return reply.code(400).send({ error: error.message });
       }
     }
@@ -674,7 +674,7 @@ export default async function invitationsRoutes(fastify) {
           topInviters,
         };
       } catch (error) {
-        fastify.log.error('获取邀请统计时出错:', error);
+        fastify.log.error(error, '获取邀请统计时出错');
         return reply.code(500).send({ error: '获取邀请统计失败' });
       }
     }
@@ -792,7 +792,7 @@ export default async function invitationsRoutes(fastify) {
           total,
         };
       } catch (error) {
-        fastify.log.error('获取邀请规则时出错:', error);
+        fastify.log.error(error, '获取邀请规则时出错');
         return reply.code(500).send({ error: '获取邀请规则失败' });
       }
     }
@@ -832,7 +832,7 @@ export default async function invitationsRoutes(fastify) {
 
         return rule;
       } catch (error) {
-        fastify.log.error('获取邀请规则时出错:', error);
+        fastify.log.error(error, '获取邀请规则时出错');
         return reply.code(500).send({ error: '获取邀请规则失败' });
       }
     }
@@ -909,7 +909,7 @@ export default async function invitationsRoutes(fastify) {
 
         return result;
       } catch (error) {
-        fastify.log.error('更新邀请规则时出错:', error);
+        fastify.log.error(error, '更新邀请规则时出错');
         return reply.code(500).send({ error: '更新邀请规则失败' });
       }
     }
@@ -961,7 +961,7 @@ export default async function invitationsRoutes(fastify) {
 
         return { success: true, message: '规则已删除' };
       } catch (error) {
-        fastify.log.error('删除邀请规则时出错:', error);
+        fastify.log.error(error, '删除邀请规则时出错');
         return reply.code(500).send({ error: '删除邀请规则失败' });
       }
     }

@@ -41,8 +41,8 @@ async function cleanupPlugin(fastify, options) {
           fastify.log.info(`[清理] 任务 [${name}] 清理了 ${count} 条记录。`);
           totalCleaned += count;
         }
-      } catch (err) {
-        fastify.log.error(`[清理] 任务 [${name}] 执行出错:`, err);
+      } catch (error) {
+        fastify.log.error(error, `[清理] 任务 [${name}] 执行出错`);
       }
     }
 
@@ -62,8 +62,8 @@ async function cleanupPlugin(fastify, options) {
         .delete(qrLoginRequests)
         .where(lt(qrLoginRequests.expiresAt, new Date()));
       return result.rowCount;
-    } catch (err) {
-      throw err; // 让运行器捕获错误
+    } catch (error) {
+      throw error; // 让运行器捕获错误
     }
   });
 
@@ -122,8 +122,8 @@ async function cleanupPlugin(fastify, options) {
         }
 
         processed++;
-      } catch (err) {
-        fastify.log.error(`[清理] 匿名化用户 ${user.id} 失败:`, err);
+      } catch (error) {
+        fastify.log.error(error, `[清理] 匿名化用户 ${user.id} 失败`);
       }
     }
 

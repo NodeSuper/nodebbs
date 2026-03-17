@@ -82,7 +82,7 @@ export default async function emailProvidersRoutes(fastify, options) {
 
         return { items };
       } catch (error) {
-        fastify.log.error('[消息] 获取邮件配置失败:', error);
+        fastify.log.error(error, '[消息] 获取邮件配置失败');
         return reply.code(500).send({ error: '获取邮件配置失败' });
       }
     }
@@ -178,7 +178,7 @@ export default async function emailProvidersRoutes(fastify, options) {
           message: '邮件配置已更新',
         };
       } catch (error) {
-        fastify.log.error('[消息] 更新邮件配置失败:', error);
+        fastify.log.error(error, '[消息] 更新邮件配置失败');
         return reply.code(500).send({ error: '更新邮件配置失败' });
       }
     }
@@ -265,14 +265,14 @@ export default async function emailProvidersRoutes(fastify, options) {
 
             return { success: true, message: `测试邮件已发送到 ${testEmail}` };
           } catch (error) {
-            fastify.log.error('[消息] 发送测试邮件失败:', error);
+            fastify.log.error(error, '[消息] 发送测试邮件失败');
             return { success: false, message: `发送测试邮件失败: ${error.message}` };
           }
         }
 
         return { success: true, message: '邮件配置验证通过' };
       } catch (error) {
-        fastify.log.error('[消息] 测试邮件配置失败:', error);
+        fastify.log.error(error, '[消息] 测试邮件配置失败');
         return reply.code(500).send({ error: '测试邮件配置失败' });
       }
     }

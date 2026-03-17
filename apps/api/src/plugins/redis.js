@@ -19,8 +19,8 @@ async function redisPlugin(fastify, options) {
     try {
       await fastify.redis.ping()
       fastify.log.info('✅ Redis 连接成功')
-    } catch (err) {
-      fastify.log.error('❌ Redis connection failed:', err)
+    } catch (error) {
+      fastify.log.error(error, '❌ Redis connection failed')
     }
   })
   // 封装缓存工具对象
@@ -37,8 +37,8 @@ async function redisPlugin(fastify, options) {
         if (cached) {
           return JSON.parse(cached)
         }
-      } catch (err) {
-        fastify.log.warn(`Redis get error for key ${key}: ${err.message}`)
+      } catch (error) {
+        fastify.log.warn(`Redis get error for key ${key}: ${error.message}`)
       }
 
       // 执行获取数据逻辑
@@ -49,8 +49,8 @@ async function redisPlugin(fastify, options) {
         if (result !== undefined && result !== null) {
           await fastify.redis.setex(key, ttl, JSON.stringify(result))
         }
-      } catch (err) {
-        fastify.log.warn(`Redis set error for key ${key}: ${err.message}`)
+      } catch (error) {
+        fastify.log.warn(`Redis set error for key ${key}: ${error.message}`)
       }
 
       return result
@@ -64,8 +64,8 @@ async function redisPlugin(fastify, options) {
         if (keysArray.length > 0) {
           await fastify.redis.del(...keysArray)
         }
-      } catch (err) {
-        fastify.log.warn(`Redis invalidate error: ${err.message}`)
+      } catch (error) {
+        fastify.log.warn(`Redis invalidate error: ${error.message}`)
       }
     }
   })

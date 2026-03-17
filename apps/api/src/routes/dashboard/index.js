@@ -65,7 +65,7 @@ export default async function dashboardRoutes(fastify, options) {
         totalPosts: postsCount.count
       };
     } catch (error) {
-      fastify.log.error('获取统计数据失败:', error);
+      fastify.log.error(error, '获取统计数据失败');
       return reply.code(500).send({ error: '获取统计数据失败' });
     }
   });

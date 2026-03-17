@@ -793,7 +793,7 @@ export default async function userRoutes(fastify, options) {
         email: emailLower
       };
     } catch (error) {
-      fastify.log.error('[邮箱绑定] 验证失败:', error);
+      fastify.log.error(error, '[邮箱绑定] 验证失败');
       return reply.code(500).send({ error: '验证失败，请稍后重试' });
     }
   });
@@ -916,7 +916,7 @@ export default async function userRoutes(fastify, options) {
         phone: normalizedPhone
       };
     } catch (error) {
-      fastify.log.error('[手机绑定] 验证失败:', error);
+      fastify.log.error(error, '[手机绑定] 验证失败');
       return reply.code(500).send({ error: '验证失败，请稍后重试' });
     }
   });
@@ -1065,7 +1065,7 @@ export default async function userRoutes(fastify, options) {
         email: newEmailLower
       };
     } catch (error) {
-      fastify.log.error('[邮箱修改] 验证失败:', error);
+      fastify.log.error(error, '[邮箱修改] 验证失败');
       return reply.code(500).send({ error: '验证失败，请稍后重试' });
     }
   });
@@ -1215,7 +1215,7 @@ export default async function userRoutes(fastify, options) {
         phone: normalizedPhone
       };
     } catch (error) {
-      fastify.log.error('[手机号修改] 验证失败:', error);
+      fastify.log.error(error, '[手机号修改] 验证失败');
       return reply.code(500).send({ error: '验证失败，请稍后重试' });
     }
   });

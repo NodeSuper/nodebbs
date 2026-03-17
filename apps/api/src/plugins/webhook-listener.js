@@ -35,7 +35,7 @@ async function webhookListenerPlugin(fastify, options) {
 
       fastify.log.info(`[Webhook] 事件 ${event} 发送成功`);
     } catch (error) {
-      fastify.log.error(`[Webhook] 事件 ${event} 发送失败 (尝试 ${retryCount + 1}):`, error.message);
+      fastify.log.error({ err: error }, `[Webhook] 事件 ${event} 发送失败 (尝试 ${retryCount + 1})`);
 
       const maxRetries = Math.min(webhookConfig.retryCount || 3, MAX_RETRY_LIMIT);
       if (retryCount < maxRetries) {
@@ -53,8 +53,8 @@ async function webhookListenerPlugin(fastify, options) {
   allEvents.forEach((event) => {
     fastify.eventBus.on(event, async (payload) => {
       // 异步发送，不阻塞主流程
-      sendWebhook(event, payload).catch((err) => {
-        fastify.log.error(`[Webhook] 处理事件 ${event} 时出错:`, err);
+      sendWebhook(event, payload).catch((error) => {
+        fastify.log.error(error, `[Webhook] 处理事件 ${event} 时出错`);
       });
     });
   });

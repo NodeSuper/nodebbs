@@ -17,8 +17,8 @@ async function eventBusPlugin(fastify, options) {
     return async (...args) => {
       try {
         await listener(...args);
-      } catch (err) {
-        fastify.log.error({ err, event }, '[事件总线] 事件处理异常');
+      } catch (error) {
+        fastify.log.error({ err: error, event }, '[事件总线] 事件处理异常');
       }
     };
   };

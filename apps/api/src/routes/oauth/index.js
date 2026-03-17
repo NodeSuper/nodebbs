@@ -104,7 +104,7 @@ export default async function oauthRoutes(fastify, options) {
 
         return { items };
       } catch (error) {
-        fastify.log.error('[OAuth] 获取配置失败:', error);
+        fastify.log.error(error, '[OAuth] 获取配置失败');
         return reply.code(500).send({ error: '获取 OAuth 配置失败' });
       }
     }
@@ -187,7 +187,7 @@ export default async function oauthRoutes(fastify, options) {
           provider: updated[0],
         };
       } catch (error) {
-        fastify.log.error('[OAuth] 更新提供商配置失败:', error);
+        fastify.log.error(error, '[OAuth] 更新提供商配置失败');
         return reply.code(500).send({ error: '更新 OAuth 配置失败' });
       }
     }
@@ -246,7 +246,7 @@ export default async function oauthRoutes(fastify, options) {
           message: 'OAuth 配置验证通过',
         };
       } catch (error) {
-        fastify.log.error('[OAuth] 测试提供商配置失败:', error);
+        fastify.log.error(error, '[OAuth] 测试提供商配置失败');
         return reply.code(500).send({ error: '测试 OAuth 配置失败' });
       }
     }

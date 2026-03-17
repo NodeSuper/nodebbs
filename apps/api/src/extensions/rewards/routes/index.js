@@ -133,7 +133,7 @@ export default async function rewardsRoutes(fastify, options) {
         }
         if (error.message.includes('未启用')) return reply.code(403).send({ error: error.message });
 
-        fastify.log.error('[打赏] 失败:', error);
+        fastify.log.error(error, '[打赏] 失败');
         return reply.code(500).send({ error: '打赏失败' });
     }
   });

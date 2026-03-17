@@ -80,7 +80,7 @@ export default async function smsProvidersRoutes(fastify, options) {
 
         return { items };
       } catch (error) {
-        fastify.log.error('[消息] 获取短信配置失败:', error);
+        fastify.log.error(error, '[消息] 获取短信配置失败');
         return reply.code(500).send({ error: '获取短信配置失败' });
       }
     }
@@ -176,7 +176,7 @@ export default async function smsProvidersRoutes(fastify, options) {
           message: '短信配置已更新',
         };
       } catch (error) {
-        fastify.log.error('[消息] 更新短信配置失败:', error);
+        fastify.log.error(error, '[消息] 更新短信配置失败');
         return reply.code(500).send({ error: '更新短信配置失败' });
       }
     }
@@ -268,7 +268,7 @@ export default async function smsProvidersRoutes(fastify, options) {
 
         return { success: true, message: '短信配置验证通过' };
       } catch (error) {
-        fastify.log.error('[消息] 测试短信配置失败:', error);
+        fastify.log.error(error, '[消息] 测试短信配置失败');
         return reply.code(500).send({ error: '测试短信配置失败' });
       }
     }

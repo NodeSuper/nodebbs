@@ -44,8 +44,8 @@ export function registerBadgeListeners(fastify) {
           }
         }
       }
-    } catch (err) {
-      fastify.log.error(`[勋章] 检查勋章解锁条件时出错: ${err.message}`);
+    } catch (error) {
+      fastify.log.error(error, '[勋章] 检查勋章解锁条件时出错');
     }
   };
 

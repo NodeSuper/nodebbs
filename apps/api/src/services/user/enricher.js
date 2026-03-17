@@ -60,9 +60,9 @@ class UserEnricher {
       this.enrichers.map(async ({ name, callback }) => {
         try {
           await callback(user, context);
-        } catch (err) {
+        } catch (error) {
           // 如果一个增强器失败，不要导致整个请求失败
-          this.logger.error(`[用户增强] ${name} 执行失败: ${err.message}`);
+          this.logger.error(error, `[用户增强] ${name} 执行失败`);
         }
       })
     );
@@ -84,8 +84,8 @@ class UserEnricher {
       this.batchEnrichers.map(async ({ name, callback }) => {
         try {
           await callback(users, context);
-        } catch (err) {
-          this.logger.error(`[用户增强] 批量处理器 ${name} 执行失败: ${err.message}`);
+        } catch (error) {
+          this.logger.error(error, `[用户增强] 批量处理器 ${name} 执行失败`);
         }
       })
     );

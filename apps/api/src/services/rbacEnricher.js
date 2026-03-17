@@ -42,8 +42,8 @@ export default function registerRbacEnricher(fastify) {
         permissionService.getRolesDisplayMap(),
       ]);
       user.displayRole = extractDisplayRole(userRolesList, rolesDisplayMap);
-    } catch (err) {
-      console.error(`[RBAC增强] 补充用户 ${user.id} 的角色信息失败:`, err);
+    } catch (error) {
+      console.error(`[RBAC增强] 补充用户 ${user.id} 的角色信息失败:`, error);
       user.displayRole = null;
     }
   };
@@ -60,8 +60,8 @@ export default function registerRbacEnricher(fastify) {
     let rolesDisplayMap;
     try {
       rolesDisplayMap = await permissionService.getRolesDisplayMap();
-    } catch (err) {
-      console.error('[RBAC增强] 获取角色展示信息失败:', err);
+    } catch (error) {
+      console.error('[RBAC增强] 获取角色展示信息失败:', error);
       users.forEach(u => { u.displayRole = null; });
       return;
     }
@@ -77,8 +77,8 @@ export default function registerRbacEnricher(fastify) {
         try {
           const userRolesList = await permissionService.getUserRoles(user.id);
           user.displayRole = extractDisplayRole(userRolesList, rolesDisplayMap);
-        } catch (err) {
-          console.error(`[RBAC增强] 补充用户 ${user.id} 的角色信息失败:`, err);
+        } catch (error) {
+          console.error(`[RBAC增强] 补充用户 ${user.id} 的角色信息失败:`, error);
           user.displayRole = null;
         }
       })

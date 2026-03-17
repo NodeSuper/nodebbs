@@ -60,7 +60,7 @@ export default async function storageProvidersRoutes(fastify) {
 
         return { items };
       } catch (error) {
-        fastify.log.error('[存储] 获取存储配置失败:', error);
+        fastify.log.error(error, '[存储] 获取存储配置失败');
         return reply.code(500).send({ error: '获取存储配置失败' });
       }
     }
@@ -156,7 +156,7 @@ export default async function storageProvidersRoutes(fastify) {
           message: '存储配置已更新',
         };
       } catch (error) {
-        fastify.log.error('[存储] 更新存储配置失败:', error);
+        fastify.log.error(error, '[存储] 更新存储配置失败');
         return reply.code(500).send({ error: '更新存储配置失败' });
       }
     }
@@ -197,7 +197,7 @@ export default async function storageProvidersRoutes(fastify) {
         const result = await fastify.storage.testConnection(slug);
         return result;
       } catch (error) {
-        fastify.log.error('[存储] 测试连接失败:', error);
+        fastify.log.error(error, '[存储] 测试连接失败');
         return { success: false, message: `测试连接失败: ${error.message}` };
       }
     }
@@ -292,7 +292,7 @@ export default async function storageProvidersRoutes(fastify) {
 
         return { message: '存储服务商已创建', slug };
       } catch (error) {
-        fastify.log.error('[存储] 创建存储服务商失败:', error);
+        fastify.log.error(error, '[存储] 创建存储服务商失败');
         return reply.code(500).send({ error: '创建存储服务商失败' });
       }
     }
@@ -360,7 +360,7 @@ export default async function storageProvidersRoutes(fastify) {
 
         return { message: '存储服务商已删除' };
       } catch (error) {
-        fastify.log.error('[存储] 删除存储服务商失败:', error);
+        fastify.log.error(error, '[存储] 删除存储服务商失败');
         return reply.code(500).send({ error: '删除存储服务商失败' });
       }
     }

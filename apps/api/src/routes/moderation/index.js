@@ -295,7 +295,7 @@ export default async function moderationRoutes(fastify, options) {
       });
     } catch (error) {
       // 通知发送失败不影响举报处理
-      fastify.log.error('Failed to send report notification:', error);
+      fastify.log.error(error, 'Failed to send report notification');
     }
 
     return { 

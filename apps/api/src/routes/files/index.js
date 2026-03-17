@@ -62,8 +62,8 @@ export default async function filesRoutes(fastify) {
     // 权限检查
     try {
       await fastify.permission.check(request, 'dashboard.files');
-    } catch (err) {
-      return reply.code(403).send({ error: err.message });
+    } catch (error) {
+      return reply.code(403).send({ error: error.message });
     }
 
     const { page = 1, limit = 20, category, type, search, userId } = request.query;
@@ -167,8 +167,8 @@ export default async function filesRoutes(fastify) {
     // 权限检查
     try {
       await fastify.permission.check(request, 'dashboard.files');
-    } catch (err) {
-      return reply.code(403).send({ error: err.message });
+    } catch (error) {
+      return reply.code(403).send({ error: error.message });
     }
 
     const { id } = request.params;
@@ -189,9 +189,9 @@ export default async function filesRoutes(fastify) {
     try {
       const storageKey = `${file.category}/${file.filename}`;
       await fastify.storage.delete(storageKey, fileProvider);
-    } catch (err) {
+    } catch (error) {
       // 文件可能已经不存在，或 provider 不可用，记录日志但继续删除数据库记录
-      fastify.log.warn(`Failed to delete file from ${fileProvider}: ${file.filename}`, err.message);
+      fastify.log.warn({ err: error }, `Failed to delete file from ${fileProvider}: ${file.filename}`);
     }
 
     // 删除数据库记录

@@ -511,8 +511,8 @@ class PermissionService {
           allowed: true,
           remaining: maxCount - current,
         };
-      } catch (err) {
-        this.fastify?.log.error('[RBAC] Redis 频率限制检查失败:', err);
+      } catch (error) {
+        this.fastify?.log.error(error, '[RBAC] Redis 频率限制检查失败');
         // Redis 失败时降级到内存缓存
       }
     }
