@@ -7,6 +7,7 @@ import remarkDirective from 'remark-directive';
 import remarkMedia from './plugins/remark-media';
 import remarkSticker from './plugins/remark-sticker';
 import remarkPoll from './plugins/remark-poll';
+import remarkProtected from './plugins/remark-protected';
 import remarkRestoreDirectives from './plugins/remark-restore-directives';
 import CodeBlock from './CodeBlock';
 import PollWidget from './components/PollWidget';
@@ -14,6 +15,8 @@ import AudioPlayer from './components/AudioPlayer';
 import VideoPlayer from './components/VideoPlayer';
 import ContentImage from './components/ContentImage';
 import { Emoji } from '@/components/common/Emoji';
+import ProtectedContentBlock from './components/ProtectedContentBlock';
+import ProtectedHiddenBlock from './components/ProtectedHiddenBlock';
 import { ImagePreviewProvider } from '@/components/common/ImagePreview/ImagePreviewContext';
 import remarkEmoji from './plugins/remark-emoji';
 
@@ -38,6 +41,7 @@ const REMARK_PLUGINS = [
   remarkSticker,
   remarkPoll,
   remarkEmoji,
+  remarkProtected,
   remarkRestoreDirectives,
 ];
 
@@ -93,6 +97,13 @@ const COMPONENTS = {
   emoji({ node, ...props }) {
     return <Emoji code={props.code} size={props.size} className={props.className} />;
   },
+  // 受保护内容组件
+  'protected-content': ({ node, children, ...props }) => (
+    <ProtectedContentBlock type={props['data-type']}>{children}</ProtectedContentBlock>
+  ),
+  'protected-hidden': ({ node, ...props }) => (
+    <ProtectedHiddenBlock type={props['data-type']} />
+  ),
 };
 
 function MarkdownRender({ content }) {

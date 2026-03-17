@@ -3,6 +3,7 @@ import { LinkTool, VideoTool, AudioTool } from './media';
 import { TableTool } from './table';
 import { ImageTool } from './image';
 import { EmojiTool } from './emoji';
+import { ProtectedTool } from './protected';
 
 // 工具注册表
 export const ToolRegistry = {
@@ -26,4 +27,5 @@ export const ToolRegistry = {
   audio: AudioTool,
   image: ImageTool,
   emoji: EmojiTool,
+  protected: ProtectedTool,
 };

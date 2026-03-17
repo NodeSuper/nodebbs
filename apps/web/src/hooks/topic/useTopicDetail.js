@@ -236,6 +236,20 @@ export function useTopicDetail({
     }, 300);
   };
 
+  /**
+   * 重新获取话题数据（用于回复后解锁隐藏内容等场景）
+   */
+  const refreshTopic = async () => {
+    try {
+      const freshTopic = await topicApi.getById(topic.id);
+      if (freshTopic) {
+        setTopic(freshTopic);
+      }
+    } catch (err) {
+      console.error('刷新话题数据失败:', err);
+    }
+  };
+
   // 哈希导航逻辑
   useEffect(() => {
     const hash = window.location.hash;
@@ -297,5 +311,7 @@ export function useTopicDetail({
     togglePinTopic,
     /** 删除话题方法 */
     deleteTopic,
+    /** 重新获取话题数据 */
+    refreshTopic,
   };
 }

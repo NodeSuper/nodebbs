@@ -17,7 +17,7 @@ export function useReplyForm({
   onReplyAdded,
 }) {
   const router = useRouter();
-  const { topic, toggleTopicStatus } = useTopicContext();
+  const { topic, toggleTopicStatus, refreshTopic } = useTopicContext();
   const { user, isAuthenticated, openLoginDialog, loading } = useAuth();
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -74,6 +74,11 @@ export function useReplyForm({
             ...response.post,
           };
           onReplyAdded(newPost);
+
+          // 回复成功后，如果话题有受保护内容，刷新话题以解锁
+          if (topic.hasProtectedContent && !topic.hasReplied) {
+            refreshTopic();
+          }
         } else {
           // 如果没有返回数据或没有回调，刷新页面
           router.refresh();

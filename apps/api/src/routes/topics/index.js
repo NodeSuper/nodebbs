@@ -23,6 +23,9 @@ import { createPaginator } from '../../utils/pagination.js';
 import { userEnricher } from '../../services/user/index.js';
 import { shouldHideUserInfo } from '../../utils/visibility.js';
 
+// 匹配 :::protected{...} ... ::: 块（行首 ::: 结束）
+const PROTECTED_RE = /:::protected\{([^}]*)\}\n([\s\S]*?)^:::\s*$/gm;
+
 /**
  * 计算用户对话题的操作权限
  * 权限检查逻辑：
@@ -720,12 +723,63 @@ export default async function topicRoutes(fastify, options) {
       const isSubscribed = subscriptionResult.length > 0;
       const isBlockedUser = blockResult.length > 0;
 
+      // 受保护内容处理（:::protected{type="reply"} 等）
+      let topicContent = firstPost?.content || '';
+      const hasProtectedContent = PROTECTED_RE.test(topicContent);
+      PROTECTED_RE.lastIndex = 0;
+      let hasReplied = false;
+
+      if (hasProtectedContent) {
+        // 预查询：当前用户是否在该话题下回复过（供 type="reply" 使用）
+        if (!isAuthor && !canManageTopics && request.user) {
+          const replyResult = await db.select({ id: posts.id })
+            .from(posts)
+            .where(
+              and(
+                eq(posts.topicId, id),
+                eq(posts.userId, request.user.id),
+                gt(posts.postNumber, 1),
+                eq(posts.isDeleted, false),
+                eq(posts.approvalStatus, 'approved')
+              )
+            )
+            .limit(1);
+          hasReplied = replyResult.length > 0;
+        } else if (isAuthor || canManageTopics) {
+          hasReplied = true;
+        }
+
+        // 逐块判断是否有权查看，无权则替换为隐藏占位
+        topicContent = topicContent.replace(PROTECTED_RE, (match, attrsStr) => {
+          // 作者和管理员始终可见
+          if (isAuthor || canManageTopics) return match;
+
+          const typeMatch = attrsStr.match(/type="([^"]*)"/);
+          const type = typeMatch ? typeMatch[1] : '';
+
+          switch (type) {
+            case 'reply':
+              if (hasReplied) return match;
+              break;
+            // 未来扩展: case 'login': / case 'level': / case 'points':
+            default:
+              break;
+          }
+
+          // 未授权：替换为隐藏占位，仅保留已解析的属性
+          return `:::protected-hidden{type="${type}"}\n:::`;
+        });
+        PROTECTED_RE.lastIndex = 0;
+      }
+
       // 排除内部字段，避免泄露给客户端
       const { categoryIsPrivate, userIsBanned, ...safeTopicData } = topic;
 
       return {
         ...safeTopicData,
-        content: firstPost?.content || '',
+        content: topicContent,
+        hasProtectedContent,
+        hasReplied,
         firstPostId: firstPost?.id,
         firstPostLikeCount: firstPost?.likeCount || 0,
         // 如果被封禁则覆盖头像
