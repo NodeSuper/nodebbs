@@ -267,6 +267,7 @@ export async function getCreditRanking(options = {}) {
       .where(and(
         eq(sysAccounts.currencyCode, DEFAULT_CURRENCY_CODE),
         eq(users.isDeleted, false),
+        eq(users.isBanned, false),
         ne(users.role, 'admin')
       ))
       .orderBy(desc(orderField))
