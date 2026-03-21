@@ -60,3 +60,45 @@ export async function getUserPosts(userId, page = 1, limit = 20) {
     return { items: [], total: 0 };
   }
 }
+
+/**
+ * 获取用户的粉丝列表
+ * @param {string} username - 用户名
+ * @param {number} page - 页码
+ * @param {number} limit - 每页数量
+ * @returns {Promise<{items: array, total: number}>}
+ */
+export async function getUserFollowers(username, page = 1, limit = 20) {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    const res = await request(`/users/${username}/followers?${params}`);
+    return res || { items: [], total: 0 };
+  } catch (error) {
+    console.error('获取粉丝列表失败:', error);
+    return { items: [], total: 0 };
+  }
+}
+
+/**
+ * 获取用户的关注列表
+ * @param {string} username - 用户名
+ * @param {number} page - 页码
+ * @param {number} limit - 每页数量
+ * @returns {Promise<{items: array, total: number}>}
+ */
+export async function getUserFollowing(username, page = 1, limit = 20) {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    const res = await request(`/users/${username}/following?${params}`);
+    return res || { items: [], total: 0 };
+  } catch (error) {
+    console.error('获取关注列表失败:', error);
+    return { items: [], total: 0 };
+  }
+}

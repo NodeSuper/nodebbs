@@ -1,55 +1,42 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from '@/components/common/Link';
 import { Button } from '@/components/ui/button';
-import { userApi } from '@/lib/api';
-import { Loader2, ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import UserAvatar from '@/components/user/UserAvatar';
+import { getUserData, getUserFollowing } from '@/lib/server/users';
 
-export default function FollowingPage() {
-  const params = useParams();
-  const username = params.id;
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const user = await getUserData(id);
 
-  const [user, setUser] = useState(null);
-  const [following, setFollowing] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  if (!user) {
+    return { title: '用户不存在' };
+  }
+
+  return {
+    title: `${user.name || user.username} 关注的用户`,
+    description: `查看 ${user.name || user.username} 的关注列表。`,
+  };
+}
+
+export default async function FollowingPage({ params, searchParams }) {
+  const { id: username } = await params;
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams.page) || 1;
   const limit = 20;
 
-  useEffect(() => {
-    fetchData();
-  }, [username, page]);
+  const [user, followingData] = await Promise.all([
+    getUserData(username),
+    getUserFollowing(username, page, limit),
+  ]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [userData, followingData] = await Promise.all([
-        userApi.getProfile(username),
-        userApi.getFollowing(username, page, limit),
-      ]);
-
-      setUser(userData);
-      setFollowing(followingData.items || []);
-      setTotal(followingData.total || 0);
-    } catch (error) {
-      console.error('获取关注列表失败:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalPages = Math.ceil(total / limit);
-
-  if (loading && !user) {
-    return (
-      <div className='container mx-auto px-4 py-8 flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-      </div>
-    );
+  if (!user) {
+    notFound();
   }
+
+  const following = followingData.items || [];
+  const total = followingData.total || 0;
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -66,7 +53,7 @@ export default function FollowingPage() {
         {/* 标题 */}
         <div className='mb-6'>
           <h1 className='text-2xl font-bold mb-2'>
-            {user?.name || user?.username} 关注的用户
+            {user.name || user.username} 关注的用户
           </h1>
           <p className='text-muted-foreground'>
             共关注 {total} 位用户
@@ -74,11 +61,7 @@ export default function FollowingPage() {
         </div>
 
         {/* 关注列表 */}
-        {loading ? (
-          <div className='flex items-center justify-center py-12'>
-            <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-          </div>
-        ) : following.length === 0 ? (
+        {following.length === 0 ? (
           <div className='text-center py-12 bg-card border border-border rounded-lg'>
             <Users className='h-12 w-12 text-muted-foreground/50 mx-auto mb-4' />
             <p className='text-muted-foreground'>还没有关注任何用户</p>
@@ -120,10 +103,12 @@ export default function FollowingPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  asChild
                   disabled={page === 1}
                 >
-                  上一页
+                  <Link href={`/users/${username}/following?page=${page - 1}`}>
+                    上一页
+                  </Link>
                 </Button>
                 <span className='text-sm text-muted-foreground'>
                   第 {page} / {totalPages} 页
@@ -131,10 +116,12 @@ export default function FollowingPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  asChild
                   disabled={page === totalPages}
                 >
-                  下一页
+                  <Link href={`/users/${username}/following?page=${page + 1}`}>
+                    下一页
+                  </Link>
                 </Button>
               </div>
             )}
