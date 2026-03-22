@@ -6,7 +6,7 @@ import { useUserItems } from '@/extensions/shop/hooks/useUserItems';
 import { useItemActions } from '@/extensions/shop/hooks/useItemActions';
 import { ItemTypeSelector } from '@/extensions/shop/components/shared/ItemTypeSelector';
 import { ItemInventoryGrid } from '../../components/user/ItemInventoryGrid';
-import { ConfirmDialog } from '@/components/common/AlertDialog';
+import { FormDialog } from '@/components/common/FormDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
@@ -156,11 +156,13 @@ export default function UserItemsPage() {
       </ItemTypeSelector>
 
       {/* 通用确认对话框（具体 action 可注册专用对话框绕过此处） */}
-      <ConfirmDialog
+      <FormDialog
         open={!!confirmState}
         onOpenChange={(open) => { if (!open) setConfirmState(null); }}
-        onConfirm={handleConfirm}
-        {...(confirmState?.confirmProps || {})}
+        title={confirmState?.confirmProps?.title}
+        description={confirmState?.confirmProps?.description}
+        submitText={confirmState?.confirmProps?.confirmText}
+        onSubmit={handleConfirm}
       />
     </div>
   );
