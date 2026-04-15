@@ -12,8 +12,6 @@ export default async function TagsPage() {
   const TagsView = getTemplate(VIEWS.TagsView);
 
   return (
-    <div className='py-3 sm:py-6 lg:px-4'>
-      <TagsView tags={tags} />
-    </div>
+    <TagsView tags={tags} />
   );
 }

@@ -12,8 +12,6 @@ export default async function CategoriesPage() {
   const CategoriesView = getTemplate(VIEWS.CategoriesView);
 
   return (
-    <div className='py-3 sm:py-6 lg:px-4'>
-      <CategoriesView categories={categories} />
-    </div>
+    <CategoriesView categories={categories} />
   );
 }

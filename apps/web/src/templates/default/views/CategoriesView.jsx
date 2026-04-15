@@ -9,7 +9,7 @@ import Time from '@/components/common/Time';
  */
 export function CategoriesView({ categories }) {
   return (
-    <>
+    <div className='p-2 sm:p-4'>
       <div className='flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-6 gap-4 border-b border-border pb-4 px-3 sm:px-0'>
         <div>
           <h1 className='text-2xl font-semibold text-foreground'>
@@ -33,7 +33,7 @@ export function CategoriesView({ categories }) {
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
 

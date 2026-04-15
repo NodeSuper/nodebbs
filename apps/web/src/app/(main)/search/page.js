@@ -11,10 +11,8 @@ export default function SearchPage() {
   const SearchView = getTemplate(VIEWS.SearchView);
 
   return (
-    <div className='py-3 sm:py-6 lg:px-4'>
-      <Suspense fallback={<Loading text='加载中...' />}>
-        <SearchView />
-      </Suspense>
-    </div>
+    <Suspense fallback={<Loading text='加载中...' />}>
+      <SearchView />
+    </Suspense>
   );
 }

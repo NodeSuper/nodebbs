@@ -25,7 +25,7 @@ export default function TagsView({ tags = [] }) {
   });
 
   return (
-    <>
+    <div className='p-2 sm:p-4'>
       {/* 头部区域：标题与搜索 */}
       <div className='flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 border-b border-border pb-4 px-3 sm:px-0'>
         <div>
@@ -66,7 +66,7 @@ export default function TagsView({ tags = [] }) {
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
