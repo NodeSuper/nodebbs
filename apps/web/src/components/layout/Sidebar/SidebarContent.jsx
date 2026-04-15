@@ -1,13 +1,6 @@
 import Link from '@/components/common/Link';
 import { Tag, BarChart3, Users, MessageSquare } from 'lucide-react';
-
-// 格式化数字显示
-export function formatNumber(num) {
-  if (!num) return '0';
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-  return num.toLocaleString();
-}
+import { formatCompactNumber } from '@/lib/utils';
 
 // 分类列表组件
 export function CategoryList({ categories, currentPath }) {
@@ -85,7 +78,7 @@ export function StatsPanel({ stats }) {
             <span>话题</span>
           </div>
           <span className='text-sm font-semibold'>
-            {formatNumber(stats.totalTopics)}
+            {formatCompactNumber(stats.totalTopics)}
           </span>
         </div>
         <div className='flex items-center justify-between'>
@@ -94,7 +87,7 @@ export function StatsPanel({ stats }) {
             <span>回复</span>
           </div>
           <span className='text-sm font-semibold'>
-            {formatNumber(stats.totalPosts)}
+            {formatCompactNumber(stats.totalPosts)}
           </span>
         </div>
         <div className='flex items-center justify-between'>
@@ -103,7 +96,7 @@ export function StatsPanel({ stats }) {
             <span>用户</span>
           </div>
           <span className='text-sm font-semibold'>
-            {formatNumber(stats.totalUsers)}
+            {formatCompactNumber(stats.totalUsers)}
           </span>
         </div>
         <div className='flex items-center justify-between pt-2 border-t border-border'>
@@ -112,7 +105,7 @@ export function StatsPanel({ stats }) {
             <span>在线</span>
           </div>
           <span className='text-sm font-semibold text-green-600'>
-            {formatNumber(stats.online?.total)}
+            {formatCompactNumber(stats.online?.total)}
           </span>
         </div>
       </div>
@@ -120,8 +113,8 @@ export function StatsPanel({ stats }) {
   );
 }
 
-// 主 Sidebar UI 组件
-export function SidebarUI({ categories, stats, currentPath }) {
+// 主 Sidebar 组件
+export function SidebarContent({ categories, stats, currentPath }) {
   return (
     <div className='space-y-6'>
       <CategoryList categories={categories} currentPath={currentPath} />

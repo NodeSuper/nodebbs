@@ -5,10 +5,10 @@ import { SearchPostsTab } from './SearchPostsTab';
 import { SearchUsersTab } from './SearchUsersTab';
 
 /**
- * 搜索页面主 UI 组件
+ * 搜索页面内容组件
  * 简洁设计：无标题头部、懒加载 Tab
  */
-export function SearchUI({
+export function SearchContent({
   searchQuery,
   searchType,
   onSearchTypeChange,

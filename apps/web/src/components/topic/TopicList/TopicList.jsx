@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { topicApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Loading } from '@/components/common/Loading';
-import { TopicListUI } from './TopicListUI';
+import { TopicListContent } from './TopicListContent';
 
 /**
  * 统一的话题列表组件 (TopicList)
@@ -42,7 +42,7 @@ export default function TopicList({
   onPageChange: externalPageChange,
   
   // 皮肤配置
-  uiComponent: UIComponent = TopicListUI, // 允许注入自定义 UI 组件，默认为标准列表
+  uiComponent: UIComponent = TopicListContent, // 允许注入自定义 UI 组件，默认为标准列表
   itemInserts, // 插入内容映射 { index: ReactNode }
   ...restProps // 透传给 UI 组件的其他属性
 }) {

@@ -1,6 +1,6 @@
 import Link from '@/components/common/Link';
 import StickyHeader from '../components/StickyHeader';
-import { formatNumber } from '@/components/layout/Sidebar/SidebarUI';
+import { formatCompactNumber } from '@/lib/utils';
 
 export default function CategoriesView({ categories }) {
   return (
@@ -33,7 +33,7 @@ export default function CategoriesView({ categories }) {
                   )}
                 </div>
                 <span className='text-[13px] text-muted-foreground shrink-0'>
-                  {formatNumber(category.totalTopics || category.topicCount || 0)}
+                  {formatCompactNumber(category.totalTopics || category.topicCount || 0)}
                 </span>
               </Link>
 
@@ -51,7 +51,7 @@ export default function CategoriesView({ categories }) {
                       />
                       <span className='text-sm truncate'>{sub.name}</span>
                       <span className='text-xs text-muted-foreground ml-auto shrink-0'>
-                        {formatNumber(sub.topicCount || 0)}
+                        {formatCompactNumber(sub.topicCount || 0)}
                       </span>
                     </Link>
                   ))}

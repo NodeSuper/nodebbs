@@ -1,2 +1,2 @@
 export { default as Sidebar } from './Sidebar';
-export { SidebarUI, CategoryList, StatsPanel, formatNumber } from './SidebarUI';
+export { SidebarContent, CategoryList, StatsPanel } from './SidebarContent';

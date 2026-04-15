@@ -228,7 +228,7 @@ export function TopicItem({ topic }) {
 }
 
 // 主 UI 组件
-export function TopicListUI({
+export function TopicListContent({
   topics,
   totalTopics,
   currentPage,

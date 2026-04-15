@@ -6,6 +6,16 @@ export function cn(...inputs) {
 }
 
 /**
+ * 格式化数字显示（1000 → 1K, 1000000 → 1M）
+ */
+export function formatCompactNumber(num) {
+  if (!num) return '0';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toLocaleString();
+}
+
+/**
  * IPX 图片处理 modifiers 预设
  * @see https://github.com/unjs/ipx
  */

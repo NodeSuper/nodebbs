@@ -1,7 +1,7 @@
 import { getCategoriesData, getStatsData, getTagsData } from '@/lib/server/topics';
 import Link from '@/components/common/Link';
 import { Search } from 'lucide-react';
-import { formatNumber } from '@/components/layout/Sidebar/SidebarUI';
+import { formatCompactNumber } from '@/lib/utils';
 
 function SearchBox() {
   return (
@@ -36,7 +36,7 @@ function Trending({ tags }) {
           </div>
           <div className='font-bold text-[15px] leading-5 mt-px'>#{tag.name}</div>
           <div className='text-[13px] text-muted-foreground mt-px'>
-            {formatNumber(tag.topicCount || 0)} 帖子
+            {formatCompactNumber(tag.topicCount || 0)} 帖子
           </div>
         </Link>
       ))}
@@ -65,7 +65,7 @@ function Explore({ categories }) {
           />
           <div className='flex-1 min-w-0'>
             <div className='font-bold text-[15px] leading-5 truncate'>{cat.name}</div>
-            <div className='text-[13px] text-muted-foreground'>{formatNumber(cat.topicCount || 0)} 个话题</div>
+            <div className='text-[13px] text-muted-foreground'>{formatCompactNumber(cat.topicCount || 0)} 个话题</div>
           </div>
         </Link>
       ))}
@@ -81,11 +81,11 @@ function FooterLinks({ stats }) {
 
   return (
     <div className='px-4 py-3 text-[13px] text-muted-foreground/60 flex items-center gap-3'>
-      <span>{formatNumber(stats.totalUsers)} 位用户</span>
+      <span>{formatCompactNumber(stats.totalUsers)} 位用户</span>
       {stats.online?.total > 0 && (
         <span className='flex items-center gap-1'>
           <span className='inline-block h-1.5 w-1.5 bg-green-500 rounded-full' />
-          {formatNumber(stats.online.total)} 在线
+          {formatCompactNumber(stats.online.total)} 在线
         </span>
       )}
     </div>

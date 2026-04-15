@@ -1,11 +1,11 @@
 'use client';
 
 import { useSearch } from '@/hooks/useSearch';
-import { SearchUI } from '@/app/(main)/search/components/SearchUI';
+import { SearchContent } from '@/app/(main)/search/components/SearchContent';
 
 /**
  * 搜索页面布局组件
- * 消费 useSearch Hook，将数据传递给 SearchUI
+ * 消费 useSearch Hook，将数据传递给 SearchContent
  */
 export default function SearchView() {
   const {
@@ -18,7 +18,7 @@ export default function SearchView() {
   } = useSearch();
 
   return (
-    <SearchUI
+    <SearchContent
       searchQuery={searchQuery}
       searchType={searchType}
       onSearchTypeChange={setSearchType}

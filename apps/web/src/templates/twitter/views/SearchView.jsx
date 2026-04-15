@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearch } from '@/hooks/useSearch';
-import { SearchUI } from '@/app/(main)/search/components/SearchUI';
+import { SearchContent } from '@/app/(main)/search/components/SearchContent';
 import StickyHeader from '../components/StickyHeader';
 
 export default function SearchView() {
@@ -17,7 +17,7 @@ export default function SearchView() {
   return (
     <div>
       <StickyHeader title='搜索' showBack={false} />
-      <SearchUI
+      <SearchContent
         searchQuery={searchQuery}
         searchType={searchType}
         onSearchTypeChange={setSearchType}

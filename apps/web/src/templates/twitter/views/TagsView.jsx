@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from '@/components/common/Link';
 import { Search, Hash } from 'lucide-react';
 import StickyHeader from '../components/StickyHeader';
-import { formatNumber } from '@/components/layout/Sidebar/SidebarUI';
+import { formatCompactNumber } from '@/lib/utils';
 
 export default function TagsView({ tags = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,7 +50,7 @@ export default function TagsView({ tags = [] }) {
                   <div className='text-[13px] text-muted-foreground'>{i + 1} · 话题标签</div>
                   <div className='font-bold text-[15px] mt-0.5'>#{tag.name}</div>
                   <div className='text-[13px] text-muted-foreground mt-0.5'>
-                    {formatNumber(tag.topicCount || 0)} 个话题
+                    {formatCompactNumber(tag.topicCount || 0)} 个话题
                   </div>
                 </div>
               </div>
