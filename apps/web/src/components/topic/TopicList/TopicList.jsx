@@ -41,10 +41,10 @@ export default function TopicList({
   onDataLoaded,
   onPageChange: externalPageChange,
   
-  // 皮肤配置
-  uiComponent: UIComponent = TopicListContent, // 允许注入自定义 UI 组件，默认为标准列表
-  itemInserts, // 插入内容映射 { index: ReactNode }
-  ...restProps // 透传给 UI 组件的其他属性
+  // 自定义列表渲染组件，默认 TopicListContent
+  component: ListComponent = TopicListContent,
+  itemInserts,
+  ...restProps
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -183,7 +183,7 @@ export default function TopicList({
   }
 
   return (
-    <UIComponent
+    <ListComponent
       topics={displayTopics}
       totalTopics={displayTotal}
       currentPage={displayPage}

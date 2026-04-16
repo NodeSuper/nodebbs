@@ -1,18 +1,16 @@
+import { TopicList } from '@/components/topic/TopicList';
 import { TopicSortTabs } from '@/components/topic/TopicSortTabs';
-import { Pager } from '@/components/common/Pagination';
 import { Badge } from '@/components/ui/badge';
 import { Tag } from 'lucide-react';
 import { getTemplate } from '@/templates';
 import { LAYOUTS } from '@/templates/constants';
-import TopicItem from '../components/TopicItem';
-import EmptyState from '../components/EmptyState';
+import JatraTopicList from '../components/JatraTopicList';
 
 export default function TagView({ tag, sort, data, page, totalPages, limit }) {
   const SidebarLayout = getTemplate(LAYOUTS.SidebarLayout);
 
   return (
     <SidebarLayout>
-    <div>
       <div className='bg-card rounded-lg border border-border px-6 py-4 mb-4'>
         <div className='flex items-center gap-3'>
           <div className='p-2 bg-primary/10 rounded-lg'>
@@ -32,23 +30,16 @@ export default function TagView({ tag, sort, data, page, totalPages, limit }) {
         <TopicSortTabs defaultValue={sort} className='w-auto' />
       </div>
 
-      {data.items?.length > 0 ? (
-        <div className='space-y-3'>
-          {data.items.map((topic) => (
-            <TopicItem key={topic.id} topic={topic} />
-          ))}
-          {totalPages > 1 && (
-            <div className='py-3'>
-              <Pager total={data.total} page={page} pageSize={limit} />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className='bg-card rounded-lg border border-border'>
-          <EmptyState />
-        </div>
-      )}
-    </div>
+      <TopicList
+        initialData={data.items}
+        total={data.total}
+        currentPage={page}
+        totalPages={totalPages}
+        limit={limit}
+        showPagination={true}
+        useUrlPagination={true}
+        component={JatraTopicList}
+      />
     </SidebarLayout>
   );
 }

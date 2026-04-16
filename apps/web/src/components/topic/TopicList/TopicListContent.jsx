@@ -237,6 +237,7 @@ export function TopicListContent({
   showPagination,
   onPageChange,
   itemInserts,
+  renderItem,
 }) {
   // 空状态
   if (topics.length === 0) {
@@ -246,11 +247,10 @@ export function TopicListContent({
   return (
     <>
       <div className='content-card overflow-hidden w-full'>
-        {/* 话题列表 */}
         <div className='divide-y divide-border/60'>
           {topics.map((topic, index) => (
             <Fragment key={topic.id}>
-              <TopicItem topic={topic} />
+              {renderItem ? renderItem(topic, index) : <TopicItem topic={topic} />}
               {itemInserts?.[index]}
             </Fragment>
           ))}
