@@ -1,35 +1,21 @@
-import { TopicSortTabs } from '@/components/topic/TopicSortTabs';
-import { Pager } from '@/components/common/Pagination';
-import StickyHeader from '../components/StickyHeader';
-import TimelineItem from '../components/TimelineItem';
-import EmptyTimeline from '../components/EmptyTimeline';
+import { getTemplate } from '@/templates';
+import { LAYOUTS } from '@/templates/constants';
+import TopicListView from '../components/TopicListView';
 
 export default function TagView({ tag, sort, data, page, totalPages, limit }) {
+  const SidebarLayout = getTemplate(LAYOUTS.SidebarLayout);
+
   return (
-    <div>
-      <StickyHeader
+    <SidebarLayout>
+      <TopicListView
         title={`#${tag.name}`}
         subtitle={`${data.total} 个话题`}
+        sort={sort}
+        data={data}
+        page={page}
+        totalPages={totalPages}
+        limit={limit}
       />
-
-      <TopicSortTabs defaultValue={sort} className='w-full' />
-
-      {data.items?.length > 0 ? (
-        <>
-          <div>
-            {data.items.map((topic) => (
-              <TimelineItem key={topic.id} topic={topic} />
-            ))}
-          </div>
-          {totalPages > 1 && (
-            <div className='py-4'>
-              <Pager total={data.total} page={page} pageSize={limit} />
-            </div>
-          )}
-        </>
-      ) : (
-        <EmptyTimeline />
-      )}
-    </div>
+    </SidebarLayout>
   );
 }

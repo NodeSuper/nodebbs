@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from '@/components/common/Link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import UserAvatar from '@/components/user/UserAvatar';
 import {
   Search,
@@ -16,19 +15,14 @@ import {
   Tag,
   Bell,
   Mail,
-  User,
   Settings,
-  LogOut,
-  Shield,
-  MessageSquare,
   ChevronDown,
-  Wallet,
   Trophy,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -43,6 +37,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useLedger } from '@/extensions/ledger/contexts/LedgerContext';
 import { usePermission } from '@/hooks/usePermission';
+import UserMenuItems from '../components/UserMenuItems';
 
 const navItems = [
   { href: '/', label: '首页', icon: Home },
@@ -75,6 +70,22 @@ export function DesktopNav() {
   const { settings } = useSettings();
   const { isWalletEnabled } = useLedger();
   const { hasDashboardAccess } = usePermission();
+
+  // profile/dashboard 页面有自己的侧边栏，只显示精简导航
+  const isMinimal = pathname?.startsWith('/profile') || pathname?.startsWith('/dashboard');
+
+  if (isMinimal) {
+    return (
+      <div className='flex flex-col items-center h-full py-2 px-2'>
+        <Link href='/' className='p-3 rounded-full hover:bg-accent/50' title='返回首页'>
+          <ArrowLeft className='h-6 w-6' />
+        </Link>
+        <div className='mt-auto pb-2'>
+          <ThemeSwitcher />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col h-full py-2 px-2'>
@@ -144,36 +155,12 @@ export function DesktopNav() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/users/${user?.username}`} className='cursor-pointer'>
-                  <User className='h-4 w-4' />
-                  个人主页
-                </Link>
-              </DropdownMenuItem>
-              {isWalletEnabled && (
-                <DropdownMenuItem asChild>
-                  <Link href='/profile/wallet' className='cursor-pointer'>
-                    <Wallet className='h-4 w-4' />
-                    我的钱包
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              {hasDashboardAccess() && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href='/dashboard' className='cursor-pointer text-primary'>
-                      <Shield className='h-4 w-4' />
-                      管理后台
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className='cursor-pointer text-red-600 dark:text-red-500'>
-                <LogOut className='h-4 w-4' />
-                退出登录
-              </DropdownMenuItem>
+              <UserMenuItems
+                user={user}
+                isWalletEnabled={isWalletEnabled}
+                hasDashboardAccess={hasDashboardAccess()}
+                logout={logout}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         ) : !loading ? (
@@ -272,54 +259,12 @@ export default function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/users/${user?.username}`} className='cursor-pointer'>
-                  <User className='h-4 w-4' />
-                  个人主页
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href='/profile/topics' className='cursor-pointer'>
-                  <MessageSquare className='h-4 w-4' />
-                  我的话题
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href='/profile/messages' className='cursor-pointer'>
-                  <Mail className='h-4 w-4' />
-                  站内信
-                </Link>
-              </DropdownMenuItem>
-              {isWalletEnabled && (
-                <DropdownMenuItem asChild>
-                  <Link href='/profile/wallet' className='cursor-pointer'>
-                    <Wallet className='h-4 w-4' />
-                    我的钱包
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem asChild>
-                <Link href='/profile/settings' className='cursor-pointer'>
-                  <Settings className='h-4 w-4' />
-                  个人设置
-                </Link>
-              </DropdownMenuItem>
-              {hasDashboardAccess() && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href='/dashboard' className='cursor-pointer text-primary'>
-                      <Shield className='h-4 w-4' />
-                      管理后台
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className='cursor-pointer text-red-600 dark:text-red-500'>
-                <LogOut className='h-4 w-4' />
-                退出登录
-              </DropdownMenuItem>
+              <UserMenuItems
+                user={user}
+                isWalletEnabled={isWalletEnabled}
+                hasDashboardAccess={hasDashboardAccess()}
+                logout={logout}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         ) : !loading ? (

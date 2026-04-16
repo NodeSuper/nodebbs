@@ -11,8 +11,7 @@ export { default as UserView } from './views/UserView';
 export { default as SearchView } from './views/SearchView';
 export { default as RankView } from './views/RankView';
 
-// Layouts
-export { default as PageLayout } from './layouts/PageLayout';
+// Layouts (PageLayout 不导出，fallback 到 default)
 export { default as AppLayout } from './layouts/AppLayout';
 export { default as SidebarLayout } from './layouts/SidebarLayout';
 

@@ -3,6 +3,8 @@ import { Trophy, Coins, Crown } from 'lucide-react';
 import Link from '@/components/common/Link';
 import UserAvatar from '@/components/user/UserAvatar';
 import { cn } from '@/lib/utils';
+import { getTemplate } from '@/templates';
+import { LAYOUTS } from '@/templates/constants';
 import StickyHeader from '../components/StickyHeader';
 
 function Podium({ top3, rankType }) {
@@ -66,38 +68,42 @@ function RankItem({ user, index, rankType, currentUserId }) {
 }
 
 export default function RankView({ rankType, currentUserId, currencyName, ranking }) {
+  const SidebarLayout = getTemplate(LAYOUTS.SidebarLayout);
+
   return (
-    <div>
-      <StickyHeader title={`${currencyName}排行榜`} showBack={false} />
+    <SidebarLayout>
+      <div>
+        <StickyHeader title={`${currencyName}排行榜`} showBack={false} />
 
-      {/* Tab 切换 */}
-      <div className="flex border-b border-border">
-        <Link href="/rank?type=balance" scroll={false} replace className={cn("flex-1 text-center py-3 text-sm font-bold transition-colors relative hover:bg-accent/30", rankType === 'balance' ? "text-foreground" : "text-muted-foreground")}>
-          余额榜
-          {rankType === 'balance' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />}
-        </Link>
-        <Link href="/rank?type=totalEarned" scroll={false} replace className={cn("flex-1 text-center py-3 text-sm font-bold transition-colors relative hover:bg-accent/30", rankType === 'totalEarned' ? "text-foreground" : "text-muted-foreground")}>
-          财富榜
-          {rankType === 'totalEarned' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />}
-        </Link>
-      </div>
-
-      {ranking.length === 0 ? (
-        <div className="text-center py-16">
-          <Trophy className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
-          <p className="font-bold">暂无排行数据</p>
-          <p className="text-sm text-muted-foreground mt-1">还没有用户获得{currencyName}</p>
+        {/* Tab 切换 */}
+        <div className="flex border-b border-border">
+          <Link href="/rank?type=balance" scroll={false} replace className={cn("flex-1 text-center py-3 text-sm font-bold transition-colors relative hover:bg-accent/30", rankType === 'balance' ? "text-foreground" : "text-muted-foreground")}>
+            余额榜
+            {rankType === 'balance' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />}
+          </Link>
+          <Link href="/rank?type=totalEarned" scroll={false} replace className={cn("flex-1 text-center py-3 text-sm font-bold transition-colors relative hover:bg-accent/30", rankType === 'totalEarned' ? "text-foreground" : "text-muted-foreground")}>
+            财富榜
+            {rankType === 'totalEarned' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />}
+          </Link>
         </div>
-      ) : (
-        <>
-          <Podium top3={ranking.slice(0, 3)} rankType={rankType} />
-          <div>
-            {ranking.slice(3).map((user, index) => (
-              <RankItem key={user.userId} user={user} index={index + 3} rankType={rankType} currentUserId={currentUserId} />
-            ))}
+
+        {ranking.length === 0 ? (
+          <div className="text-center py-16">
+            <Trophy className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="font-bold">暂无排行数据</p>
+            <p className="text-sm text-muted-foreground mt-1">还没有用户获得{currencyName}</p>
           </div>
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <Podium top3={ranking.slice(0, 3)} rankType={rankType} />
+            <div>
+              {ranking.slice(3).map((user, index) => (
+                <RankItem key={user.userId} user={user} index={index + 3} rankType={rankType} currentUserId={currentUserId} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </SidebarLayout>
   );
 }

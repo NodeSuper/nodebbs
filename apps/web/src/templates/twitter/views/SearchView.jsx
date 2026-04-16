@@ -1,30 +1,17 @@
-'use client';
-
-import { useSearch } from '@/hooks/useSearch';
-import { SearchContent } from '@/app/(main)/search/components/SearchContent';
+import { getTemplate } from '@/templates';
+import { LAYOUTS } from '@/templates/constants';
 import StickyHeader from '../components/StickyHeader';
+import SearchContent from './SearchContent';
 
 export default function SearchView() {
-  const {
-    searchQuery,
-    searchType,
-    setSearchType,
-    loading,
-    searchResults,
-    loadTypePage,
-  } = useSearch();
+  const SidebarLayout = getTemplate(LAYOUTS.SidebarLayout);
 
   return (
-    <div>
-      <StickyHeader title='搜索' showBack={false} />
-      <SearchContent
-        searchQuery={searchQuery}
-        searchType={searchType}
-        onSearchTypeChange={setSearchType}
-        loading={loading}
-        searchResults={searchResults}
-        onLoadPage={loadTypePage}
-      />
-    </div>
+    <SidebarLayout>
+      <div>
+        <StickyHeader title='搜索' showBack={false} />
+        <SearchContent />
+      </div>
+    </SidebarLayout>
   );
 }
