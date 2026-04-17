@@ -74,9 +74,9 @@ export default function Header() {
   return (
     <header className='sticky top-0 z-50'>
       {/* 主导航栏 */}
-      <div className='bg-background border-b border-border'>
+      <div className='bg-card border-b border-border'>
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
-          <div className='flex items-center justify-between h-[56px] gap-4'>
+          <div className='flex items-center justify-between h-16 gap-4'>
             {/* 左侧：品牌 + 搜索框 */}
             <div className='flex items-center gap-4 min-w-0'>
               <Link href='/' className='flex items-center gap-2.5 shrink-0 group'>
@@ -84,10 +84,10 @@ export default function Header() {
                   <img
                     src={settings.site_logo.value}
                     alt='logo'
-                    className='h-7 w-auto max-w-30 transition-transform group-hover:scale-105'
+                    className='h-8 w-auto max-w-32 transition-transform group-hover:scale-105'
                   />
                 )}
-                <span className='text-lg font-bold text-foreground tracking-tight'>
+                <span className='text-2xl font-extrabold text-foreground tracking-tight'>
                   {settings?.site_name?.value || 'NodeBBS'}
                 </span>
               </Link>

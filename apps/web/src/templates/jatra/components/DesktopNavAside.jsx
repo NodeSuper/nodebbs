@@ -38,7 +38,7 @@ export default function DesktopNavAside({ categories = [] }) {
 
   return (
     <aside className='hidden md:flex flex-col w-44 shrink-0 sticky top-[var(--header-offset)] overflow-y-auto'>
-      <nav className='flex flex-col gap-1'>
+      <nav className='flex flex-col gap-3'>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -48,10 +48,10 @@ export default function DesktopNavAside({ categories = [] }) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-r-lg font-medium transition-all border-l-2',
+                'flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors border-l-2',
                 isActive
-                  ? 'border-primary text-primary bg-primary/5 dark:bg-primary/10'
-                  : 'border-transparent text-muted-foreground hover:bg-muted dark:hover:bg-muted/50'
+                  ? 'border-accent text-foreground font-semibold'
+                  : 'border-transparent text-foreground hover:text-accent'
               )}
             >
               {/* 分类带颜色圆点 */}
@@ -61,9 +61,9 @@ export default function DesktopNavAside({ categories = [] }) {
                   style={{ backgroundColor: item.color }}
                 />
               ) : (
-                <Icon className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                <Icon className='w-5 h-5 shrink-0' />
               )}
-              <span className='text-sm truncate'>{item.label}</span>
+              <span className='truncate'>{item.label}</span>
             </Link>
           );
         })}

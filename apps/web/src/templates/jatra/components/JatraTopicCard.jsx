@@ -74,13 +74,13 @@ export default function JatraTopicCard({ topic }) {
         </div>
 
         <div className='flex items-center gap-3 text-[13px]'>
-          <button className='flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors font-medium'>
+          <button className='flex items-center gap-1.5 px-3 py-1 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors font-medium'>
             <ThumbsUp className='w-3.5 h-3.5' />
             <span>Like</span>
             <span className='pl-2 border-l border-border font-semibold ml-0.5'>{topic.firstPostLikeCount || 0}</span>
           </button>
           
-          <button className='flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors font-medium'>
+          <button className='flex items-center gap-1.5 px-3 py-1 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors font-medium'>
             <MessageSquare className='w-3.5 h-3.5' />
             <span>Replies</span>
             <span className='pl-2 border-l border-border font-semibold ml-0.5'>{replyCount}</span>

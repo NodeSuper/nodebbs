@@ -8,6 +8,7 @@ export const THEMES = [
   { value: 'sunrise', label: '晨曦', class: 'sunrise', color: 'oklch(0.62 0.24 12)' },
   { value: 'iceblue', label: '冰蓝', class: 'iceblue', color: 'oklch(0.56 0.18 250)' },
   { value: 'nord', label: 'Nord', class: 'nord', color: 'oklch(0.594 0.077 254.03)' },
+  { value: 'jatra', label: 'Jatra', class: 'jatra', color: 'oklch(0.6 0.13 240)' },
 ];
 
 export const FONT_SIZES = [

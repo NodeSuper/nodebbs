@@ -8,7 +8,7 @@ export default function AppLayout({ children }) {
   const Footer = getTemplate(GLOBALS.Footer);
 
   return (
-    <div className='jatra-template min-h-screen text-foreground flex flex-col font-sans' style={{ '--header-offset': '81px' }}>
+    <div className='jatra-template min-h-screen text-foreground flex flex-col font-sans' style={{ '--header-offset': '89px' }}>
       <Header />
       <EmailVerificationBanner />
       

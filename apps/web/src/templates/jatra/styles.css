@@ -1,14 +1,15 @@
-/* === Jatra 模板全局样式 === */
+/* === Jatra 模板专属样式 ===
+ * 配色已在 app/globals.css 注册为 `.jatra` 主题（通过 theme.config.js 切换）
+ * 此文件只保留模板结构性工具类
+ */
 
 .jatra-template {
-  background-color: var(--background);
   min-height: 100vh;
 }
 
-/* 卡片通用样式 */
+/* 论坛风扁平卡片 — 无阴影，依赖边框 */
 .jatra-card {
   background-color: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
