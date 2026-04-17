@@ -80,14 +80,12 @@ export default function Header() {
             {/* 左侧：品牌 + 搜索框 */}
             <div className='flex items-center gap-4 min-w-0'>
               <Link href='/' className='flex items-center gap-2.5 shrink-0 group'>
-                {settings?.site_logo?.value && (
-                  <img
-                    src={settings.site_logo.value}
-                    alt='logo'
-                    className='h-8 w-auto max-w-32 transition-transform group-hover:scale-105'
-                  />
-                )}
-                <span className='text-2xl font-extrabold text-foreground tracking-tight'>
+                <img
+                  src={settings?.site_logo?.value || '/logo.svg'}
+                  alt='logo'
+                  className='h-8 w-auto max-w-32 transition-transform group-hover:scale-105'
+                />
+                <span className='text-2xl font-bold text-foreground tracking-tight hidden sm:inline'>
                   {settings?.site_name?.value || 'NodeBBS'}
                 </span>
               </Link>
