@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Megaphone, MessageCircle, Hash } from 'lucide-react';
+import { Home, ChartBarBig, MessageCircle, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 
@@ -15,8 +15,15 @@ export default function DesktopNavAside({ categories = [] }) {
 
   // 动态构建导航项：固定首页 + 分类列表
   const navItems = [
-    { href: '/', label: 'Home', icon: Home },
+    { href: '/', label: '首页', icon: Home },
   ];
+
+  // 固定底部入口
+  navItems.push(
+    { href: '/categories', label: '全部版块', icon: MessageCircle },
+    { href: '/tags', label: '标签广场', icon: Hash },
+    { href: '/rank', label: '排行榜', icon: ChartBarBig },
+  );
 
   if (categories.length > 0) {
     // 使用真实分类数据
@@ -29,12 +36,6 @@ export default function DesktopNavAside({ categories = [] }) {
       });
     });
   }
-
-  // 固定底部入口
-  navItems.push(
-    { href: '/categories', label: '全部版块', icon: MessageCircle },
-    { href: '/tags', label: '标签广场', icon: Hash },
-  );
 
   return (
     <aside className='hidden md:flex flex-col w-44 shrink-0 sticky top-[var(--header-offset)] overflow-y-auto'>
