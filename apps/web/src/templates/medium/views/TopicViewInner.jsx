@@ -4,6 +4,7 @@ import Link from '@/components/common/Link';
 import UserAvatar from '@/components/user/UserAvatar';
 import Time from '@/components/common/Time';
 import { useTopicContext } from '@/contexts/TopicContext';
+import { AdSlot } from '@/extensions/ads/components';
 import TopicAlerts from '@/components/topic/TopicDetail/TopicAlerts';
 import TopicBody from '@/components/topic/TopicDetail/TopicBody';
 import FirstPostActions from '@/components/topic/TopicDetail/FirstPostActions';
@@ -24,6 +25,8 @@ export default function TopicViewInner({
     <div>
       {/* 提示 */}
       <TopicAlerts />
+
+      <AdSlot slotCode='topic_detail_top' className='mt-4 rounded-lg' />
 
       {/* 标题区 */}
       <div className='pt-8 sm:pt-12 mb-6'>
@@ -110,6 +113,9 @@ export default function TopicViewInner({
           limit={limit}
         />
       </div>
+
+      <AdSlot slotCode='topic_detail_bottom' className='mt-6 rounded-lg' />
+      <div className='h-16'/>
     </div>
   );
 }

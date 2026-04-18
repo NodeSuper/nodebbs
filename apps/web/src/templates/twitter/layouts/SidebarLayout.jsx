@@ -1,4 +1,5 @@
 import { getCategoriesData, getStatsData, getTagsData } from '@/lib/server/topics';
+import { AdSlot } from '@/extensions/ads/components';
 import Link from '@/components/common/Link';
 import { Search } from 'lucide-react';
 import { formatCompactNumber } from '@/lib/utils';
@@ -103,16 +104,20 @@ export default async function SidebarLayout({ children }) {
     <div className='flex'>
       {/* 中间内容区 */}
       <main className='flex-1 min-w-0 border-r border-border'>
+        <AdSlot slotCode='home_header_banner' />
         {children}
+        <AdSlot slotCode='home_footer_banner' />
       </main>
 
       {/* 右侧推荐栏 */}
       <aside className='hidden lg:block w-[350px] shrink-0'>
         <div className='sticky top-0 max-h-screen overflow-y-auto px-4 space-y-4'>
           <SearchBox />
+          <AdSlot slotCode='home_sidebar_top' className='rounded-2xl' />
           <Trending tags={tags} />
           <Explore categories={categories} />
           <FooterLinks stats={stats} />
+          <AdSlot slotCode='home_sidebar_bottom' className='rounded-2xl' />
         </div>
       </aside>
     </div>

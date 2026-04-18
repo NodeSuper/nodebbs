@@ -1,5 +1,6 @@
 import { TopicList } from '@/components/topic/TopicList';
 import { TopicSortTabs } from '@/components/topic/TopicSortTabs';
+import { AdSlot } from '@/extensions/ads/components';
 import { getTemplate } from '@/templates';
 import { LAYOUTS } from '@/templates/constants';
 import JatraTopicList from '../components/JatraTopicList';
@@ -33,6 +34,9 @@ export default function HomeView({ title, description, sort, data, page, totalPa
           showPagination={true}
           useUrlPagination={true}
           component={JatraTopicList}
+          itemInserts={{
+            4: <AdSlot key='ad-topic-inline' slotCode='topic_list_inline' className='rounded-lg' />
+          }}
         />
       </div>
     </SidebarLayout>

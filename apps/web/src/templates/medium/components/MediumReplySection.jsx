@@ -59,7 +59,7 @@ export default function MediumReplySection({
       <FloatingReplyForm onReplyAdded={handleReplyAdded} />
 
       {/* 底部留白，防止 fixed 栏遮挡末尾内容 */}
-      <div className='h-16' />
+      {/* <div className='h-16' /> */}
     </>
   );
 }
