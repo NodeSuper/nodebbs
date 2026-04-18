@@ -150,7 +150,7 @@ export default function TopicActionMenu() {
       <FormDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        title='编辑文章'
+        title='编辑话题'
         description='修改标题、内容和分类'
         maxWidth='sm:max-w-[95vw] lg:max-w-7xl'
         footer={null}

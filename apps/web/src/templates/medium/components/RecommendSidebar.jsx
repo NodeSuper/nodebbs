@@ -16,7 +16,7 @@ export default function RecommendSidebar({ stats, tags }) {
             推荐标签
           </h3>
           <div className='flex flex-wrap gap-2'>
-            {tags.map((tag) => (
+            {tags.slice(0, 8).map((tag) => (
               <Link key={tag.id || tag.slug} href={`/tags/${tag.slug}`}>
                 <Badge
                   variant='secondary'
@@ -27,6 +27,12 @@ export default function RecommendSidebar({ stats, tags }) {
               </Link>
             ))}
           </div>
+          <Link
+            href='/tags'
+            className='inline-block mt-3 text-[13px] text-primary hover:underline'
+          >
+            查看全部标签
+          </Link>
         </div>
       )}
 
@@ -37,7 +43,7 @@ export default function RecommendSidebar({ stats, tags }) {
       {stats && (
         <div className='text-xs text-muted-foreground/60 space-y-1'>
           <div>{formatCompactNumber(stats.totalUsers)} 位创作者</div>
-          <div>{formatCompactNumber(stats.totalTopics)} 篇文章</div>
+          <div>{formatCompactNumber(stats.totalTopics)} 话题</div>
           {stats.online?.total > 0 && (
             <div className='flex items-center gap-1'>
               <span className='inline-block h-1.5 w-1.5 bg-green-500 rounded-full' />

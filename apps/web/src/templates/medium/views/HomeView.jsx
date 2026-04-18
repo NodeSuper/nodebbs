@@ -11,7 +11,7 @@ export default function HomeView({ title, description, sort, data, page, totalPa
   return (
     <SidebarLayout>
       <div>
-        <div className='mb-6 pb-6 border-b border-border'>
+        <div className='sticky top-[var(--header-offset)] z-10 bg-background/80 backdrop-blur py-3 mb-4 border-b border-border'>
           <TopicSortTabs defaultValue={sort} className='w-auto' />
         </div>
         <TopicList

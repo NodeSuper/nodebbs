@@ -29,7 +29,7 @@ export default function TopicViewInner({
       <AdSlot slotCode='topic_detail_top' className='mt-4 rounded-lg' />
 
       {/* 标题区 */}
-      <div className='pt-8 sm:pt-12 mb-6'>
+      <div className='pt-4 sm:pt-6 mb-6'>
         {/* 分类 */}
         {topic.categoryName && (
           <Link

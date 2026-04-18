@@ -51,11 +51,12 @@ export default function Header() {
 
   return (
     <header className='border-b border-border bg-background sticky top-0 z-50'>
-      <div className='flex items-center h-[57px] px-4 sm:px-6 gap-3'>
+      <div className='flex items-center h-14 px-4 sm:px-6 gap-3'>
         {/* 左侧: 折叠按钮 + Logo + 站名 */}
         <button
           onClick={toggle}
           className='p-2 -ml-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors'
+          aria-label='切换菜单'
           title='切换菜单'
         >
           <AlignJustify className='h-5 w-5' />
@@ -72,23 +73,23 @@ export default function Header() {
         </Link>
 
         {/* 搜索框 */}
-        <div className='flex-1 max-w-xs ml-2'>
-          <form onSubmit={handleSearch} className='relative'>
-            <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 pointer-events-none' />
-            <input
-              type='text'
-              placeholder='搜索'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className='w-full h-9 pl-9 pr-3 rounded-full bg-muted/50 text-sm outline-none focus:bg-muted transition-colors placeholder:text-muted-foreground/50 border-none'
-            />
-          </form>
-        </div>
-
-        <div className='flex-1' />
+        <form onSubmit={handleSearch} className='flex-1 max-w-xs ml-2 relative'>
+          <Search
+            aria-hidden='true'
+            className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 pointer-events-none'
+          />
+          <input
+            type='search'
+            placeholder='搜索'
+            aria-label='搜索'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='w-full h-9 pl-9 pr-3 rounded-full bg-muted/50 text-sm outline-none focus:bg-muted transition-colors placeholder:text-muted-foreground/50 border-none'
+          />
+        </form>
 
         {/* 右侧操作区 */}
-        <div className='flex items-center gap-2 shrink-0'>
+        <div className='flex items-center gap-2 shrink-0 ml-auto'>
           {!loading && (
             <>
               <ThemeSwitcher />
@@ -124,7 +125,7 @@ export default function Header() {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href='/profile/topics' className='cursor-pointer'>
-                          <MessageSquare className='h-4 w-4' /> 我的文章
+                          <MessageSquare className='h-4 w-4' /> 我的话题
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

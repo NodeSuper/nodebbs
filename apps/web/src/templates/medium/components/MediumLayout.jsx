@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
 import LeftNav from './LeftNav';
@@ -15,10 +15,10 @@ function SidebarDrawer({ version }) {
 
   // 桌面端样式
   const desktopClass = interacted
-    ? `hidden lg:flex flex-col shrink-0 border-r border-border sticky top-[57px] h-[calc(100vh-57px)] overflow-hidden transition-[width] duration-300 ease-in-out ${
+    ? `hidden lg:flex flex-col shrink-0 border-r border-border sticky top-[var(--header-offset)] h-[calc(100vh-var(--header-offset))] overflow-hidden transition-[width] duration-300 ease-in-out ${
         open ? 'w-[220px]' : 'w-0 border-r-0'
       }`
-    : 'hidden lg:flex flex-col shrink-0 w-[220px] border-r border-border sticky top-[57px] h-[calc(100vh-57px)] overflow-hidden';
+    : 'hidden lg:flex flex-col shrink-0 w-[220px] border-r border-border sticky top-[var(--header-offset)] h-[calc(100vh-var(--header-offset))] overflow-hidden';
 
   // 移动端遮罩+抽屉样式
   const mobileOverlayClass = interacted
@@ -28,7 +28,7 @@ function SidebarDrawer({ version }) {
     : 'hidden';
 
   const mobileDrawerClass = interacted
-    ? `absolute top-[57px] left-0 bottom-0 w-[260px] bg-background border-r border-border shadow-xl transition-transform duration-300 ease-in-out ${
+    ? `absolute top-[var(--header-offset)] left-0 bottom-0 w-[260px] bg-background border-r border-border shadow-xl transition-transform duration-300 ease-in-out ${
         open ? 'translate-x-0' : '-translate-x-full'
       }`
     : '';
@@ -37,7 +37,7 @@ function SidebarDrawer({ version }) {
     <>
       {/* 桌面端 */}
       <aside className={desktopClass}>
-        <div className='w-[220px] h-full'>
+        <div className='w-[220px] h-full overflow-y-auto'>
           <LeftNav version={version} />
         </div>
       </aside>
@@ -55,9 +55,23 @@ function SidebarDrawer({ version }) {
 
 export default function MediumLayout({ children, version }) {
   const pathname = usePathname();
+  const isPopNavigationRef = useRef(false);
 
-  // 路由变化时滚动到顶部
+  // popstate 仅在浏览器前进/后退时触发,Link 点击不会触发
   useEffect(() => {
+    const handlePopState = () => {
+      isPopNavigationRef.current = true;
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // 仅对新导航(push)滚顶;前进/后退交给浏览器恢复
+  useEffect(() => {
+    if (isPopNavigationRef.current) {
+      isPopNavigationRef.current = false;
+      return;
+    }
     window.scrollTo(0, 0);
   }, [pathname]);
 

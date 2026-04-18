@@ -51,10 +51,10 @@ export default function LeftNav({ onNavigate, version }) {
         <Link
           href='/create'
           onClick={onNavigate}
-          className='flex items-center gap-2 mt-6 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground bg-foreground/5 hover:bg-foreground/10 transition-colors'
+          className='flex items-center justify-center gap-2 mt-6 px-4 py-2.5 rounded-full text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 transition-colors'
         >
           <PenSquare className='h-[18px] w-[18px]' />
-          <span>写文章</span>
+          <span>新话题</span>
         </Link>
       )}
 

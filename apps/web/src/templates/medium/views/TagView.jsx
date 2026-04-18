@@ -17,7 +17,7 @@ export default function TagView({ tag, sort, data, page, totalPages, limit }) {
               #{tag.name}
             </h1>
             <Badge variant='secondary' className='text-xs font-normal rounded-full'>
-              {data.total} 篇文章
+              {data.total} 话题
             </Badge>
           </div>
           {tag.description && (
