@@ -19,7 +19,7 @@ function RankItem({ user, index, rankType, currentUserId }) {
       </Link>
       <div className='flex-1 min-w-0'>
         <Link href={`/users/${user.username}`} className='hover:underline'>
-          <span className={cn('font-semibold', isCurrentUser && 'text-primary')}>{user.name}</span>
+          <span className={cn('font-semibold', isCurrentUser && 'text-primary')}>{user.name || '-'}</span>
         </Link>
         {isCurrentUser && <span className='text-xs text-primary ml-2'>(you)</span>}
       </div>

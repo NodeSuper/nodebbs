@@ -103,7 +103,7 @@ export default function Header() {
                     placeholder='搜索...'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className='w-full h-9 pl-10 bg-input/60'
+                    className='w-full h-9 pl-10'
                   />
                 </form>
               </div>
@@ -262,12 +262,12 @@ export default function Header() {
                   <div className='p-4'>
                     <form onSubmit={handleSearch} className='relative'>
                       <Search className='absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none' />
-                      <input
+                      <Input
                         type='text'
                         placeholder='搜索...'
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className='w-full h-9 pl-10 pr-4 rounded-lg bg-muted/60 text-sm outline-none border border-border/50 focus:border-primary/50 focus:bg-background transition-all placeholder:text-muted-foreground/50'
+                        className='w-full h-9 pl-10'
                       />
                     </form>
                   </div>
