@@ -17,7 +17,7 @@ import Time from '@/components/common/Time';
 // 空状态组件
 export function EmptyState() {
   return (
-    <div className='text-center py-20 content-card'>
+    <div className='text-center py-16 sm:py-20 content-card'>
       <div className='w-16 h-16 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center'>
         <BookOpen className='h-8 w-8 text-muted-foreground/50' />
       </div>
@@ -41,34 +41,33 @@ export function TopicItem({ topic }) {
     topic.categoryName || topic.category?.name || '未知分类';
 
   const isPinned = topic.isPinned;
+  const replyCount = Math.max((topic.postCount || 1) - 1, 0);
+  const viewCount = topic.viewCount || 0;
 
   return (
     <div
-      className={`
-        p-3 group relative
-        ${isPinned
-          ? 'bg-primary/3 dark:bg-primary/6 border-l-[3px] border-l-primary'
+      className={`p-3 sm:p-5 group relative transition-colors ${
+        isPinned
+          ? 'bg-primary/5 dark:bg-primary/10'
           : 'hover:bg-accent/50'
-        }
-      `}
+      }`}
       style={{ contain: 'layout style' }}
     >
-      <div className='flex items-start gap-4 w-full'>
+      <div className='flex items-start gap-3 sm:gap-4 w-full'>
         {/* 左侧：作者头像 */}
         <div className='shrink-0 mt-0.5'>
-          <Link href={`/users/${topic.username}`}>
+          <Link href={`/users/${topic.username}`} className='relative z-10'>
             <UserAvatar
               url={topic.userAvatar}
               name={topic.userName || topic.username}
               size='md'
-              className={`
-                ${!topic.userAvatarFrame?.itemMetadata
+              className={
+                !topic.userAvatarFrame?.itemMetadata
                   ? isPinned
                     ? 'ring-2 ring-primary/20'
-                    : 'ring-2 ring-transparent group-hover:ring-primary/20'
+                    : 'ring-2 ring-transparent group-hover:ring-primary/20 transition-shadow'
                   : ''
-                }
-              `}
+              }
               frameMetadata={topic.userAvatarFrame?.itemMetadata}
             />
           </Link>
@@ -77,37 +76,31 @@ export function TopicItem({ topic }) {
         {/* 中间：主要内容区域 */}
         <div className='flex-1 min-w-0'>
           {/* 标题行 */}
-          <div className='mb-2 leading-snug relative'>
-            {/* 置顶标签 */}
+          <div className='mb-1.5 leading-snug relative'>
             {isPinned && (
-              <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary align-middle relative -top-px'>
+              <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary align-middle mr-1.5'>
                 <Pin className='w-3 h-3' />
                 置顶
               </span>
             )}
             {topic.isClosed && (
-              <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground align-middle relative -top-px'>
+              <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground align-middle mr-1.5'>
                 <Lock className='w-3 h-3' />
                 已关闭
               </span>
             )}
             <Link
               href={`/topic/${topic.id}`}
-              className={`
-                text-base sm:text-lg font-medium align-middle break-all
-                before:absolute before:inset-0 before:z-0
-                ${isPinned
-                  ? 'text-foreground group-hover:text-primary'
-                  : 'text-foreground group-hover:text-primary visited:text-muted-foreground'
-                }
-              `}
+              className={`text-base sm:text-lg font-medium align-middle break-all before:absolute before:inset-0 before:z-0 text-foreground group-hover:text-primary ${
+                isPinned ? '' : 'visited:text-muted-foreground'
+              }`}
             >
               {topic.title}
             </Link>
             {topic.approvalStatus === 'pending' && (
               <Badge
                 variant='outline'
-                className='text-chart-5 border-chart-5 text-xs h-5 inline-flex align-middle ml-2 relative -top-px'
+                className='text-chart-5 border-chart-5 text-xs h-5 inline-flex align-middle ml-2'
               >
                 待审核
               </Badge>
@@ -115,26 +108,19 @@ export function TopicItem({ topic }) {
             {topic.approvalStatus === 'rejected' && (
               <Badge
                 variant='outline'
-                className='text-destructive border-destructive text-xs h-5 inline-flex align-middle ml-2 relative -top-px'
+                className='text-destructive border-destructive text-xs h-5 inline-flex align-middle ml-2'
               >
                 已拒绝
               </Badge>
             )}
           </div>
 
-          {/* 正文摘要 (主要用于搜索结果) */}
-          {/* {topic.snippet && (
-            <div className='text-sm text-muted-foreground line-clamp-2 mb-2 wrap-break-word opacity-80'>
-              {topic.snippet}
-            </div>
-          )} */}
-
           {/* 元信息行 */}
-          <div className='flex items-center gap-2 text-sm text-muted-foreground flex-wrap'>
+          <div className='flex items-center gap-x-2 gap-y-1 text-sm text-muted-foreground flex-wrap'>
             {/* 作者名 */}
             <Link
               href={`/users/${topic.username}`}
-              className='font-medium text-foreground/70 hover:text-primary'
+              className='font-medium text-foreground/70 hover:text-primary relative z-10'
             >
               {topic.userName || topic.username}
             </Link>
@@ -144,7 +130,7 @@ export function TopicItem({ topic }) {
               <span className='text-muted-foreground/40 mr-2'>·</span>
               <Badge
                 variant='secondary'
-                className='text-xs font-normal px-2 py-0.5 h-auto bg-muted/50 hover:bg-muted transition-colors'
+                className='text-xs font-normal px-2 py-0.5 h-auto bg-muted/50 hover:bg-muted transition-colors relative z-10'
               >
                 {categoryName}
               </Badge>
@@ -161,12 +147,12 @@ export function TopicItem({ topic }) {
             {topic.tags?.length > 0 && (
               <>
                 <span className='text-muted-foreground/40'>·</span>
-                <div className='flex items-center gap-1.5'>
+                <div className='flex items-center gap-1.5 flex-wrap'>
                   {topic.tags.slice(0, 3).map((tag) => (
                     <Badge
                       key={tag}
                       variant='outline'
-                      className='text-xs h-5 px-2 text-muted-foreground/70 border-muted-foreground/20 hover:border-muted-foreground/40 transition-colors'
+                      className='text-xs h-5 px-2 text-muted-foreground/70 border-muted-foreground/20 hover:border-muted-foreground/40 transition-colors relative z-10'
                     >
                       {tag}
                     </Badge>
@@ -180,19 +166,15 @@ export function TopicItem({ topic }) {
               </>
             )}
 
-            {/* 移动端统计信息 (放入 Meta 行，且居右) */}
+            {/* 移动端统计信息 */}
             <div className='flex sm:hidden items-center gap-3 text-xs text-muted-foreground/60 ml-auto shrink-0'>
               <div className='flex items-center gap-1'>
                 <MessageSquare className='h-3 w-3' />
-                <span className='font-medium tabular-nums'>
-                  {Math.max((topic.postCount || 1) - 1, 0)}
-                </span>
+                <span className='font-medium tabular-nums'>{replyCount}</span>
               </div>
               <div className='flex items-center gap-1'>
                 <Eye className='h-3 w-3' />
-                <span className='font-medium tabular-nums'>
-                  {topic.viewCount || 0}
-                </span>
+                <span className='font-medium tabular-nums'>{viewCount}</span>
               </div>
             </div>
           </div>
@@ -201,18 +183,13 @@ export function TopicItem({ topic }) {
         {/* 右侧：统计信息 - 桌面端 */}
         <div className='hidden sm:flex flex-col items-end gap-2 shrink-0 min-w-25'>
           <div className='flex items-center gap-4 text-xs text-muted-foreground/60'>
-            <div className='flex items-center gap-1.5 hover:text-muted-foreground'>
+            <div className='flex items-center gap-1.5 transition-colors hover:text-muted-foreground'>
               <MessageSquare className='h-3.5 w-3.5' />
-              <span className='font-medium tabular-nums'>
-                {Math.max((topic.postCount || 1) - 1, 0)}
-              </span>
+              <span className='font-medium tabular-nums'>{replyCount}</span>
             </div>
-
-            <div className='flex items-center gap-1.5 hover:text-muted-foreground'>
+            <div className='flex items-center gap-1.5 transition-colors hover:text-muted-foreground'>
               <Eye className='h-3.5 w-3.5' />
-              <span className='font-medium tabular-nums'>
-                {topic.viewCount || 0}
-              </span>
+              <span className='font-medium tabular-nums'>{viewCount}</span>
             </div>
           </div>
 

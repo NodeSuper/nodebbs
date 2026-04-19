@@ -42,7 +42,7 @@ export default function RecommendSidebar({ stats, tags }) {
       {/* 统计 */}
       {stats && (
         <div className='text-xs text-muted-foreground/60 space-y-1'>
-          <div>{formatCompactNumber(stats.totalUsers)} 位创作者</div>
+          <div>{formatCompactNumber(stats.totalUsers)} 用户</div>
           <div>{formatCompactNumber(stats.totalTopics)} 话题</div>
           {stats.online?.total > 0 && (
             <div className='flex items-center gap-1'>

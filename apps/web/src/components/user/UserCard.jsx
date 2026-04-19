@@ -1,9 +1,8 @@
 import React from 'react';
 import Link from '@/components/common/Link';
 import UserAvatar from '@/components/user/UserAvatar';
-import UserBadge from '@/extensions/badges/components/Badge';
+import { UserRoleBadge, UserBadgesList } from '@/components/user/UserIdentityBadges';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 /**
  * 通用用户卡片组件
@@ -74,7 +73,6 @@ export default React.memo(function UserCard({
             {isBanner ? (
               <Link
                 href={`/users/${user.username}`}
-
                 className='font-bold hover:text-primary hover:underline block truncate'
               >
                 {user.name || user.username}
@@ -83,43 +81,15 @@ export default React.memo(function UserCard({
               user.name || user.username
             )}
           </h4>
-          {user.displayRole && (
-            <Badge
-              variant="secondary"
-              className='mt-1 bg-primary/10 text-primary'
-            >
-              {user.displayRole.name}
-            </Badge>
-          )}
+          <UserRoleBadge user={user} className='mt-1' />
         </div>
 
         {/* 勋章展示 */}
-        {badges && badges.length > 0 && (
-          <div
-            className={cn(
-              'flex flex-wrap justify-center',
-              isBanner ? 'gap-1.5' : 'gap-2'
-            )}
-          >
-            {badges.map((item) => {
-              // 兼容不同的 badges 数据结构 (Badge object vs UserBadge object)
-              const badge = item.badge || item;
-              // 注意: UserProfileSidebar 原代码用了 size="xl"，而 TopicSidebar 用了 size="lg" 或 "md"
-              // 这里我们根据 variant 做一个自适应，或者接受 prop
-              const badgeSize = isBanner ? 'lg' : 'xl';
-
-              return (
-                <UserBadge
-                  key={badge.id || badge.slug}
-                  badge={badge}
-                  userBadge={item.badge ? item : null} // 如果是 userBadge 结构则传递
-                  size={badgeSize}
-                  className='transition-transform hover:scale-110'
-                />
-              );
-            })}
-          </div>
-        )}
+        <UserBadgesList
+          badges={badges}
+          size={isBanner ? 'lg' : 'xl'}
+          className='justify-center'
+        />
       </div>
     </CardWrapper>
   );

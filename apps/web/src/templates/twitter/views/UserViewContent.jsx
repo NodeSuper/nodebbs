@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, Calendar, MapPin } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/common/Loading';
 import Link from '@/components/common/Link';
@@ -8,7 +8,9 @@ import UserAvatar from '@/components/user/UserAvatar';
 import UserActivityTabs from '@/app/(main)/users/[id]/components/UserActivityTabs';
 import FollowButton from '@/components/user/FollowButton';
 import SendMessageButton from '@/components/user/SendMessageButton';
-import Time from '@/components/common/Time';
+import UserMoreMenu from '@/components/user/UserMoreMenu';
+import UserIdentityBadges from '@/components/user/UserIdentityBadges';
+import UserMetaRow from '@/components/user/UserMetaRow';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 import StickyHeader from '../components/StickyHeader';
 
@@ -51,8 +53,8 @@ export default function UserViewContent({
 
       {/* 头像 + 操作按钮 */}
       <div className='px-4'>
-        <div className='flex justify-between items-start -mt-10 sm:-mt-16'>
-          <div className='border-4 border-background rounded-full'>
+        <div className='flex items-start gap-2 -mt-10 sm:-mt-16 flex-wrap'>
+          <div className='border-4 border-background rounded-full shrink-0'>
             <UserAvatar
               url={user.avatar}
               name={user.name || user.username}
@@ -61,13 +63,12 @@ export default function UserViewContent({
               frameMetadata={user.avatarFrame?.itemMetadata}
             />
           </div>
-          <div className='flex gap-2 mt-12 sm:mt-3'>
+          <div className='flex items-center gap-2 basis-full sm:basis-auto sm:ml-auto sm:mt-3 justify-end'>
             <SendMessageButton
               recipientId={user.id}
               recipientName={user.name || user.username}
               recipientMessagePermission={user.messagePermission}
               variant='outline'
-              size='sm'
               className='rounded-full'
             />
             <FollowButton
@@ -77,30 +78,28 @@ export default function UserViewContent({
               onFollowChange={handleFollowChange}
               className='rounded-full font-bold'
             />
+            <UserMoreMenu
+              userId={user.id}
+              username={user.name || user.username}
+              className='rounded-full text-muted-foreground hover:text-foreground shrink-0'
+            />
           </div>
         </div>
 
         {/* 用户信息 */}
         <div className='mt-3'>
           <h2 className='text-xl font-extrabold'>{user.name || user.username}</h2>
-          <p className='text-[15px] text-muted-foreground'>@{user.username}</p>
+          <UserIdentityBadges user={user} badges={user.badges} size='md' className='mt-1.5' />
 
           {user.bio && (
             <p className='text-[15px] mt-3'>{user.bio}</p>
           )}
 
-          <div className='flex items-center gap-3 mt-3 text-[15px] text-muted-foreground flex-wrap'>
-            {user.location && (
-              <span className='flex items-center gap-1'>
-                <MapPin className='h-4 w-4' />
-                {user.location}
-              </span>
-            )}
-            <span className='flex items-center gap-1'>
-              <Calendar className='h-4 w-4' />
-              <Time date={user.createdAt} format='YYYY年M月' /> 加入
-            </span>
-          </div>
+          <UserMetaRow
+            user={user}
+            iconClassName='h-4 w-4 shrink-0'
+            className='mt-3 text-[15px] text-muted-foreground'
+          />
 
           {/* 关注/粉丝 */}
           <div className='flex gap-4 mt-3'>

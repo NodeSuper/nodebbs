@@ -1,10 +1,9 @@
 import Link from '@/components/common/Link';
-import { Tag, BarChart3, Users, MessageSquare } from 'lucide-react';
+import { Tag, BarChart3, Users, MessageSquare, MessageCircle } from 'lucide-react';
 import { formatCompactNumber } from '@/lib/utils';
 
 // 分类列表组件
 export function CategoryList({ categories, currentPath }) {
-  // categories 已经通过 isFeatured 参数从后端过滤，无需前端再次过滤
   const isActiveCategory = (categorySlug) => {
     return (
       currentPath === `/categories/${categorySlug}` ||
@@ -26,34 +25,33 @@ export function CategoryList({ categories, currentPath }) {
             暂无分类
           </div>
         ) : (
-          <div className='space-y-1'>
+          <div className='space-y-0.5'>
             {categories.map((category) => {
               const isActive = isActiveCategory(category.slug);
               return (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                 
-                  className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors group ${
+                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors group ${
                     isActive
-                      ? 'bg-muted font-medium text-foreground'
-                      : 'hover:bg-muted/50 text-foreground'
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted/60'
                   }`}
                 >
-                  <div className='flex items-center gap-2 min-w-0'>
-                    <div
-                      className='w-3 h-3 rounded-sm shrink-0'
+                  <div className='flex items-center gap-2.5 min-w-0'>
+                    <span
+                      aria-hidden='true'
+                      className='w-2.5 h-2.5 rounded-sm shrink-0'
                       style={{ backgroundColor: category.color }}
-                    ></div>
+                    />
                     <span className='truncate'>{category.name}</span>
                   </div>
-                  <span className='text-xs text-muted-foreground shrink-0 ml-2'>
+                  <span className='text-xs tabular-nums text-muted-foreground/80 shrink-0'>
                     {category.topicCount || 0}
                   </span>
                 </Link>
               );
             })}
-
           </div>
         )}
       </div>
@@ -63,6 +61,12 @@ export function CategoryList({ categories, currentPath }) {
 
 // 统计信息组件
 export function StatsPanel({ stats }) {
+  const rows = [
+    { icon: MessageSquare, label: '话题', value: stats.totalTopics },
+    { icon: MessageCircle, label: '回复', value: stats.totalPosts },
+    { icon: Users, label: '用户', value: stats.totalUsers },
+  ];
+
   return (
     <div className='card-base'>
       <div className='px-4 py-3 border-b border-border'>
@@ -72,39 +76,26 @@ export function StatsPanel({ stats }) {
         </h3>
       </div>
       <div className='p-4 space-y-3'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <MessageSquare className='h-4 w-4' />
-            <span>话题</span>
+        {rows.map(({ icon: Icon, label, value }) => (
+          <div key={label} className='flex items-center justify-between'>
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <Icon className='h-4 w-4' />
+              <span>{label}</span>
+            </div>
+            <span className='text-sm font-semibold tabular-nums'>
+              {formatCompactNumber(value)}
+            </span>
           </div>
-          <span className='text-sm font-semibold'>
-            {formatCompactNumber(stats.totalTopics)}
-          </span>
-        </div>
-        <div className='flex items-center justify-between'>
+        ))}
+        <div className='flex items-center justify-between pt-3 border-t border-border'>
           <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <MessageSquare className='h-4 w-4' />
-            <span>回复</span>
-          </div>
-          <span className='text-sm font-semibold'>
-            {formatCompactNumber(stats.totalPosts)}
-          </span>
-        </div>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <Users className='h-4 w-4' />
-            <span>用户</span>
-          </div>
-          <span className='text-sm font-semibold'>
-            {formatCompactNumber(stats.totalUsers)}
-          </span>
-        </div>
-        <div className='flex items-center justify-between pt-2 border-t border-border'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <div className='h-2 w-2 bg-green-500 rounded-full animate-pulse'></div>
+            <span className='relative flex h-2 w-2 shrink-0'>
+              <span className='absolute inline-flex h-full w-full rounded-full bg-emerald-400/60 animate-ping' />
+              <span className='relative inline-flex h-2 w-2 rounded-full bg-emerald-500' />
+            </span>
             <span>在线</span>
           </div>
-          <span className='text-sm font-semibold text-green-600'>
+          <span className='text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400'>
             {formatCompactNumber(stats.online?.total)}
           </span>
         </div>
@@ -116,7 +107,7 @@ export function StatsPanel({ stats }) {
 // 主 Sidebar 组件
 export function SidebarContent({ categories, stats, currentPath }) {
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4'>
       <CategoryList categories={categories} currentPath={currentPath} />
       {stats ? <StatsPanel stats={stats} /> : null}
     </div>

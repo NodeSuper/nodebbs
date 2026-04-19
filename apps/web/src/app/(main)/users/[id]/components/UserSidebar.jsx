@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Users } from 'lucide-react';
+import { Users, MapPin } from 'lucide-react';
 import Link from '@/components/common/Link';
 import StickySidebar from '@/components/common/StickySidebar';
 import Time from '@/components/common/Time';
 import FollowButton from '@/components/user/FollowButton';
 import SendMessageButton from '@/components/user/SendMessageButton';
-import BlockUserButton from '@/components/user/BlockUserButton';
-import ReportUserButton from '@/components/user/ReportUserButton';
+import UserMoreMenu from '@/components/user/UserMoreMenu';
 import UserCard from '@/components/user/UserCard';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 
@@ -44,19 +43,39 @@ export default function UserSidebar({ user }) {
             avatarClassName="w-24 h-24"
           />
 
+          {/* bio / 位置 */}
+          <div className='space-y-1.5 text-sm -mt-1'>
+            {user.bio && (
+              <p className='text-center text-foreground/80 break-words px-2'>
+                {user.bio}
+              </p>
+            )}
+            {user.location && (
+              <div className='flex items-center justify-center gap-1 text-muted-foreground'>
+                <MapPin className='h-3.5 w-3.5 shrink-0' />
+                <span className='break-words'>{user.location}</span>
+              </div>
+            )}
+          </div>
+
           {/* 主操作区 */}
-          <div className='flex justify-center gap-2 w-full'>
+          <div className='flex items-center gap-2 w-full'>
             <FollowButton
               username={username}
               initialIsFollowing={isFollowing}
               onFollowChange={handleFollowChange}
-              className="w-1/2"
+              className='flex-1'
             />
             <SendMessageButton
               recipientId={user.id}
               recipientName={user.name || user.username}
               recipientMessagePermission={user.messagePermission}
-              className="w-1/2"
+              className='flex-1'
+            />
+            <UserMoreMenu
+              userId={user.id}
+              username={user.name || user.username}
+              className='shrink-0 text-muted-foreground hover:text-foreground'
             />
           </div>
 
@@ -103,24 +122,6 @@ export default function UserSidebar({ user }) {
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* 次要操作 */}
-          <div className='flex items-center gap-2'>
-            <BlockUserButton
-              userId={user.id}
-              username={user.name || user.username}
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-muted-foreground hover:text-foreground"
-            />
-            <ReportUserButton
-              userId={user.id}
-              username={user.name || user.username}
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-muted-foreground hover:text-foreground"
-            />
           </div>
         </aside>
       </StickySidebar>
