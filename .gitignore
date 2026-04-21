@@ -23,6 +23,7 @@ coverage
 .claude
 .shared
 .opencode
+.qoder
 
 # Build Outputs
 .next/

@@ -1,12 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Lock, Loader2, X, MessageSquare } from 'lucide-react';
 import UserAvatar from '@/components/user/UserAvatar';
 import { useReplyForm } from '@/hooks/topic/useReplyForm';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
 import { useSidebar, SIDEBAR_WIDTH } from './SidebarContext';
+
+const MarkdownEditor = dynamic(
+  () => import('@/components/common/MarkdownEditor'),
+  { ssr: false }
+);
 
 /**
  * Medium 模板 — 底部固定回复表单

@@ -1,8 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Reply, Loader2 } from 'lucide-react';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
+
+const MarkdownEditor = dynamic(
+  () => import('@/components/common/MarkdownEditor'),
+  { ssr: false }
+);
 
 /**
  * 楼中楼回复表单

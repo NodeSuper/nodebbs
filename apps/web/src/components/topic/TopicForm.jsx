@@ -1,13 +1,18 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import MarkdownEditor from '../common/MarkdownEditor';
 import CategorySelector from '@/components/topic/CategorySelector';
 import TagSelect from '@/components/topic/TagSelect';
 import { AlertCircle, Loader2, Folder, Tag, Info, Send } from 'lucide-react';
 import { useTopicForm } from '@/hooks/topic/useTopicForm';
 import { usePermission } from '@/hooks/usePermission';
+
+const MarkdownEditor = dynamic(
+  () => import('../common/MarkdownEditor'),
+  { ssr: false }
+);
 
 // 话题编辑器工具栏（比默认多一个"回复可见"按钮）
 const TOPIC_TOOLBAR = [

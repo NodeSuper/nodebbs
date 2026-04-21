@@ -55,6 +55,14 @@ WORKDIR /app
 # 环境变量
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# 可覆盖的 Node.js 构建选项
+# 默认空（让 V8 根据物理内存自动设置，高配机器不受影响）
+# 低配机器构建时通过 --build-arg 传入，例如：
+#   docker build --build-arg NODE_OPTIONS="--max-old-space-size=2048" .
+# 经验值：给到机器可用内存的 75% 左右，避免 OOM 或频繁 GC
+ARG NODE_OPTIONS=""
+ENV NODE_OPTIONS=$NODE_OPTIONS
+
 # 先复制已安装依赖的目录结构（包括所有 node_modules）
 COPY --from=deps /app/ ./
 

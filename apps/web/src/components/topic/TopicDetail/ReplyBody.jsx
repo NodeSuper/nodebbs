@@ -1,10 +1,15 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Pencil, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import MarkdownRender from '@/components/common/MarkdownRender';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
+
+const MarkdownEditor = dynamic(
+  () => import('@/components/common/MarkdownEditor'),
+  { ssr: false }
+);
 
 /**
  * 回复正文内容 + 折叠/展开 + 编辑模式

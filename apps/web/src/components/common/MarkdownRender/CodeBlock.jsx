@@ -1,60 +1,79 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Copy } from 'lucide-react';
 import CopyButton from '@/components/common/CopyButton';
 
+// 常用语言静态注册（命中多数代码块，零加载延迟）
 import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
-import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
-import diff from 'react-syntax-highlighter/dist/esm/languages/prism/diff';
-import docker from 'react-syntax-highlighter/dist/esm/languages/prism/docker';
-import go from 'react-syntax-highlighter/dist/esm/languages/prism/go';
-import java from 'react-syntax-highlighter/dist/esm/languages/prism/java';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
-import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
-import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
-import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
-import php from 'react-syntax-highlighter/dist/esm/languages/prism/php';
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
-import ruby from 'react-syntax-highlighter/dist/esm/languages/prism/ruby';
-import rust from 'react-syntax-highlighter/dist/esm/languages/prism/rust';
-import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
-import toml from 'react-syntax-highlighter/dist/esm/languages/prism/toml';
-import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
-import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
+import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
 
-const LANGUAGES = {
+const STATIC_LANGUAGES = {
   bash, sh: bash, shell: bash, 'shell-session': bash, console: bash,
-  css,
-  diff,
-  docker, dockerfile: docker,
-  go, golang: go,
-  java,
   javascript, js: javascript,
-  json,
-  jsx,
-  markdown, md: markdown,
-  markup, html: markup, xml: markup,
-  php,
-  python, py: python,
-  ruby, rb: ruby,
-  rust, rs: rust,
-  sql,
-  toml,
-  tsx,
   typescript, ts: typescript,
-  yaml, yml: yaml,
+  jsx,
+  tsx,
+  json,
+  markdown, md: markdown,
 };
 
-for (const [name, definition] of Object.entries(LANGUAGES)) {
-  SyntaxHighlighter.registerLanguage(name, definition);
+for (const [name, def] of Object.entries(STATIC_LANGUAGES)) {
+  SyntaxHighlighter.registerLanguage(name, def);
 }
 
+// 冷门语言首次使用时异步加载，各自独立 chunk，显著减少编译时每路由参与的模块数
+const LAZY_LOADERS = {
+  css: () => import('react-syntax-highlighter/dist/esm/languages/prism/css'),
+  diff: () => import('react-syntax-highlighter/dist/esm/languages/prism/diff'),
+  docker: () => import('react-syntax-highlighter/dist/esm/languages/prism/docker'),
+  dockerfile: () => import('react-syntax-highlighter/dist/esm/languages/prism/docker'),
+  go: () => import('react-syntax-highlighter/dist/esm/languages/prism/go'),
+  golang: () => import('react-syntax-highlighter/dist/esm/languages/prism/go'),
+  java: () => import('react-syntax-highlighter/dist/esm/languages/prism/java'),
+  markup: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
+  html: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
+  xml: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
+  php: () => import('react-syntax-highlighter/dist/esm/languages/prism/php'),
+  python: () => import('react-syntax-highlighter/dist/esm/languages/prism/python'),
+  py: () => import('react-syntax-highlighter/dist/esm/languages/prism/python'),
+  ruby: () => import('react-syntax-highlighter/dist/esm/languages/prism/ruby'),
+  rb: () => import('react-syntax-highlighter/dist/esm/languages/prism/ruby'),
+  rust: () => import('react-syntax-highlighter/dist/esm/languages/prism/rust'),
+  rs: () => import('react-syntax-highlighter/dist/esm/languages/prism/rust'),
+  sql: () => import('react-syntax-highlighter/dist/esm/languages/prism/sql'),
+  toml: () => import('react-syntax-highlighter/dist/esm/languages/prism/toml'),
+  yaml: () => import('react-syntax-highlighter/dist/esm/languages/prism/yaml'),
+  yml: () => import('react-syntax-highlighter/dist/esm/languages/prism/yaml'),
+};
+
+const loaded = new Set(Object.keys(STATIC_LANGUAGES));
+
 export default function CodeBlock({ language, code, ...rest }) {
+  const [, force] = useState(0);
+
+  useEffect(() => {
+    if (!language || loaded.has(language)) return;
+    const loader = LAZY_LOADERS[language];
+    if (!loader) return;
+    loader()
+      .then((mod) => {
+        SyntaxHighlighter.registerLanguage(language, mod.default);
+        loaded.add(language);
+        force((n) => n + 1);
+      })
+      .catch((err) => {
+        console.warn(`[CodeBlock] failed to load language "${language}"`, err);
+      });
+  }, [language]);
+
   return (
     <div className='relative group rounded-lg w-full max-w-full grid grid-cols-1 min-w-0'>
       <CopyButton
