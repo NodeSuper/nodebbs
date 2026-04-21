@@ -140,6 +140,7 @@ export function ProfileTab() {
                 value={formData.name}
                 onChange={(e) => updateField('name', e.target.value)}
                 placeholder='请输入昵称'
+                maxLength={30}
                 required
               />
             </div>

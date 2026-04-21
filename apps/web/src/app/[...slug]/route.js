@@ -13,6 +13,13 @@ const INTERNAL_TOKEN = '1';
 
 export { INTERNAL_HEADER, INTERNAL_TOKEN };
 
+const INTERNAL_ORIGIN = `http://127.0.0.1:${process.env.WEB_PORT || 3100}`;
+const markdownProcessor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkRehype)
+  .use(rehypeStringify);
+
 function buildForwardHeaders(request) {
   const forwardHeaders = new Headers();
   forwardHeaders.set('accept', 'text/html');
@@ -42,7 +49,7 @@ async function fetchInternalPage(target, request) {
 }
 
 async function renderHtmlNotFound(request) {
-  const target = new URL('/not-found-render', request.url);
+  const target = new URL('/not-found-render', INTERNAL_ORIGIN);
   const { html } = await fetchInternalPage(target, request);
 
   return new NextResponse(html, {
@@ -59,12 +66,10 @@ function escapeHtml(str) {
 }
 
 async function renderMarkdown(content) {
-  const file = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkRehype)
-    .use(rehypeStringify)
-    .process(content);
+  if (!content) return '';
+  
+  // 使用复用的 processor 处理内容
+  const file = await markdownProcessor.process(content);
   return String(file);
 }
 
@@ -132,7 +137,7 @@ export async function GET(request, { params }) {
         });
       }
 
-      const target = new URL(`/page-render/${encodeSlugPath(resolvedParams.slug)}`, request.url);
+      const target = new URL(`/page-render/${encodeSlugPath(resolvedParams.slug)}`, INTERNAL_ORIGIN);
 
       const { html, status } = await fetchInternalPage(target, request);
 
@@ -147,13 +152,16 @@ export async function GET(request, { params }) {
 
     return new NextResponse('Unsupported Page Type', { status: 500 });
   } catch (error) {
+    console.error('[PageRoute] Unhandled error:', error);
+
     const accept = request.headers.get('accept') || '';
     if (accept.includes('text/html')) {
-      try {
-        return await renderHtmlNotFound(request);
-      } catch {
-        // fallback if even 404 rendering fails
-      }
+      // 直接返回静态 404 HTML，不再依赖内部 fetch
+      const fallbackHtml = `<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><title>404</title></head><body><h1>404 - Page Not Found</h1><p>请求的页面不存在或渲染失败。</p></body></html>`;
+      return new NextResponse(fallbackHtml, {
+        status: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+      });
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
