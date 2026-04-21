@@ -13,7 +13,7 @@ const INTERNAL_TOKEN = '1';
 
 export { INTERNAL_HEADER, INTERNAL_TOKEN };
 
-const INTERNAL_ORIGIN = `http://127.0.0.1:${process.env.WEB_PORT || 3100}`;
+const INTERNAL_ORIGIN = `http://127.0.0.1:${process.env.PORT || 3100}`;
 const markdownProcessor = unified()
   .use(remarkParse)
   .use(remarkGfm)
